@@ -83,21 +83,21 @@ def report_statistics(header, key, qubits, keep_count, discard_count, exposed_co
           f"  qubits                    : {qubits}\n"
           f"  keep count                : "
           f"{keep_count} "
-          f"({percent_str(keep_count, qubits)}%)\n"
+          f"({percent_str(keep_count, qubits)})\n"
           f"  discard count             : "
           f"{discard_count} "
-          f"({percent_str(discard_count, qubits)}%)\n"
+          f"({percent_str(discard_count, qubits)})\n"
           f"  exposed count             : "
           f"{exposed_count} "
           f"({percent_str(discard_count, qubits)}%)\n"
           f"    possibly unobserved count : "
           f"{possibly_unobserverd_count} "
-          f"({percent_str(possibly_unobserverd_count, qubits)}% of total) "
-          f"({percent_str(possibly_unobserverd_count, exposed_count)}% of exposed)\n"
+          f"({percent_str(possibly_unobserverd_count, qubits)} of total) "
+          f"({percent_str(possibly_unobserverd_count, exposed_count)} of exposed)\n"
           f"    definitely observed count : "
           f"{definitely_observered_count} "
-          f"({percent_str(definitely_observered_count, qubits)}% of total) "
-          f"({percent_str(definitely_observered_count, exposed_count)}% of exposed)\n")
+          f"({percent_str(definitely_observered_count, qubits)} of total) "
+          f"({percent_str(definitely_observered_count, exposed_count)} of exposed)\n")
 
 
 def server_generate_key(simulaqron, client_node_name, required_key_length):

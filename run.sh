@@ -2,7 +2,7 @@
 
 # TODO: Add Eve the evesdropper
 
-REQUIRED_KEY_BITS=5
+REQUIRED_KEY_BITS=32
 
 echo "Stopping SimulaQron (in case it was still running from a previous test)"
 simulaqron stop

@@ -102,7 +102,9 @@ def report_statistics(header, key, qubits, keep_count, discard_count, exposed_co
 
 def server_generate_key(simulaqron, client_node_name, required_key_length):
 
-    done = False
+    key_done = False
+    exposed_done = False
+    wanted_exposed_bits = (required_key_length + 1) // 2
     key = []
     sent_qubits = 0
     keep_count = 0
@@ -110,7 +112,7 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
     exposed_count = 0
     possibly_unobserverd_count = 0
     definitely_observered_count = 0
-    while not done:
+    while not key_done:
 
         # Randomly choose a bit and an encoding basis
         bit = choose_random_bit()
@@ -127,18 +129,26 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
 
         # Decide what to do with the bit, based on whether or not we chose the same basis
         if basis == peer_basis:
-            if random.randint(0, 1) == 0:
+            # Same basis. Decide whether to keep or expose.
+            if key_done:
+                keep = False
+            elif exposed_done:
+                keep = True
+            else:
+                keep = random.randint(0, 1) == 0
+            if keep:
                 # Keep the bit as key material
                 key.append(bit)
                 keep_count += 1
                 if len(key) == required_key_length:
-                    done = True
+                    key_done = True
                     msg = MSG_KEEP_DONE
                 else:
                     msg = MSG_KEEP_MORE
             else:
                 # Expose the bit value (as 0 or 1) to check for evesdroppers
                 exposed_count += 1
+                exposed_done = exposed_count >= wanted_exposed_bits
                 if bit == 0:
                     msg = MSG_EXPOSE_0
                 else:
@@ -166,7 +176,7 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
 
 def client_generate_key(simulaqron, server_node_name, required_key_length):
 
-    done = False
+    key_done = False
     key = []
     received_qubits = 0
     keep_count = 0
@@ -174,7 +184,7 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
     exposed_count = 0
     possibly_unobserverd_count = 0
     definitely_observered_count = 0
-    while not done:
+    while not key_done:
 
         # Choose a random basis
         basis = choose_random_basis()
@@ -196,7 +206,7 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
             keep_count += 1
             if msg == MSG_KEEP_DONE:
                 assert len(key) == required_key_length
-                done = True
+                key_done = True
             else:
                 assert len(key) < required_key_length
         elif msg == MSG_DISCARD:

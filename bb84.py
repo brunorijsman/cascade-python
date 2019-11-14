@@ -69,8 +69,6 @@ def decode_key_bit_from_qubit(qubit, basis):
 
 def server_generate_key(simulaqron, client_node_name, required_key_length):
 
-    # TODO: Make NR_BITS a parameter (nr of key bits required)
-
     key = []
     discard_count = 0
     possibly_unobserverd_count = 0

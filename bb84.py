@@ -89,7 +89,7 @@ def report_statistics(header, key, qubits, keep_count, discard_count, exposed_co
           f"({percent_str(discard_count, qubits)})\n"
           f"  exposed count             : "
           f"{exposed_count} "
-          f"({percent_str(discard_count, qubits)}%)\n"
+          f"({percent_str(discard_count, qubits)})\n"
           f"    possibly unobserved count : "
           f"{possibly_unobserverd_count} "
           f"({percent_str(possibly_unobserverd_count, qubits)} of total) "

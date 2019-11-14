@@ -4,10 +4,12 @@ import cqc.pythonLib as cqclib
 BASIS_COMPUTATIONAL = 0
 BASIS_HADAMARD = 1
 
-MSG_KEEP = b"K"
+MSG_KEEP_DONE = b"KD"
+MSG_KEEP_MORE = b"KM"
 MSG_DISCARD = b"D"
 MSG_EXPOSE_0 = b"E0"
 MSG_EXPOSE_1 = b"E1"
+MSG_FINISHED = b"F"
 
 MSG_POSSIBLY_UNOBSERVED = b"U"
 MSG_DEFINITELY_OBSERVED = b"O"
@@ -69,11 +71,14 @@ def decode_key_bit_from_qubit(qubit, basis):
 
 def server_generate_key(simulaqron, client_node_name, required_key_length):
 
+    done = False
     key = []
+    sent_qubits = 0
+    keep_count = 0
     discard_count = 0
     possibly_unobserverd_count = 0
     definitely_observered_count = 0
-    while len(key) < required_key_length:
+    while not done:
 
         # Randomly choose a bit and an encoding basis
         bit = choose_random_bit()
@@ -82,6 +87,7 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
         # Encode the bit into a qubit (using the chosen basis) and send the qubit to the peer
         qubit = encode_key_bit_into_qubit(simulaqron, bit, basis)
         simulaqron.sendQubit(qubit, client_node_name)
+        sent_qubits += 1
 
         # Wait for the peer to tell us what basis they chose
         msg = simulaqron.recvClassical()
@@ -91,8 +97,13 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
         if basis == peer_basis:
             if random.randint(0, 1) == 0:
                 # Keep the bit as key material
-                msg = MSG_KEEP
                 key.append(bit)
+                keep_count += 1
+                if len(key) == required_key_length:
+                    done = True
+                    msg = MSG_KEEP_DONE
+                else:
+                    msg = MSG_KEEP_MORE
             else:
                 # Expose the bit value (as 0 or 1) to check for evesdroppers
                 if bit == 0:
@@ -117,6 +128,8 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
 
     print()
     print(f"[Server] key                       : {key}\n"
+          f"[Server] sent qubits               : {sent_qubits}\n"
+          f"[Server] keep count                : {keep_count}\n"
           f"[Server] discard count             : {discard_count}\n"
           f"[Server] possibly unobserved count : {possibly_unobserverd_count}\n"
           f"[Server] definitely observed count : {definitely_observered_count}")
@@ -125,17 +138,21 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
 
 def client_generate_key(simulaqron, server_node_name, required_key_length):
 
+    done = False
     key = []
+    received_qubits = 0
+    keep_count = 0
     discard_count = 0
     possibly_unobserverd_count = 0
     definitely_observered_count = 0
-    while len(key) < required_key_length:
+    while not done:
 
         # Choose a random basis
         basis = choose_random_basis()
 
         # Receive a qubit from the peer and decode it using our chosen basis
         qubit = simulaqron.recvQubit()
+        received_qubits += 1
         bit = decode_key_bit_from_qubit(qubit, basis)
 
         # Tell the peer what basis we used to decode the qubit
@@ -144,9 +161,15 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
 
         # Find out what the peer decided to do with the bit
         msg = simulaqron.recvClassical()
-        if msg == MSG_KEEP:
-            # Keep the bit as key material
+        if msg in [MSG_KEEP_DONE, MSG_KEEP_MORE]:
+            # Keep the bit as key material, and check if we are done
             key.append(bit)
+            keep_count += 1
+            if msg == MSG_KEEP_DONE:
+                assert len(key) == required_key_length
+                done = True
+            else:
+                assert len(key) < required_key_length
         elif msg == MSG_DISCARD:
             # Discard the bit (we chose a different basis than the peer)
             discard_count += 1
@@ -164,6 +187,8 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
 
     print()
     print(f"[Client] key                       : {key}\n"
+          f"[Client] keep count                : {keep_count}\n"
+          f"[Client] received qubits           : {received_qubits}\n"
           f"[Client] discard count             : {discard_count}\n"
           f"[Client] possibly unobserved count : {possibly_unobserverd_count}\n"
           f"[Client] definitely observed count : {definitely_observered_count}")

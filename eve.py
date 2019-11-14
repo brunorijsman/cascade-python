@@ -8,12 +8,14 @@ def main(observe_percentage):
     with cqclib.CQCConnection("Eve") as simulaqron:
 
         done = False
+        qubits_count = 0
         unobserved_count = 0
         observed_count = 0
         while not done:
 
             # Receive qubit from Aliced
             qubit = simulaqron.recvQubit()
+            qubits_count += 1
 
             # Does Eve observe the qubit?
             if random.randint(1, 100) <= observe_percentage:
@@ -54,8 +56,13 @@ def main(observe_percentage):
                 simulaqron.sendClassical("Alice", observation_msg)
 
     print()
-    print(f"[Eve] Un-observerd qubits : {unobserved_count}\n"
-          f"[Eve] Observed qubits     : {observed_count}")
+    print(f"Eve:\n"
+          f"  un-observerd qubits : "
+          f"{unobserved_count} "
+          f"{bb84.percent_str(unobserved_count, qubits_count)}\n"
+          f"  observed qubits     : "
+          f"{observed_count} "
+          f"{bb84.percent_str(observed_count, qubits_count)}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Eve')

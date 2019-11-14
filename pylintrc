@@ -3,3 +3,6 @@
 disable=
     missing-docstring,
     invalid-name,
+    too-many-arguments,
+    too-many-locals,
+    too-many-branches,

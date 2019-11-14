@@ -69,6 +69,37 @@ def decode_key_bit_from_qubit(qubit, basis):
     bit = qubit.measure()
     return bit
 
+def percent_str(count, total):
+    if total == 0:
+        return f"{count} (-)"
+    percentage = 100.0 * float(count) / float(total)
+    return f"{percentage:.1f}%"
+
+def report_statistics(header, key, qubits, keep_count, discard_count, exposed_count,
+                      possibly_unobserverd_count, definitely_observered_count):
+    print()
+    print(f"{header}:\n"
+          f"  key                       : {key}\n"
+          f"  qubits                    : {qubits}\n"
+          f"  keep count                : "
+          f"{keep_count} "
+          f"({percent_str(keep_count, qubits)}%)\n"
+          f"  discard count             : "
+          f"{discard_count} "
+          f"({percent_str(discard_count, qubits)}%)\n"
+          f"  exposed count             : "
+          f"{exposed_count} "
+          f"({percent_str(discard_count, qubits)}%)\n"
+          f"    possibly unobserved count : "
+          f"{possibly_unobserverd_count} "
+          f"({percent_str(possibly_unobserverd_count, qubits)}% of total) "
+          f"({percent_str(possibly_unobserverd_count, exposed_count)}% of exposed)\n"
+          f"    definitely observed count : "
+          f"{definitely_observered_count} "
+          f"({percent_str(definitely_observered_count, qubits)}% of total) "
+          f"({percent_str(definitely_observered_count, exposed_count)}% of exposed)\n")
+
+
 def server_generate_key(simulaqron, client_node_name, required_key_length):
 
     done = False
@@ -76,6 +107,7 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
     sent_qubits = 0
     keep_count = 0
     discard_count = 0
+    exposed_count = 0
     possibly_unobserverd_count = 0
     definitely_observered_count = 0
     while not done:
@@ -106,6 +138,7 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
                     msg = MSG_KEEP_MORE
             else:
                 # Expose the bit value (as 0 or 1) to check for evesdroppers
+                exposed_count += 1
                 if bit == 0:
                     msg = MSG_EXPOSE_0
                 else:
@@ -126,13 +159,8 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
             else:
                 assert False, "Unrecognized observation message"
 
-    print()
-    print(f"[Server] key                       : {key}\n"
-          f"[Server] sent qubits               : {sent_qubits}\n"
-          f"[Server] keep count                : {keep_count}\n"
-          f"[Server] discard count             : {discard_count}\n"
-          f"[Server] possibly unobserved count : {possibly_unobserverd_count}\n"
-          f"[Server] definitely observed count : {definitely_observered_count}")
+    report_statistics("Server", key, sent_qubits, keep_count, discard_count, exposed_count,
+                      possibly_unobserverd_count, definitely_observered_count)
 
     return key
 
@@ -143,6 +171,7 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
     received_qubits = 0
     keep_count = 0
     discard_count = 0
+    exposed_count = 0
     possibly_unobserverd_count = 0
     definitely_observered_count = 0
     while not done:
@@ -175,6 +204,7 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
             discard_count += 1
         elif msg in [MSG_EXPOSE_0, MSG_EXPOSE_1]:
             # The bit was exposed. Look for evidence that an evesdropper observed it
+            exposed_count += 1
             peer_bit = 0 if msg == MSG_EXPOSE_0 else 1
             if bit == peer_bit:
                 simulaqron.sendClassical(server_node_name, MSG_POSSIBLY_UNOBSERVED)
@@ -185,12 +215,7 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
         else:
             assert False, "Unrecognized disposition message from peer"
 
-    print()
-    print(f"[Client] key                       : {key}\n"
-          f"[Client] keep count                : {keep_count}\n"
-          f"[Client] received qubits           : {received_qubits}\n"
-          f"[Client] discard count             : {discard_count}\n"
-          f"[Client] possibly unobserved count : {possibly_unobserverd_count}\n"
-          f"[Client] definitely observed count : {definitely_observered_count}")
+    report_statistics("Client", key, received_qubits, keep_count, discard_count, exposed_count,
+                      possibly_unobserverd_count, definitely_observered_count)
 
     return key

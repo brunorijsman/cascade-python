@@ -6,3 +6,4 @@ with cqclib.CQCConnection("Bart") as simulaqron:
         qubit = simulaqron.recvQubit()
         bit = qubit.measure()
         print(f"[Bart] Received qubit {bit} from Anton")
+        time.sleep(0.2)

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-REQUIRED_KEY_BITS=32
-
 echo "Stopping SimulaQron (in case it was still running from a previous test)"
 simulaqron stop
 

@@ -1,4 +1,5 @@
 import random
+import time
 import cqc.pythonLib as cqclib
 
 BASIS_COMPUTATIONAL = 0
@@ -75,42 +76,43 @@ def percent_str(count, total):
     percentage = 100.0 * float(count) / float(total)
     return f"{percentage:.1f}%"
 
-def report_statistics(header, key, qubits, keep_count, discard_count, exposed_count,
-                      possibly_unobserverd_count, definitely_observered_count):
+def report_statistics(header, key, qubits, keep_count, discard_count, revealed_count,
+                      possibly_unobserverd_count, definitely_observered_count, _duration):
     print()
     print(f"{header}:\n"
           f"  key                       : {key}\n"
-          f"  qubits                    : {qubits}\n"
-          f"  keep count                : "
+          f"  all qubits                : {qubits}\n"
+          f"  kept qubits               : "
           f"{keep_count} "
           f"({percent_str(keep_count, qubits)})\n"
-          f"  discard count             : "
+          f"  discarded qubits          : "
           f"{discard_count} "
           f"({percent_str(discard_count, qubits)})\n"
-          f"  exposed count             : "
-          f"{exposed_count} "
+          f"  revealed qubits           : "
+          f"{revealed_count} "
           f"({percent_str(discard_count, qubits)})\n"
           f"    possibly unobserved count : "
           f"{possibly_unobserverd_count} "
           f"({percent_str(possibly_unobserverd_count, qubits)} of total) "
-          f"({percent_str(possibly_unobserverd_count, exposed_count)} of exposed)\n"
+          f"({percent_str(possibly_unobserverd_count, revealed_count)} of revealed)\n"
           f"    definitely observed count : "
           f"{definitely_observered_count} "
           f"({percent_str(definitely_observered_count, qubits)} of total) "
-          f"({percent_str(definitely_observered_count, exposed_count)} of exposed)\n")
+          f"({percent_str(definitely_observered_count, revealed_count)} of revealed)\n")
 
 def server_generate_key(simulaqron, client_node_name, required_key_length):
 
     key_done = False
-    exposed_done = False
-    wanted_exposed_bits = (required_key_length + 1) // 2
+    revealed_done = False
+    wanted_revealed_bits = (required_key_length + 1) // 2
     key = []
     sent_qubits = 0
     keep_count = 0
     discard_count = 0
-    exposed_count = 0
+    revealed_count = 0
     possibly_unobserverd_count = 0
     definitely_observered_count = 0
+    start_time = time.perf_counter()
     while not key_done:
 
         # Randomly choose a bit and an encoding basis
@@ -131,7 +133,7 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
             # Same basis. Decide whether to keep or expose.
             if key_done:
                 keep = False
-            elif exposed_done:
+            elif revealed_done:
                 keep = True
             else:
                 keep = random.randint(0, 1) == 0
@@ -146,8 +148,8 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
                     msg = MSG_KEEP_MORE
             else:
                 # Expose the bit value (as 0 or 1) to check for evesdroppers
-                exposed_count += 1
-                exposed_done = exposed_count >= wanted_exposed_bits
+                revealed_count += 1
+                revealed_done = revealed_count >= wanted_revealed_bits
                 if bit == 0:
                     msg = MSG_EXPOSE_0
                 else:
@@ -158,7 +160,7 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
             discard_count += 1
         simulaqron.sendClassical(client_node_name, msg)
 
-        # If we exposed our bit, look for evidence that an evesdropper observed it
+        # If we revealed our bit, look for evidence that an evesdropper observed it
         if msg in [MSG_EXPOSE_0, MSG_EXPOSE_1]:
             msg = simulaqron.recvClassical()
             if msg == MSG_POSSIBLY_UNOBSERVED:
@@ -168,8 +170,9 @@ def server_generate_key(simulaqron, client_node_name, required_key_length):
             else:
                 assert False, "Unrecognized observation message"
 
-    report_statistics("Server", key, sent_qubits, keep_count, discard_count, exposed_count,
-                      possibly_unobserverd_count, definitely_observered_count)
+    duration = time.perf_counter() - start_time
+    report_statistics("Server", key, sent_qubits, keep_count, discard_count, revealed_count,
+                      possibly_unobserverd_count, definitely_observered_count, duration)
 
     return key
 
@@ -180,9 +183,10 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
     received_qubits = 0
     keep_count = 0
     discard_count = 0
-    exposed_count = 0
+    revealed_count = 0
     possibly_unobserverd_count = 0
     definitely_observered_count = 0
+    start_time = time.perf_counter()
     while not key_done:
 
         # Choose a random basis
@@ -212,8 +216,8 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
             # Discard the bit (we chose a different basis than the peer)
             discard_count += 1
         elif msg in [MSG_EXPOSE_0, MSG_EXPOSE_1]:
-            # The bit was exposed. Look for evidence that an evesdropper observed it
-            exposed_count += 1
+            # The bit was revealed. Look for evidence that an evesdropper observed it
+            revealed_count += 1
             peer_bit = 0 if msg == MSG_EXPOSE_0 else 1
             if bit == peer_bit:
                 simulaqron.sendClassical(server_node_name, MSG_POSSIBLY_UNOBSERVED)
@@ -224,7 +228,8 @@ def client_generate_key(simulaqron, server_node_name, required_key_length):
         else:
             assert False, "Unrecognized disposition message from peer"
 
-    report_statistics("Client", key, received_qubits, keep_count, discard_count, exposed_count,
-                      possibly_unobserverd_count, definitely_observered_count)
+    duration = time.perf_counter() - start_time
+    report_statistics("Client", key, received_qubits, keep_count, discard_count, revealed_count,
+                      possibly_unobserverd_count, definitely_observered_count, duration)
 
     return key

@@ -99,7 +99,6 @@ def report_statistics(header, key, qubits, keep_count, discard_count, exposed_co
           f"({percent_str(definitely_observered_count, qubits)} of total) "
           f"({percent_str(definitely_observered_count, exposed_count)} of exposed)\n")
 
-
 def server_generate_key(simulaqron, client_node_name, required_key_length):
 
     key_done = False

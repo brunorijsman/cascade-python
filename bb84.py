@@ -18,10 +18,13 @@ import cqc.pythonLib as cqclib
 # TODO: Control message tracing with environment variable
 # TODO: Have class for decision
 # TODO: Eve to report which key bits she gleaned ?=wrongbasis 01=gleaned .=did not measure
+# TODO: Keep stats for measured qubits
+# TODO: If qubit is measured, do so immediately
+# TODO: Don't use functions to increase stats (just do so directly)
 
 def percent_str(count, total):
     if total == 0:
-        return f"{count} (-)"
+        return f"-"
     percentage = 100.0 * float(count) / float(total)
     return f"{percentage:.1f}%"
 
@@ -78,23 +81,23 @@ class Basis:
 
 class BitState:
 
-    DECISION_NOT_DECIDED = b'?'
+    DECISION_NONE = b'?'
     DECISION_BASIS_MISMATCH = b'M'
     DECISION_KEEP_AS_KEY = b'K'
     DECISION_REVEAL_AS_0 = b'0'
     DECISION_REVEAL_AS_1 = b'1'
 
-    REVEAL_COMPARISON_NOT_COMPARED = b'.'
-    REVEAL_COMPARISON_SAME = b'S'
-    REVEAL_COMPARISON_DIFFERENT = b'D'
+    COMPARISON_NONE = b'.'
+    COMPARISON_SAME = b'S'
+    COMPARISON_DIFFERENT = b'D'
 
     def __init__(self, bit, basis, qubit):
         self.bit = bit
         self.basis = basis
         self.client_basis = None
         self.qubit = qubit
-        self.decision = self.DECISION_NOT_DECIDED
-        self.reveal_comparison = self.REVEAL_COMPARISON_NOT_COMPARED
+        self.decision = self.DECISION_NONE
+        self.comparison = self.COMPARISON_NONE
 
     def encode_qubit(self, cqc_connection):
         self.qubit = cqclib.qubit(cqc_connection)
@@ -131,7 +134,7 @@ class BitState:
 
     def decode_decission(self, encoded_decision):
         assert len(encoded_decision) == 1, "Encoded decision must be 1 byte"
-        assert self.decision in [self.DECISION_NOT_DECIDED,
+        assert self.decision in [self.DECISION_NONE,
                                  self.DECISION_BASIS_MISMATCH,
                                  self.DECISION_KEEP_AS_KEY,
                                  self.DECISION_REVEAL_AS_0,
@@ -153,65 +156,66 @@ class Report:
 
 class Stats:
 
-    def __init__(self, is_rx):
+    def __init__(self, is_rx, block_size):
         self._is_rx = is_rx
-        self._blocks_count = 0
-        self._qubits_count = 0
-        self._basis_mismatch_count = 0
-        self._key_bits_count = 0
-        self._revealed_bits_count = 0
-        self._comparison_same_count = 0
-        self._comparison_diff_count = 0
-
-    def count_block(self):
-        self._blocks_count += 1
-
-    def count_qubit(self):
-        self._qubits_count += 1
-
-    def count_basis_mismatch(self):
-        self._basis_mismatch_count += 1
-
-    def count_key_bit(self):
-        self._key_bits_count += 1
-
-    def count_revealed_bit(self):
-        self._revealed_bits_count += 1
-
-    def count_comparison_same(self):
-        self._comparison_same_count += 1
-
-    def count_comparison_different(self):
-        self._comparison_diff_count += 1
+        self.block = 0
+        self.block_size = block_size
+        self.qubit = 0
+        self.qubit_measured = 0
+        self.decision_msg = 0
+        self.decision_basis_mismatch = 0
+        self.decision_use_as_key = 0
+        self.decision_reveal_as_0 = 0
+        self.decision_reveal_as_1 = 0
+        self.comparison_msg = 0
+        self.comparison_none = 0
+        self.comparison_same = 0
+        self.comparison_different = 0
 
     def add_to_report(self, report, elapsed_time):
         if self._is_rx:
             report.add("RX stats:")
         else:
             report.add("TX stats:")
-        report.add(f"  Blocks: {self._blocks_count} " +
-                   f"{throughput_str(self._blocks_count, elapsed_time, 'blocks')}")
-        report.add(f"  Qubits: {self._qubits_count} " +
-                   f"{throughput_str(self._qubits_count, elapsed_time, 'qubits')}")
-        report.add(f"  Basis mismatches: {self._basis_mismatch_count} " +
-                   f"({percent_str(self._basis_mismatch_count, self._qubits_count)} of total) " +
-                   f"{throughput_str(self._basis_mismatch_count, elapsed_time, 'mismatches')}")
-        report.add(f"  Key bits: {self._key_bits_count} " +
-                   f"({percent_str(self._key_bits_count, self._qubits_count)} of total) " +
-                   f"{throughput_str(self._key_bits_count, elapsed_time, 'bits')}")
-        basis_match_count = self._qubits_count - self._basis_mismatch_count
-        report.add(f"  Revealed bits: {self._revealed_bits_count} " +
-                   f"({percent_str(self._revealed_bits_count, basis_match_count)} of "
-                   f"matching basis) " +
-                   f"{throughput_str(self._revealed_bits_count, elapsed_time, 'bits')}")
-        report.add(f"  Comparison same: {self._comparison_same_count} " +
-                   f"({percent_str(self._comparison_same_count, self._revealed_bits_count)} " +
-                   f"of revealed) " +
-                   f"{throughput_str(self._comparison_same_count, elapsed_time, 'comparisons')}")
-        report.add(f"  Comparison different: {self._comparison_diff_count} " +
-                   f"({percent_str(self._comparison_diff_count, self._revealed_bits_count)} " +
-                   f"of revealed) " +
-                   f"{throughput_str(self._comparison_diff_count, elapsed_time, 'comparisons')}")
+        report.add(f"  Blocks: {self.block} " +
+                   f"{throughput_str(self.block, elapsed_time, 'blocks')}")
+        if self.qubit:
+            report.add(f"  Qubits: {self.qubit} " +
+                       f"{throughput_str(self.qubit, elapsed_time, 'qubits')}")
+            # TODO: Measured qubits
+        if self.decision_msg:
+            report.add(f"  Decision messages: {self.decision_msg} " +
+                       f"{throughput_str(self.decision_msg, elapsed_time, 'messages')}")
+            cnt = self.decision_msg * self.block_size
+            report.add(f"    Basis mismatch: {self.decision_basis_mismatch} " +
+                       f"({percent_str(self.decision_basis_mismatch, cnt)}) " +
+                       f"{throughput_str(self.decision_basis_mismatch, elapsed_time, 'bits')}")
+            report.add(f"    Use as key: {self.decision_use_as_key} " +
+                       f"({percent_str(self.decision_use_as_key, cnt)}) " +
+                       f"{throughput_str(self.decision_use_as_key, elapsed_time, 'bits')}")
+            report.add(f"    Reveal as 0: {self.decision_reveal_as_0} " +
+                       f"({percent_str(self.decision_reveal_as_0, cnt)}) " +
+                       f"{throughput_str(self.decision_reveal_as_0, elapsed_time, 'bits')}")
+            report.add(f"    Reveal as 1: {self.decision_reveal_as_1} " +
+                       f"({percent_str(self.decision_reveal_as_1, cnt)}) " +
+                       f"{throughput_str(self.decision_reveal_as_1, elapsed_time, 'bits')}")
+        if self.comparison_msg:
+            report.add(f"  Comparison messages: {self.comparison_msg} " +
+                       f"{throughput_str(self.comparison_msg, elapsed_time, 'messages')}")
+            cnt = self.comparison_msg * self.block_size
+            report.add(f"    Not compared: {self.comparison_none} " +
+                       f"({percent_str(self.comparison_none, cnt)}) " +
+                       f"{throughput_str(self.comparison_none, elapsed_time, 'bits')}")
+            compared = self.comparison_same + self.comparison_different
+            report.add(f"    Compared: {compared} " +
+                       f"({percent_str(compared, cnt)}) " +
+                       f"{throughput_str(compared, elapsed_time, 'bits')}")
+            report.add(f"      Same: {self.comparison_same} " +
+                       f"({percent_str(self.comparison_same, compared)}) " +
+                       f"{throughput_str(self.comparison_same, elapsed_time, 'bits')}")
+            report.add(f"      Different: {self.comparison_different} " +
+                       f"({percent_str(self.comparison_different, compared)}) " +
+                       f"{throughput_str(self.comparison_different, elapsed_time, 'bits')}")
 
 class Base:
 
@@ -223,8 +227,8 @@ class Base:
         self._revealed_bits_in_block = 0
         self._block_size = None
         self._key = []
-        self._tx_stats = Stats(False)
-        self._rx_stats = Stats(True)
+        self._tx_stats = Stats(False, None)
+        self._rx_stats = Stats(True, None)
 
     def __del__(self):
         # TODO: Is this inherited?
@@ -241,6 +245,8 @@ class Base:
         assert len(msg) == 4, "Parameters message must be 2 bytes"
         self._block_size = int.from_bytes(msg[0:2], 'big')
         self._key_size = int.from_bytes(msg[2:4], 'big')
+        self._tx_stats.block_size = self._block_size
+        self._rx_stats.block_size = self._block_size
 
     def create_random_qubits_block(self):
         block = []
@@ -256,14 +262,14 @@ class Base:
             if bit_state.qubit is None:
                 bit_state.encode_qubit(self._cqc_connection)
             self._cqc_connection.sendQubit(bit_state.qubit, peer_name)
-            self._tx_stats.count_qubit()
+            self._tx_stats.qubit += 1
         return block
 
     def receive_qubits_block(self):
         block = []
         for _ in range(self._block_size):
             qubit = self._cqc_connection.recvQubit()
-            self._rx_stats.count_qubit()
+            self._rx_stats.qubit += 1
             bit_state = BitState(None, None, qubit)
             block.append(bit_state)
         return block
@@ -315,11 +321,13 @@ class Base:
     @staticmethod
     def count_decision(decision, stats):
         if decision == BitState.DECISION_BASIS_MISMATCH:
-            stats.count_basis_mismatch()
+            stats.decision_basis_mismatch += 1
         elif decision == BitState.DECISION_KEEP_AS_KEY:
-            stats.count_key_bit()
-        elif decision in [BitState.DECISION_REVEAL_AS_0, BitState.DECISION_REVEAL_AS_1]:
-            stats.count_revealed_bit()
+            stats.decision_use_as_key += 1
+        elif decision == BitState.DECISION_REVEAL_AS_0:
+            stats.decision_reveal_as_0 += 1
+        elif decision == BitState.DECISION_REVEAL_AS_1:
+            stats.decision_reveal_as_1 += 1
 
     def send_client_basis(self, block, peer_name):
         msg = b""
@@ -341,9 +349,11 @@ class Base:
             msg += bit_state.encode_decision()
             self.count_decision(bit_state.decision, self._tx_stats)
         self._cqc_connection.sendClassical(peer_name, msg)
+        self._tx_stats.decision_msg += 1
 
     def receive_decisions(self, block):
         msg = self._cqc_connection.recvClassical()
+        self._rx_stats.decision_msg += 1
         assert len(msg) == self._block_size, "Server decisions message has wrong size"
         i = 0
         for bit_state in block:
@@ -354,40 +364,46 @@ class Base:
             i += 1
 
     @staticmethod
-    def compute_reveal_comparison(block):
+    def compute_comparison(block):
         for bit_state in block:
             if bit_state.decision == bit_state.DECISION_REVEAL_AS_0:
                 if bit_state.bit == 0:
-                    bit_state.reveal_comparison = BitState.REVEAL_COMPARISON_SAME
+                    bit_state.comparison = BitState.COMPARISON_SAME
                 else:
-                    bit_state.reveal_comparison = BitState.REVEAL_COMPARISON_DIFFERENT
+                    bit_state.comparison = BitState.COMPARISON_DIFFERENT
             elif bit_state.decision == bit_state.DECISION_REVEAL_AS_1:
                 if bit_state.bit == 1:
-                    bit_state.reveal_comparison = BitState.REVEAL_COMPARISON_SAME
+                    bit_state.comparison = BitState.COMPARISON_SAME
                 else:
-                    bit_state.reveal_comparison = BitState.REVEAL_COMPARISON_DIFFERENT
+                    bit_state.comparison = BitState.COMPARISON_DIFFERENT
             else:
-                bit_state.reveal_comparison = BitState.REVEAL_COMPARISON_NOT_COMPARED
+                bit_state.comparison = BitState.COMPARISON_NONE
 
-    def send_reveal_comparison(self, block, peer_name):
+    @staticmethod
+    def count_comparison(comparison, stats):
+        if comparison == BitState.COMPARISON_NONE:
+            stats.comparison_none += 1
+        elif comparison == BitState.COMPARISON_SAME:
+            stats.comparison_same += 1
+        elif comparison == BitState.COMPARISON_DIFFERENT:
+            stats.comparison_different += 1
+
+
+    def send_comparison(self, block, peer_name):
         msg = b""
         for bit_state in block:
-            msg += bit_state.reveal_comparison
-            if bit_state.reveal_comparison == BitState.REVEAL_COMPARISON_SAME:
-                self._tx_stats.count_comparison_same()
-            elif bit_state.reveal_comparison == BitState.REVEAL_COMPARISON_DIFFERENT:
-                self._tx_stats.count_comparison_different()
+            msg += bit_state.comparison
+            self.count_comparison(bit_state.comparison, self._tx_stats)
+        self._tx_stats.comparison_msg += 1
         self._cqc_connection.sendClassical(peer_name, msg)
 
-    def receive_reveal_comparison(self, block):
+    def receive_comparison(self, block):
         msg = self._cqc_connection.recvClassical()
+        self._rx_stats.comparison_msg += 1
         i = 0
         for bit_state in block:
-            bit_state.reveal_comparison = msg[i:i+1]
-            if bit_state.reveal_comparison == BitState.REVEAL_COMPARISON_SAME:
-                self._rx_stats.count_comparison_same()
-            elif bit_state.reveal_comparison == BitState.REVEAL_COMPARISON_DIFFERENT:
-                self._rx_stats.count_comparison_different()
+            bit_state.comparison = msg[i:i+1]
+            self.count_comparison(bit_state.comparison, self._rx_stats)
             i += 1
 
     def print_report(self, elapsed_time):
@@ -408,15 +424,15 @@ class Server(Base):
         self._client_name = client_name
 
     def process_block(self):
-        self._rx_stats.count_block()
-        self._tx_stats.count_block()
+        self._tx_stats.block += 1
+        self._rx_stats.block += 1
         self._revealed_bits_in_block = 0
         block = self.create_random_qubits_block()
         self.send_qubits_block(block, self._client_name)
         self.receive_client_basis(block)
         self.decide_what_to_do_with_block(block)
         self.send_decisions(block, self._client_name)
-        self.receive_reveal_comparison(block)
+        self.receive_comparison(block)
 
     def agree_key(self, report=False):
         start_time = time.perf_counter()
@@ -435,16 +451,18 @@ class Client(Base):
         self._server_name = server_name
         self._key_size = key_size
         self._block_size = block_size
+        self._tx_stats.block_size = self._block_size
+        self._rx_stats.block_size = self._block_size
 
     def process_block(self):
-        self._rx_stats.count_block()
-        self._tx_stats.count_block()
+        self._tx_stats.block += 1
+        self._rx_stats.block += 1
         block = self.receive_qubits_block()
         self.measure_qubits_block(block)
         self.send_client_basis(block, self._server_name)
         self.receive_decisions(block)
-        self.compute_reveal_comparison(block)
-        self.send_reveal_comparison(block, self._server_name)
+        self.compute_comparison(block)
+        self.send_comparison(block, self._server_name)
 
     def agree_key(self, report=False):
         start_time = time.perf_counter()
@@ -465,8 +483,8 @@ class Middle(Base):
         self._observe_percentage = observe_percentage
 
     def process_block(self):
-        self._rx_stats.count_block()
-        self._tx_stats.count_block()
+        self._tx_stats.block += 1
+        self._rx_stats.block += 1
         self._revealed_bits_in_block = 0
         block = self.receive_qubits_block()
         self.measure_qubits_block(block, self._observe_percentage)
@@ -475,8 +493,8 @@ class Middle(Base):
         self.send_client_basis(block, self._server_name)
         self.receive_decisions(block)
         self.send_decisions(block, self._client_name)
-        self.receive_reveal_comparison(block)
-        self.send_reveal_comparison(block, self._server_name)
+        self.receive_comparison(block)
+        self.send_comparison(block, self._server_name)
 
     def pass_through(self, report=False):
         start_time = time.perf_counter()

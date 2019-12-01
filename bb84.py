@@ -1,235 +1,457 @@
 import random
-import time
+# import time
+import sys
 import cqc.pythonLib as cqclib
 
-BASIS_COMPUTATIONAL = 0
-BASIS_HADAMARD = 1
+# TODO: Add authentication and data integrety on classical channel (see http://bit.ly/bb84auth)
+# TODO: Add documentation comments
+# TODO: Add type annotations
+# TODO: Add noise estimation
+# TODO: Add information reconciliation
+# TODO: Add privacy amplification
+# TODO: Add throughput
+# TODO: Add percentages
+# TODO: Figure out why stopping SimulaQron doesn't work
+# TODO: Reveal count seems too low; should be the same as key bits count
 
-MSG_KEEP_DONE = b"KD"
-MSG_KEEP_MORE = b"KM"
-MSG_DISCARD = b"D"
-MSG_EXPOSE_0 = b"E0"
-MSG_EXPOSE_1 = b"E1"
-MSG_FINISHED = b"F"
+# def percent_str(count, total):
+#     if total == 0:
+#         return f"{count} (-)"
+#     percentage = 100.0 * float(count) / float(total)
+#     return f"{percentage:.1f}%"
 
-MSG_POSSIBLY_UNOBSERVED = b"U"
-MSG_DEFINITELY_OBSERVED = b"O"
+# def throughput_str(count, duration):
+#     throughput = count / duration
+#     return f"{throughput:.1f} qubits/sec"
 
-def basis_to_str(basis):
-    if basis == BASIS_COMPUTATIONAL:
-        return "+"
-    assert basis == BASIS_HADAMARD
-    return "x"
+class Report:
 
-def basis_to_bytes(basis):
-    if basis == BASIS_COMPUTATIONAL:
-        return b"+"
-    assert basis == BASIS_HADAMARD
-    return b"x"
+    def __init__(self):
+        self._text = ""
 
-def bytes_to_basis(msg):
-    if msg == b"+":
-        return BASIS_COMPUTATIONAL
-    assert msg == b"x"
-    return BASIS_HADAMARD
+    def add(self, line):
+        self._text += line + '\n'
 
-def choose_random_bit():
-    return random.randint(0, 1)
+    def print(self):
+        print(self._text, file=sys.stderr)
+        self._text = ""
 
-def choose_random_basis():
-    return random.randint(0, 1)
+# TODO: A bit over the top? Get rid of the Bit class?
 
-def encode_key_bit_into_qubit(connection, bit, basis):
-    qubit = cqclib.qubit(connection)
-    if basis == BASIS_COMPUTATIONAL:
-        if bit == 0:
+class Bit:
+
+    def __init__(self, bit):
+        assert bit in [0, 1], "Bit value must be 0 or 1"
+        self._bit = bit
+
+    def __eq__(self, other):
+        return self._bit == other._bit
+
+    def __repr__(self):
+        return self.to_str()
+
+    @classmethod
+    def random(cls):
+        bit = random.randint(0, 1)
+        return Bit(bit)
+
+    def is_zero(self):
+        return self._bit == 0
+
+    def is_one(self):
+        return self._bit == 1
+
+    def to_str(self):
+        if self.is_zero():
+            return "0"
+        assert self.is_one()
+        return "1"
+
+    def to_bytes(self):
+        if self.is_zero():
+            return b"0"
+        assert self.is_one()
+        return b"1"
+
+    @classmethod
+    def from_bytes(cls, data):
+        assert len(data) == 1, "Bytes representation of bit much have length 1"
+        if data == b"0":
+            return Bit(0)
+        assert data == b"x", "Bytes representation of bit must be 0 or 1"
+        return Bit(1)
+
+class Basis:
+
+    _COMPUTATIONAL = 0
+    _HADAMARD = 1
+
+    def __init__(self, basis):
+        assert basis in [self._COMPUTATIONAL, self._HADAMARD], \
+               "Basis must be COMPUTATIONAL or HADAMARD"
+        self._basis = basis
+
+    def __eq__(self, other):
+        return self._basis == other._basis
+
+    def __repr__(self):
+        return self.to_str()
+
+    @classmethod
+    def random(cls):
+        basis = random.randint(0, 1)
+        return Basis(basis)
+
+    def is_computational(self):
+        return self._basis == self._COMPUTATIONAL
+
+    def is_hadamard(self):
+        return self._basis == self._HADAMARD
+
+    def to_str(self):
+        if self.is_computational():
+            return "+"
+        assert self.is_hadamard()
+        return "x"
+
+    def to_bytes(self):
+        if self.is_computational():
+            return b"+"
+        assert self.is_hadamard()
+        return b"x"
+
+    @classmethod
+    def from_bytes(cls, data):
+        assert len(data) == 1, "Bytes representation of basis much have length 1"
+        if data == b"+":
+            return Basis(cls._COMPUTATIONAL)
+        assert data == b"x", "Bytes representation of basis must be + or x"
+        return Basis(cls._HADAMARD)
+
+class BitState:
+
+    DECISION_NOT_DECIDED = b'?'
+    DECISION_BASIS_MISMATCH = b'M'
+    DECISION_KEEP_AS_KEY = b'K'
+    DECISION_REVEAL_AS_0 = b'0'
+    DECISION_REVEAL_AS_1 = b'1'
+
+    REVEAL_COMPARISON_NOT_COMPARED = b'.'
+    REVEAL_COMPARISON_SAME = b'S'
+    REVEAL_COMPARISON_DIFFERENT = b'D'
+
+    def __init__(self, bit, basis):
+        self.bit = bit
+        self.basis = basis
+        self.decision = self.DECISION_NOT_DECIDED
+
+    def to_qubit(self, cqc_connection):
+        qubit = cqclib.qubit(cqc_connection)
+        if self.basis.is_computational():
+            if self.bit.is_zero():
+                pass
+            elif self.bit.is_one():
+                qubit.X()
+            else:
+                assert False, "Unknown bit value"
+        elif self.basis.is_hadamard():
+            if self.bit.is_zero():
+                qubit.H()
+            elif self.bit.is_one():
+                qubit.X()
+                qubit.H()
+            else:
+                assert False, "Unknown bit value"
+        else:
+            assert False, "Unknown basis"
+        return qubit
+
+    @classmethod
+    def from_qubit(cls, qubit, basis):
+        if basis.is_computational():
             pass
-        elif bit == 1:
-            qubit.X()
-        else:
-            assert False, "Unknown bit value"
-    elif basis == BASIS_HADAMARD:
-        if bit == 0:
-            qubit.H()
-        elif bit == 1:
-            qubit.X()
+        elif basis.is_hadamard():
             qubit.H()
         else:
-            assert False, "Unknown bit value"
-    else:
-        assert False, "Unknown basis"
-    return qubit
+            assert False, "Unknown basis"
+        bit = Bit(qubit.measure())
+        return BitState(bit, basis)
 
-def decode_key_bit_from_qubit(qubit, basis):
-    if basis == BASIS_COMPUTATIONAL:
+    def encode_decision(self):
+        return self.decision
+
+    def decode_decission(self, encoded_decision):
+        assert len(encoded_decision) == 1, "Encoded decision must be 1 byte"
+        assert self.decision in [self.DECISION_NOT_DECIDED,
+                                 self.DECISION_BASIS_MISMATCH,
+                                 self.DECISION_KEEP_AS_KEY,
+                                 self.DECISION_REVEAL_AS_0,
+                                 self.DECISION_REVEAL_AS_1], \
+               f"Encoded decision has unexpected value {encoded_decision}"
+        self.decision = encoded_decision
+
+class Stats:
+
+    def __init__(self):
+        self._blocks_count = 0
+        self._qubits_count = 0
+        self._basis_mismatch_count = 0
+        self._key_bits_count = 0
+        self._revealed_bits_count = 0
+        self._comparison_same_count = 0
+        self._comparison_different_count = 0
+
+    def count_block(self):
+        self._blocks_count += 1
+
+    def count_qubit(self):
+        self._qubits_count += 1
+
+    def count_basis_mismatch(self):
+        self._basis_mismatch_count += 1
+
+    def count_key_bit(self):
+        self._key_bits_count += 1
+
+    def count_revealed_bit(self):
+        self._revealed_bits_count += 1
+
+    def count_comparison_same(self):
+        self._comparison_same_count += 1
+
+    def count_comparison_different(self):
+        self._comparison_different_count += 1
+
+    def add_to_report(self, report):
+        report.add(f"Blocks: {self._blocks_count}")
+        report.add(f"Total qubits: {self._qubits_count}")
+        report.add(f"Basis mismatches: {self._basis_mismatch_count}")
+        report.add(f"Key bits: {self._key_bits_count}")
+        report.add(f"Revealed bits: {self._revealed_bits_count}")
+        report.add(f"Comparison same: {self._comparison_same_count}")
+        report.add(f"Comparison different: {self._comparison_different_count}")
+
+class Server:
+
+    def __init__(self, server_name, client_name, key_size):
+        self._server_name = server_name
+        self._client_name = client_name
+        self._cqc_connection = cqclib.CQCConnection(server_name)
+        self._cqc_connection.__enter__()   # TODO: Also call __exit__ somewhere
+        self._key_size = key_size
+        self._revealed_bits_in_block = 0
+        self._block_size = None
+        self._key = []
+        self._stats = Stats()
+
+    def receive_block_size_from_client(self):
+        msg = self._cqc_connection.recvClassical()
+        assert len(msg) == 2, "Block size message must be 2 bytes"
+        self._block_size = int.from_bytes(msg, 'big')
+
+    def send_qubits_block(self):
+        block = []
+        for _ in range(self._block_size):
+            bit = Bit.random()
+            basis = Basis.random()
+            print(f"Server TX bit {bit.to_str()}{basis.to_str()}")
+            bit_state = BitState(bit, basis)
+            qubit = bit_state.to_qubit(self._cqc_connection)
+            self._cqc_connection.sendQubit(qubit, self._client_name)
+            self._stats.count_qubit()
+            block.append(bit_state)
+        return block
+
+    def key_is_complete(self):
+        key_len = len(self._key)
+        if key_len < self._key_size:
+            return False
+        assert key_len == self._key_size, "Key length should never exceed requested key size"
+        return True
+
+    def decide_what_to_do_with_bit(self, bit_state, client_basis):
+        if bit_state.basis != client_basis:
+            bit_state.decision = BitState.DECISION_BASIS_MISMATCH
+            self._stats.count_basis_mismatch()
+            return
+        if self.key_is_complete():
+            keep_as_key = False
+        elif self._revealed_bits_in_block > (self._key_size + 1) // 2:
+            keep_as_key = True
+        else:
+            keep_as_key = random.randint(0, 1) == 0
+        if keep_as_key:
+            bit_state.decision = BitState.DECISION_KEEP_AS_KEY
+            self._key.append(bit_state.bit)
+            self._stats.count_key_bit()
+        else:
+            if bit_state.bit.is_zero():
+                bit_state.decision = BitState.DECISION_REVEAL_AS_0
+            else:
+                bit_state.decision = BitState.DECISION_REVEAL_AS_1
+            self._revealed_bits_in_block += 1
+            self._stats.count_revealed_bit()
+
+    def receive_client_basis(self, block):
+        msg = self._cqc_connection.recvClassical()
+        print(f"Server RX basis {msg}")
+        assert len(msg) == self._block_size, "Chosen basis message has wrong size"
+        i = 0
+        for bit_state in block:
+            client_basis = Basis.from_bytes(msg[i:i+1])
+            self.decide_what_to_do_with_bit(bit_state, client_basis)
+            i += 1
+
+    def send_decisions(self, block):
+        msg = b""
+        for bit_state in block:
+            msg += bit_state.encode_decision()
+        print(f"Server TX decision {msg}")
+        self._cqc_connection.sendClassical(self._client_name, msg)
+
+    def receive_reveal_comparison(self, block):
+        msg = self._cqc_connection.recvClassical()
+        print(f"Server RX reveal comparison: {msg}")
+        i = 0
+        for _bit_state in block:
+            reveal_comparison = msg[i:i+1]
+            if reveal_comparison == BitState.REVEAL_COMPARISON_SAME:
+                self._stats.count_comparison_same()
+            elif reveal_comparison == BitState.REVEAL_COMPARISON_DIFFERENT:
+                self._stats.count_comparison_different()
+            i += 1
+        # TODO: Store in bitstate for noise estimation
+
+    def process_block(self):
+        self._stats.count_block()
+        self._revealed_bits_in_block = 0
+        block = self.send_qubits_block()
+        self.receive_client_basis(block)
+        self.send_decisions(block)
+        self.receive_reveal_comparison(block)
+
+    def print_report(self):
+        report = Report()
+        report.add(f"Server {self._server_name}")
+        report.add(f"Key size: {self._key_size}")
+        report.add(f"Key: {self._key}")
+        report.add(f"Block size: {self._block_size}")
+        self._stats.add_to_report(report)
+        report.print()
+
+    def agree_key(self, report=False):
+        self.receive_block_size_from_client()
+        while not self.key_is_complete():
+            self.process_block()
+        if report:
+            self.print_report()
+        return self._key
+
+class Client:
+
+    def __init__(self, client_name, server_name, key_size, block_size):
+        self._client_name = client_name
+        self._server_name = server_name
+        self._cqc_connection = cqclib.CQCConnection(client_name)
+        self._cqc_connection.__enter__()
+        self._key_size = key_size
+        self._block_size = block_size
+        self._key = []
+        self._stats = Stats()
+
+    def __del__(self):
+        self._cqc_connection.__exit__(None, None, None)
         pass
-    elif basis == BASIS_HADAMARD:
-        qubit.H()
-    else:
-        assert False, "Unknown basis"
-    bit = qubit.measure()
-    return bit
 
-def percent_str(count, total):
-    if total == 0:
-        return f"{count} (-)"
-    percentage = 100.0 * float(count) / float(total)
-    return f"{percentage:.1f}%"
+    def send_block_size_to_server(self):
+        # TODO: Eve could change the block size. Is that a vulnerability?
+        msg = self._block_size.to_bytes(2, 'big')
+        self._cqc_connection.sendClassical(self._server_name, msg)
 
-def report_statistics(header, key, qubits, keep_count, discard_count, revealed_count,
-                      possibly_unobserverd_count, definitely_observered_count, _duration):
-    print()
-    print(f"{header}:\n"
-          f"  key                       : {key}\n"
-          f"  all qubits                : {qubits}\n"
-          f"  kept qubits               : "
-          f"{keep_count} "
-          f"({percent_str(keep_count, qubits)})\n"
-          f"  discarded qubits          : "
-          f"{discard_count} "
-          f"({percent_str(discard_count, qubits)})\n"
-          f"  revealed qubits           : "
-          f"{revealed_count} "
-          f"({percent_str(discard_count, qubits)})\n"
-          f"    possibly unobserved count : "
-          f"{possibly_unobserverd_count} "
-          f"({percent_str(possibly_unobserverd_count, qubits)} of total) "
-          f"({percent_str(possibly_unobserverd_count, revealed_count)} of revealed)\n"
-          f"    definitely observed count : "
-          f"{definitely_observered_count} "
-          f"({percent_str(definitely_observered_count, qubits)} of total) "
-          f"({percent_str(definitely_observered_count, revealed_count)} of revealed)\n")
+    def receive_qubits_block(self):
+        block = []
+        for _ in range(self._block_size):
+            basis = Basis.random()
+            qubit = self._cqc_connection.recvQubit()
+            self._stats.count_qubit()
+            bit_state = BitState.from_qubit(qubit, basis)
+            print(f"Client RX bit {bit_state.bit.to_str()}{bit_state.basis.to_str()}")
+            block.append(bit_state)
+        return block
 
-def server_generate_key(simulaqron, client_node_name, required_key_length):
+    def key_is_complete(self):
+        key_len = len(self._key)
+        if key_len < self._key_size:
+            return False
+        assert key_len == self._key_size, "Key length should never exceed requested key size"
+        return True
 
-    key_done = False
-    revealed_done = False
-    wanted_revealed_bits = (required_key_length + 1) // 2
-    key = []
-    sent_qubits = 0
-    keep_count = 0
-    discard_count = 0
-    revealed_count = 0
-    possibly_unobserverd_count = 0
-    definitely_observered_count = 0
-    start_time = time.perf_counter()
-    while not key_done:
+    def send_client_basis(self, block):
+        msg = b""
+        for bit_state in block:
+            msg += bit_state.basis.to_bytes()
+        self._cqc_connection.sendClassical(self._server_name, msg)
+        print(f"Client TX basis: {msg}")
 
-        # Randomly choose a bit and an encoding basis
-        bit = choose_random_bit()
-        basis = choose_random_basis()
+    def receive_decisions(self, block):
+        msg = self._cqc_connection.recvClassical()
+        print(f"Client RX decision {msg}")
+        assert len(msg) == self._block_size, "Server decisions message has wrong size"
+        i = 0
+        for bit_state in block:
+            bit_state.decode_decission(msg[i:i+1])
+            if bit_state.decision == bit_state.DECISION_KEEP_AS_KEY:
+                self._key.append(bit_state.bit)
+                self._stats.count_key_bit()
+            elif bit_state.decision == BitState.DECISION_BASIS_MISMATCH:
+                self._stats.count_basis_mismatch()
+            elif bit_state.decision in [BitState.DECISION_REVEAL_AS_0,
+                                        BitState.DECISION_REVEAL_AS_1]:
+                self._stats.count_revealed_bit()
+            i += 1
 
-        # Encode the bit into a qubit (using the chosen basis) and send the qubit to the peer
-        qubit = encode_key_bit_into_qubit(simulaqron, bit, basis)
-        simulaqron.sendQubit(qubit, client_node_name)
-        sent_qubits += 1
-
-        # Wait for the peer to tell us what basis they chose
-        msg = simulaqron.recvClassical()
-        peer_basis = bytes_to_basis(msg)
-
-        # Decide what to do with the bit, based on whether or not we chose the same basis
-        if basis == peer_basis:
-            # Same basis. Decide whether to keep or expose.
-            if key_done:
-                keep = False
-            elif revealed_done:
-                keep = True
-            else:
-                keep = random.randint(0, 1) == 0
-            if keep:
-                # Keep the bit as key material
-                key.append(bit)
-                keep_count += 1
-                if len(key) == required_key_length:
-                    key_done = True
-                    msg = MSG_KEEP_DONE
+    def send_reveal_comparison(self, block):
+        msg = b""
+        for bit_state in block:
+            if bit_state.decision == bit_state.DECISION_REVEAL_AS_0:
+                if bit_state.bit.is_zero():
+                    msg += BitState.REVEAL_COMPARISON_SAME
+                    self._stats.count_comparison_same()
                 else:
-                    msg = MSG_KEEP_MORE
-            else:
-                # Expose the bit value (as 0 or 1) to check for evesdroppers
-                revealed_count += 1
-                revealed_done = revealed_count >= wanted_revealed_bits
-                if bit == 0:
-                    msg = MSG_EXPOSE_0
+                    msg += BitState.REVEAL_COMPARISON_DIFFERENT
+                    self._stats.count_comparison_different()
+            elif bit_state.decision == bit_state.DECISION_REVEAL_AS_1:
+                if bit_state.bit.is_one():
+                    msg += BitState.REVEAL_COMPARISON_SAME
+                    self._stats.count_comparison_same()
                 else:
-                    msg = MSG_EXPOSE_1
-        else:
-            # Discard the bit (we chose a different basis than the peer)
-            msg = MSG_DISCARD
-            discard_count += 1
-        simulaqron.sendClassical(client_node_name, msg)
-
-        # If we revealed our bit, look for evidence that an evesdropper observed it
-        if msg in [MSG_EXPOSE_0, MSG_EXPOSE_1]:
-            msg = simulaqron.recvClassical()
-            if msg == MSG_POSSIBLY_UNOBSERVED:
-                possibly_unobserverd_count += 1
-            elif msg == MSG_DEFINITELY_OBSERVED:
-                definitely_observered_count += 1
+                    msg += BitState.REVEAL_COMPARISON_DIFFERENT
+                    self._stats.count_comparison_different()
             else:
-                assert False, "Unrecognized observation message"
+                msg += BitState.REVEAL_COMPARISON_NOT_COMPARED
+        self._cqc_connection.sendClassical(self._server_name, msg)
+        print(f"Client TX reveal comparison: {msg}")
 
-    duration = time.perf_counter() - start_time
-    report_statistics("Server", key, sent_qubits, keep_count, discard_count, revealed_count,
-                      possibly_unobserverd_count, definitely_observered_count, duration)
+    def process_block(self):
+        self._stats.count_block()
+        block = self.receive_qubits_block()
+        self.send_client_basis(block)
+        self.receive_decisions(block)
+        self.send_reveal_comparison(block)
 
-    return key
+    def print_report(self):
+        report = Report()
+        report.add(f"Client {self._client_name}")
+        report.add(f"Key size: {self._key_size}")
+        report.add(f"Key: {self._key}")
+        report.add(f"Block size: {self._block_size}")
+        self._stats.add_to_report(report)
+        report.print()
 
-def client_generate_key(simulaqron, server_node_name, required_key_length):
-
-    key_done = False
-    key = []
-    received_qubits = 0
-    keep_count = 0
-    discard_count = 0
-    revealed_count = 0
-    possibly_unobserverd_count = 0
-    definitely_observered_count = 0
-    start_time = time.perf_counter()
-    while not key_done:
-
-        # Choose a random basis
-        basis = choose_random_basis()
-
-        # Receive a qubit from the peer and decode it using our chosen basis
-        qubit = simulaqron.recvQubit()
-        received_qubits += 1
-        bit = decode_key_bit_from_qubit(qubit, basis)
-
-        # Tell the peer what basis we used to decode the qubit
-        msg = basis_to_bytes(basis)
-        simulaqron.sendClassical(server_node_name, msg)
-
-        # Find out what the peer decided to do with the bit
-        msg = simulaqron.recvClassical()
-        if msg in [MSG_KEEP_DONE, MSG_KEEP_MORE]:
-            # Keep the bit as key material, and check if we are done
-            key.append(bit)
-            keep_count += 1
-            if msg == MSG_KEEP_DONE:
-                assert len(key) == required_key_length
-                key_done = True
-            else:
-                assert len(key) < required_key_length
-        elif msg == MSG_DISCARD:
-            # Discard the bit (we chose a different basis than the peer)
-            discard_count += 1
-        elif msg in [MSG_EXPOSE_0, MSG_EXPOSE_1]:
-            # The bit was revealed. Look for evidence that an evesdropper observed it
-            revealed_count += 1
-            peer_bit = 0 if msg == MSG_EXPOSE_0 else 1
-            if bit == peer_bit:
-                simulaqron.sendClassical(server_node_name, MSG_POSSIBLY_UNOBSERVED)
-                possibly_unobserverd_count += 1
-            else:
-                simulaqron.sendClassical(server_node_name, MSG_DEFINITELY_OBSERVED)
-                definitely_observered_count += 1
-        else:
-            assert False, "Unrecognized disposition message from peer"
-
-    duration = time.perf_counter() - start_time
-    report_statistics("Client", key, received_qubits, keep_count, discard_count, revealed_count,
-                      possibly_unobserverd_count, definitely_observered_count, duration)
-
-    return key
+    def agree_key(self, report=False):
+        self.send_block_size_to_server()
+        while not self.key_is_complete():
+            self.process_block()
+        if report:
+            self.print_report()
+        return self._key

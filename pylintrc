@@ -7,3 +7,5 @@ disable=
     too-many-locals,
     too-many-branches,
     too-many-statements,
+    too-many-instance-attributes,
+    fixme

@@ -1,8 +1,8 @@
 import argparse
 import bb84
 
-def main(_observe_percentage):
-    middle = bb84.Middle("Eve", "Alice", "Bob")
+def main(observe_percentage):
+    middle = bb84.Middle("Eve", "Alice", "Bob", observe_percentage)
     middle.pass_through(report=True)
 
 if __name__ == "__main__":

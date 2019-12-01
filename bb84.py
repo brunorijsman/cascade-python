@@ -12,6 +12,9 @@ import cqc.pythonLib as cqclib
 # TODO: Stop all processes and simulaqron at script exit
 # TODO: Count classical messages
 # TODO: Fix eve observing script
+# TODO: Add observe_qubit_percentage to Middle class
+# TODO: Report RX and TX stats separately
+# TODO: Control message tracing with environment variable
 
 def percent_str(count, total):
     if total == 0:
@@ -85,6 +88,7 @@ class BitState:
     def __init__(self, bit, basis):
         self.bit = bit
         self.basis = basis
+        self.client_basis = None
         self.decision = self.DECISION_NOT_DECIDED
 
     def to_qubit(self, cqc_connection):
@@ -258,8 +262,8 @@ class Base:
         assert key_len == self._key_size, "Key length should never exceed requested key size"
         return True
 
-    def decide_what_to_do_with_bit(self, bit_state, client_basis):
-        if bit_state.basis != client_basis:
+    def decide_what_to_do_with_bit(self, bit_state):
+        if bit_state.basis != bit_state.client_basis:
             bit_state.decision = BitState.DECISION_BASIS_MISMATCH
             self._stats.count_basis_mismatch()
             return
@@ -281,6 +285,10 @@ class Base:
             self._revealed_bits_in_block += 1
             self._stats.count_revealed_bit()
 
+    def decide_what_to_do_with_block(self, block):
+        for bit_state in block:
+            self.decide_what_to_do_with_bit(bit_state)
+
     def send_client_basis(self, block, peer_name):
         msg = b""
         for bit_state in block:
@@ -292,8 +300,7 @@ class Base:
         assert len(msg) == self._block_size, "Chosen basis message has wrong size"
         i = 0
         for bit_state in block:
-            client_basis = Basis.from_bytes(msg[i:i+1])
-            self.decide_what_to_do_with_bit(bit_state, client_basis)
+            bit_state.client_basis = Basis.from_bytes(msg[i:i+1])
             i += 1
 
     def send_decisions(self, block, peer_name):
@@ -372,6 +379,7 @@ class Server(Base):
         self._revealed_bits_in_block = 0
         block = self.send_qubits_block(self._client_name)
         self.receive_client_basis(block)
+        self.decide_what_to_do_with_block(block)
         self.send_decisions(block, self._client_name)
         self.receive_reveal_comparison(block)
 
@@ -409,3 +417,32 @@ class Client(Base):
         if report:
             self.print_report(elapsed_time)
         return self._key
+
+class Middle(Base):
+
+    def __init__(self, name, server_name, client_name):
+        Base.__init__(self, name)
+        self._server_name = server_name
+        self._client_name = client_name
+
+    def process_block(self):
+        self._stats.count_block()
+        self._revealed_bits_in_block = 0
+        block = self.receive_qubits_block()         ###@@@
+        block = self.send_qubits_block(self._client_name)   ###@@@
+        self.receive_client_basis(block)
+        self.send_client_basis(block, self._server_name)
+        self.receive_decisions(block)
+        self.send_decisions(block, self._client_name)
+        self.receive_reveal_comparison(block)
+        self.send_reveal_comparison(block, self._server_name)
+
+    def pass_through(self, report=False):
+        start_time = time.perf_counter()
+        self.receive_parameters()
+        self.send_parameters(self._server_name)
+        while not self.key_is_complete():
+            self.process_block()
+        elapsed_time = time.perf_counter() - start_time
+        if report:
+            self.print_report(elapsed_time)

@@ -1,7 +1,9 @@
 import argparse
+import bb84
 
 def main(_observe_percentage):
-    pass  # TODO
+    middle = bb84.Middle("Eve", "Alice", "Bob")
+    middle.pass_through(report=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Eve')

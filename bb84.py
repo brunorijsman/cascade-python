@@ -10,9 +10,9 @@ import cqc.pythonLib as cqclib
 # TODO: Add information reconciliation
 # TODO: Add privacy amplification
 # TODO: Stop all processes and simulaqron at script exit
-# TODO: Reveal count seems too low; should be the same as key bits count
 # TODO: Count classical messages
 # TODO: Fix eve observing script
+# TODO: Carry block size in protocol (client chooses)
 
 def percent_str(count, total):
     if total == 0:
@@ -23,63 +23,6 @@ def percent_str(count, total):
 def throughput_str(count, duration, unit):
     throughput = count / duration
     return f"[{throughput:.1f} {unit}/sec]"
-
-class Report:
-
-    def __init__(self):
-        self._text = ""
-
-    def add(self, line):
-        self._text += line + '\n'
-
-    def print(self):
-        print(self._text, file=sys.stderr)
-        self._text = ""
-
-# TODO: A bit over the top? Get rid of the Bit class?
-
-class Bit:
-
-    def __init__(self, bit):
-        assert bit in [0, 1], "Bit value must be 0 or 1"
-        self._bit = bit
-
-    def __eq__(self, other):
-        return self._bit == other._bit
-
-    def __repr__(self):
-        return self.to_str()
-
-    @classmethod
-    def random(cls):
-        bit = random.randint(0, 1)
-        return Bit(bit)
-
-    def is_zero(self):
-        return self._bit == 0
-
-    def is_one(self):
-        return self._bit == 1
-
-    def to_str(self):
-        if self.is_zero():
-            return "0"
-        assert self.is_one()
-        return "1"
-
-    def to_bytes(self):
-        if self.is_zero():
-            return b"0"
-        assert self.is_one()
-        return b"1"
-
-    @classmethod
-    def from_bytes(cls, data):
-        assert len(data) == 1, "Bytes representation of bit much have length 1"
-        if data == b"0":
-            return Bit(0)
-        assert data == b"x", "Bytes representation of bit must be 0 or 1"
-        return Bit(1)
 
 class Basis:
 
@@ -148,16 +91,16 @@ class BitState:
     def to_qubit(self, cqc_connection):
         qubit = cqclib.qubit(cqc_connection)
         if self.basis.is_computational():
-            if self.bit.is_zero():
+            if self.bit == 0:
                 pass
-            elif self.bit.is_one():
+            elif self.bit == 1:
                 qubit.X()
             else:
                 assert False, "Unknown bit value"
         elif self.basis.is_hadamard():
-            if self.bit.is_zero():
+            if self.bit == 0:
                 qubit.H()
-            elif self.bit.is_one():
+            elif self.bit == 1:
                 qubit.X()
                 qubit.H()
             else:
@@ -174,7 +117,7 @@ class BitState:
             qubit.H()
         else:
             assert False, "Unknown basis"
-        bit = Bit(qubit.measure())
+        bit = qubit.measure()
         return BitState(bit, basis)
 
     def encode_decision(self):
@@ -189,6 +132,18 @@ class BitState:
                                  self.DECISION_REVEAL_AS_1], \
                f"Encoded decision has unexpected value {encoded_decision}"
         self.decision = encoded_decision
+
+class Report:
+
+    def __init__(self):
+        self._text = ""
+
+    def add(self, line):
+        self._text += line + '\n'
+
+    def print(self):
+        print(self._text, file=sys.stderr)
+        self._text = ""
 
 class Stats:
 
@@ -233,8 +188,10 @@ class Stats:
         report.add(f"Key bits: {self._key_bits_count} " +
                    f"({percent_str(self._key_bits_count, self._qubits_count)} of total) " +
                    f"{throughput_str(self._key_bits_count, elapsed_time, 'bits')}")
+        basis_match_count = self._qubits_count - self._basis_mismatch_count
         report.add(f"Revealed bits: {self._revealed_bits_count} " +
-                   f"({percent_str(self._revealed_bits_count, self._qubits_count)} of total) " +
+                   f"({percent_str(self._revealed_bits_count, basis_match_count)} of "
+                   f"matching basis) " +
                    f"{throughput_str(self._revealed_bits_count, elapsed_time, 'bits')}")
         report.add(f"Comparison same: {self._comparison_same_count} " +
                    f"({percent_str(self._comparison_same_count, self._revealed_bits_count)} " +
@@ -266,7 +223,7 @@ class Server:
     def send_qubits_block(self):
         block = []
         for _ in range(self._block_size):
-            bit = Bit.random()
+            bit = random.randint(0, 1)
             basis = Basis.random()
             bit_state = BitState(bit, basis)
             qubit = bit_state.to_qubit(self._cqc_connection)
@@ -298,7 +255,7 @@ class Server:
             self._key.append(bit_state.bit)
             self._stats.count_key_bit()
         else:
-            if bit_state.bit.is_zero():
+            if bit_state.bit == 0:
                 bit_state.decision = BitState.DECISION_REVEAL_AS_0
             else:
                 bit_state.decision = BitState.DECISION_REVEAL_AS_1
@@ -345,7 +302,7 @@ class Server:
         report.add(f"Server {self._server_name}")
         report.add(f"Elpased time: {elapsed_time:.1f} secs")
         report.add(f"Key size: {self._key_size}")
-        report.add(f"Key: {self._key}")
+        report.add(f"Key: {''.join([str(bit) for bit in self._key])}")
         report.add(f"Block size: {self._block_size}")
         self._stats.add_to_report(report, elapsed_time)
         report.print()
@@ -376,7 +333,6 @@ class Client:
         self._cqc_connection.__exit__(None, None, None)
 
     def send_block_size_to_server(self):
-        # TODO: Eve could change the block size. Is that a vulnerability?
         msg = self._block_size.to_bytes(2, 'big')
         self._cqc_connection.sendClassical(self._server_name, msg)
 
@@ -423,14 +379,14 @@ class Client:
         msg = b""
         for bit_state in block:
             if bit_state.decision == bit_state.DECISION_REVEAL_AS_0:
-                if bit_state.bit.is_zero():
+                if bit_state.bit == 0:
                     msg += BitState.REVEAL_COMPARISON_SAME
                     self._stats.count_comparison_same()
                 else:
                     msg += BitState.REVEAL_COMPARISON_DIFFERENT
                     self._stats.count_comparison_different()
             elif bit_state.decision == bit_state.DECISION_REVEAL_AS_1:
-                if bit_state.bit.is_one():
+                if bit_state.bit == 1:
                     msg += BitState.REVEAL_COMPARISON_SAME
                     self._stats.count_comparison_same()
                 else:
@@ -452,7 +408,7 @@ class Client:
         report.add(f"Client {self._client_name}")
         report.add(f"Elpased time: {elapsed_time:.1f} secs")
         report.add(f"Key size: {self._key_size}")
-        report.add(f"Key: {self._key}")
+        report.add(f"Key: {''.join([str(bit) for bit in self._key])}")
         report.add(f"Block size: {self._block_size}")
         self._stats.add_to_report(report, elapsed_time)
         report.print()

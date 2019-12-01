@@ -203,11 +203,11 @@ class Stats:
 
 class Base:
 
-    def __init__(self, name, key_size):
+    def __init__(self, name):
         self._name = name
         self._cqc_connection = cqclib.CQCConnection(name)
         self._cqc_connection.__enter__()
-        self._key_size = key_size
+        self._key_size = None
         self._revealed_bits_in_block = 0
         self._block_size = None
         self._key = []
@@ -218,13 +218,16 @@ class Base:
         self._cqc_connection.__exit__(None, None, None)
 
     def send_parameters(self, peer_name):
-        msg = self._block_size.to_bytes(2, 'big')
+        assert self._block_size is not None, "Block size must be set"
+        assert self._key_size is not None, "Key size must be set"
+        msg = self._block_size.to_bytes(2, 'big') + self._key_size.to_bytes(2, 'big')
         self._cqc_connection.sendClassical(peer_name, msg)
 
     def receive_parameters(self):
         msg = self._cqc_connection.recvClassical()
-        assert len(msg) == 2, "Parameters message must be 2 bytes"
-        self._block_size = int.from_bytes(msg, 'big')
+        assert len(msg) == 4, "Parameters message must be 2 bytes"
+        self._block_size = int.from_bytes(msg[0:2], 'big')
+        self._key_size = int.from_bytes(msg[2:4], 'big')
 
     def send_qubits_block(self, peer_name):
         block = []
@@ -360,8 +363,8 @@ class Base:
 
 class Server(Base):
 
-    def __init__(self, name, client_name, key_size):
-        Base.__init__(self, name, key_size)
+    def __init__(self, name, client_name):
+        Base.__init__(self, name)
         self._client_name = client_name
 
     def process_block(self):
@@ -385,8 +388,9 @@ class Server(Base):
 class Client(Base):
 
     def __init__(self, name, server_name, key_size, block_size):
-        Base.__init__(self, name, key_size)
+        Base.__init__(self, name)
         self._server_name = server_name
+        self._key_size = key_size
         self._block_size = block_size
 
     def process_block(self):

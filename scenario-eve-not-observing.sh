@@ -15,7 +15,7 @@ echo "Starting SimulaQron"
 simulaqron start --force --nodes Alice,Eve,Bob --topology path
 
 echo "Starting Alice"
-python alice.py --eve --key-size ${KEY_SIZE} &
+python alice.py --eve &
 alice_pid=$!
 
 echo "Starting Bob"

@@ -10,17 +10,13 @@ import cqc.pythonLib as cqclib
 # TODO: Add information reconciliation
 # TODO: Add privacy amplification
 # TODO: Stop all processes and simulaqron at script exit
-# TODO: Count classical messages
-# TODO: Report basis mismatches on other side of RX/TX
 # TODO: Fix eve observing script
 # TODO: Add observe_qubit_percentage to Middle class
-# TODO: Report RX and TX stats separately
 # TODO: Control message tracing with environment variable
 # TODO: Have class for decision
 # TODO: Eve to report which key bits she gleaned ?=wrongbasis 01=gleaned .=did not measure
 # TODO: Keep stats for measured qubits
 # TODO: If qubit is measured, do so immediately
-# TODO: Don't use functions to increase stats (just do so directly)
 
 def percent_str(count, total):
     if total == 0:

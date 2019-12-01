@@ -201,33 +201,50 @@ class Stats:
                    f"of revealed) " +
                    f"{throughput_str(self._comparison_diff_count, elapsed_time, 'comparisons')}")
 
-class Server:
+class Base:
 
-    def __init__(self, server_name, client_name, key_size):
-        self._server_name = server_name
-        self._client_name = client_name
-        self._cqc_connection = cqclib.CQCConnection(server_name)
-        self._cqc_connection.__enter__()   # TODO: Also call __exit__ somewhere
+    def __init__(self, name, key_size):
+        self._name = name
+        self._cqc_connection = cqclib.CQCConnection(name)
+        self._cqc_connection.__enter__()
         self._key_size = key_size
         self._revealed_bits_in_block = 0
         self._block_size = None
         self._key = []
         self._stats = Stats()
 
+    def __del__(self):
+        # TODO: Is this inherited?
+        self._cqc_connection.__exit__(None, None, None)
+
+    def send_parameters(self, peer_name):
+        msg = self._block_size.to_bytes(2, 'big')
+        self._cqc_connection.sendClassical(peer_name, msg)
+
     def receive_parameters(self):
         msg = self._cqc_connection.recvClassical()
         assert len(msg) == 2, "Parameters message must be 2 bytes"
         self._block_size = int.from_bytes(msg, 'big')
 
-    def send_qubits_block(self):
+    def send_qubits_block(self, peer_name):
         block = []
         for _ in range(self._block_size):
             bit = random.randint(0, 1)
             basis = Basis.random()
             bit_state = BitState(bit, basis)
             qubit = bit_state.to_qubit(self._cqc_connection)
-            self._cqc_connection.sendQubit(qubit, self._client_name)
+            self._cqc_connection.sendQubit(qubit, peer_name)
             self._stats.count_qubit()
+            block.append(bit_state)
+        return block
+
+    def receive_qubits_block(self):
+        block = []
+        for _ in range(self._block_size):
+            basis = Basis.random()
+            qubit = self._cqc_connection.recvQubit()
+            self._stats.count_qubit()
+            bit_state = BitState.from_qubit(qubit, basis)
             block.append(bit_state)
         return block
 
@@ -261,6 +278,12 @@ class Server:
             self._revealed_bits_in_block += 1
             self._stats.count_revealed_bit()
 
+    def send_client_basis(self, block, peer_name):
+        msg = b""
+        for bit_state in block:
+            msg += bit_state.basis.to_bytes()
+        self._cqc_connection.sendClassical(peer_name, msg)
+
     def receive_client_basis(self, block):
         msg = self._cqc_connection.recvClassical()
         assert len(msg) == self._block_size, "Chosen basis message has wrong size"
@@ -270,93 +293,11 @@ class Server:
             self.decide_what_to_do_with_bit(bit_state, client_basis)
             i += 1
 
-    def send_decisions(self, block):
+    def send_decisions(self, block, peer_name):
         msg = b""
         for bit_state in block:
             msg += bit_state.encode_decision()
-        self._cqc_connection.sendClassical(self._client_name, msg)
-
-    def receive_reveal_comparison(self, block):
-        msg = self._cqc_connection.recvClassical()
-        i = 0
-        for _bit_state in block:
-            reveal_comparison = msg[i:i+1]
-            if reveal_comparison == BitState.REVEAL_COMPARISON_SAME:
-                self._stats.count_comparison_same()
-            elif reveal_comparison == BitState.REVEAL_COMPARISON_DIFFERENT:
-                self._stats.count_comparison_different()
-            i += 1
-        # TODO: Store in bitstate for noise estimation
-
-    def process_block(self):
-        self._stats.count_block()
-        self._revealed_bits_in_block = 0
-        block = self.send_qubits_block()
-        self.receive_client_basis(block)
-        self.send_decisions(block)
-        self.receive_reveal_comparison(block)
-
-    def print_report(self, elapsed_time):
-        report = Report()
-        report.add(f"Server {self._server_name}")
-        report.add(f"Elpased time: {elapsed_time:.1f} secs")
-        report.add(f"Key size: {self._key_size}")
-        report.add(f"Key: {''.join([str(bit) for bit in self._key])}")
-        report.add(f"Block size: {self._block_size}")
-        self._stats.add_to_report(report, elapsed_time)
-        report.print()
-
-    def agree_key(self, report=False):
-        start_time = time.perf_counter()
-        self.receive_parameters()
-        while not self.key_is_complete():
-            self.process_block()
-        elapsed_time = time.perf_counter() - start_time
-        if report:
-            self.print_report(elapsed_time)
-        return self._key
-
-class Client:
-
-    def __init__(self, client_name, server_name, key_size, block_size):
-        self._client_name = client_name
-        self._server_name = server_name
-        self._cqc_connection = cqclib.CQCConnection(client_name)
-        self._cqc_connection.__enter__()
-        self._key_size = key_size
-        self._block_size = block_size
-        self._key = []
-        self._stats = Stats()
-
-    def __del__(self):
-        self._cqc_connection.__exit__(None, None, None)
-
-    def send_parameters(self):
-        msg = self._block_size.to_bytes(2, 'big')
-        self._cqc_connection.sendClassical(self._server_name, msg)
-
-    def receive_qubits_block(self):
-        block = []
-        for _ in range(self._block_size):
-            basis = Basis.random()
-            qubit = self._cqc_connection.recvQubit()
-            self._stats.count_qubit()
-            bit_state = BitState.from_qubit(qubit, basis)
-            block.append(bit_state)
-        return block
-
-    def key_is_complete(self):
-        key_len = len(self._key)
-        if key_len < self._key_size:
-            return False
-        assert key_len == self._key_size, "Key length should never exceed requested key size"
-        return True
-
-    def send_client_basis(self, block):
-        msg = b""
-        for bit_state in block:
-            msg += bit_state.basis.to_bytes()
-        self._cqc_connection.sendClassical(self._server_name, msg)
+        self._cqc_connection.sendClassical(peer_name, msg)
 
     def receive_decisions(self, block):
         msg = self._cqc_connection.recvClassical()
@@ -374,7 +315,7 @@ class Client:
                 self._stats.count_revealed_bit()
             i += 1
 
-    def send_reveal_comparison(self, block):
+    def send_reveal_comparison(self, block, peer_name):
         msg = b""
         for bit_state in block:
             if bit_state.decision == bit_state.DECISION_REVEAL_AS_0:
@@ -393,18 +334,23 @@ class Client:
                     self._stats.count_comparison_different()
             else:
                 msg += BitState.REVEAL_COMPARISON_NOT_COMPARED
-        self._cqc_connection.sendClassical(self._server_name, msg)
+        self._cqc_connection.sendClassical(peer_name, msg)
 
-    def process_block(self):
-        self._stats.count_block()
-        block = self.receive_qubits_block()
-        self.send_client_basis(block)
-        self.receive_decisions(block)
-        self.send_reveal_comparison(block)
+    def receive_reveal_comparison(self, block):
+        msg = self._cqc_connection.recvClassical()
+        i = 0
+        for _bit_state in block:
+            reveal_comparison = msg[i:i+1]
+            if reveal_comparison == BitState.REVEAL_COMPARISON_SAME:
+                self._stats.count_comparison_same()
+            elif reveal_comparison == BitState.REVEAL_COMPARISON_DIFFERENT:
+                self._stats.count_comparison_different()
+            i += 1
+        # TODO: Store in bitstate for noise estimation
 
     def print_report(self, elapsed_time):
         report = Report()
-        report.add(f"Client {self._client_name}")
+        report.add(f"*** {self._name} ***")
         report.add(f"Elpased time: {elapsed_time:.1f} secs")
         report.add(f"Key size: {self._key_size}")
         report.add(f"Key: {''.join([str(bit) for bit in self._key])}")
@@ -412,9 +358,47 @@ class Client:
         self._stats.add_to_report(report, elapsed_time)
         report.print()
 
+class Server(Base):
+
+    def __init__(self, name, client_name, key_size):
+        Base.__init__(self, name, key_size)
+        self._client_name = client_name
+
+    def process_block(self):
+        self._stats.count_block()
+        self._revealed_bits_in_block = 0
+        block = self.send_qubits_block(self._client_name)
+        self.receive_client_basis(block)
+        self.send_decisions(block, self._client_name)
+        self.receive_reveal_comparison(block)
+
     def agree_key(self, report=False):
         start_time = time.perf_counter()
-        self.send_parameters()
+        self.receive_parameters()
+        while not self.key_is_complete():
+            self.process_block()
+        elapsed_time = time.perf_counter() - start_time
+        if report:
+            self.print_report(elapsed_time)
+        return self._key
+
+class Client(Base):
+
+    def __init__(self, name, server_name, key_size, block_size):
+        Base.__init__(self, name, key_size)
+        self._server_name = server_name
+        self._block_size = block_size
+
+    def process_block(self):
+        self._stats.count_block()
+        block = self.receive_qubits_block()
+        self.send_client_basis(block, self._server_name)
+        self.receive_decisions(block)
+        self.send_reveal_comparison(block, self._server_name)
+
+    def agree_key(self, report=False):
+        start_time = time.perf_counter()
+        self.send_parameters(self._server_name)
         while not self.key_is_complete():
             self.process_block()
         elapsed_time = time.perf_counter() - start_time

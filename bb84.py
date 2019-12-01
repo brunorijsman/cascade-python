@@ -12,6 +12,8 @@ import cqc.pythonLib as cqclib
 # TODO: Add throughput
 # TODO: Stop all processes and simulaqron at script exit
 # TODO: Reveal count seems too low; should be the same as key bits count
+# TODO: Count classical messages
+# TODO: Fix eve observing script
 
 def percent_str(count, total):
     if total == 0:
@@ -231,10 +233,10 @@ class Stats:
         report.add(f"Revealed bits: {self._revealed_bits_count} " +
                    f"({percent_str(self._revealed_bits_count, self._qubits_count)} of total)")
         report.add(f"Comparison same: {self._comparison_same_count} " +
-                   f"({percent_str(self._comparison_same_count, self._revealed_bits_count)} " + 
+                   f"({percent_str(self._comparison_same_count, self._revealed_bits_count)} " +
                    f"of revealed)")
         report.add(f"Comparison different: {self._comparison_different_count} " +
-                   f"({percent_str(self._comparison_different_count, self._revealed_bits_count)} " + 
+                   f"({percent_str(self._comparison_different_count, self._revealed_bits_count)} " +
                    f"of revealed)")
 
 class Server:
@@ -260,7 +262,6 @@ class Server:
         for _ in range(self._block_size):
             bit = Bit.random()
             basis = Basis.random()
-            print(f"Server TX bit {bit.to_str()}{basis.to_str()}")
             bit_state = BitState(bit, basis)
             qubit = bit_state.to_qubit(self._cqc_connection)
             self._cqc_connection.sendQubit(qubit, self._client_name)
@@ -300,7 +301,6 @@ class Server:
 
     def receive_client_basis(self, block):
         msg = self._cqc_connection.recvClassical()
-        print(f"Server RX basis {msg}")
         assert len(msg) == self._block_size, "Chosen basis message has wrong size"
         i = 0
         for bit_state in block:
@@ -312,12 +312,10 @@ class Server:
         msg = b""
         for bit_state in block:
             msg += bit_state.encode_decision()
-        print(f"Server TX decision {msg}")
         self._cqc_connection.sendClassical(self._client_name, msg)
 
     def receive_reveal_comparison(self, block):
         msg = self._cqc_connection.recvClassical()
-        print(f"Server RX reveal comparison: {msg}")
         i = 0
         for _bit_state in block:
             reveal_comparison = msg[i:i+1]
@@ -380,7 +378,6 @@ class Client:
             qubit = self._cqc_connection.recvQubit()
             self._stats.count_qubit()
             bit_state = BitState.from_qubit(qubit, basis)
-            print(f"Client RX bit {bit_state.bit.to_str()}{bit_state.basis.to_str()}")
             block.append(bit_state)
         return block
 
@@ -396,11 +393,9 @@ class Client:
         for bit_state in block:
             msg += bit_state.basis.to_bytes()
         self._cqc_connection.sendClassical(self._server_name, msg)
-        print(f"Client TX basis: {msg}")
 
     def receive_decisions(self, block):
         msg = self._cqc_connection.recvClassical()
-        print(f"Client RX decision {msg}")
         assert len(msg) == self._block_size, "Server decisions message has wrong size"
         i = 0
         for bit_state in block:
@@ -435,7 +430,6 @@ class Client:
             else:
                 msg += BitState.REVEAL_COMPARISON_NOT_COMPARED
         self._cqc_connection.sendClassical(self._server_name, msg)
-        print(f"Client TX reveal comparison: {msg}")
 
     def process_block(self):
         self._stats.count_block()

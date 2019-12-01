@@ -10,15 +10,14 @@ import cqc.pythonLib as cqclib
 # TODO: Add information reconciliation
 # TODO: Add privacy amplification
 # TODO: Add throughput
-# TODO: Add percentages
-# TODO: Figure out why stopping SimulaQron doesn't work
+# TODO: Stop all processes and simulaqron at script exit
 # TODO: Reveal count seems too low; should be the same as key bits count
 
-# def percent_str(count, total):
-#     if total == 0:
-#         return f"{count} (-)"
-#     percentage = 100.0 * float(count) / float(total)
-#     return f"{percentage:.1f}%"
+def percent_str(count, total):
+    if total == 0:
+        return f"{count} (-)"
+    percentage = 100.0 * float(count) / float(total)
+    return f"{percentage:.1f}%"
 
 # def throughput_str(count, duration):
 #     throughput = count / duration
@@ -225,11 +224,18 @@ class Stats:
     def add_to_report(self, report):
         report.add(f"Blocks: {self._blocks_count}")
         report.add(f"Total qubits: {self._qubits_count}")
-        report.add(f"Basis mismatches: {self._basis_mismatch_count}")
-        report.add(f"Key bits: {self._key_bits_count}")
-        report.add(f"Revealed bits: {self._revealed_bits_count}")
-        report.add(f"Comparison same: {self._comparison_same_count}")
-        report.add(f"Comparison different: {self._comparison_different_count}")
+        report.add(f"Basis mismatches: {self._basis_mismatch_count} " +
+                   f"({percent_str(self._basis_mismatch_count, self._qubits_count)} of total)")
+        report.add(f"Key bits: {self._key_bits_count} " +
+                   f"({percent_str(self._key_bits_count, self._qubits_count)} of total)")
+        report.add(f"Revealed bits: {self._revealed_bits_count} " +
+                   f"({percent_str(self._revealed_bits_count, self._qubits_count)} of total)")
+        report.add(f"Comparison same: {self._comparison_same_count} " +
+                   f"({percent_str(self._comparison_same_count, self._revealed_bits_count)} " + 
+                   f"of revealed)")
+        report.add(f"Comparison different: {self._comparison_different_count} " +
+                   f"({percent_str(self._comparison_different_count, self._revealed_bits_count)} " + 
+                   f"of revealed)")
 
 class Server:
 
@@ -361,7 +367,6 @@ class Client:
 
     def __del__(self):
         self._cqc_connection.__exit__(None, None, None)
-        pass
 
     def send_block_size_to_server(self):
         # TODO: Eve could change the block size. Is that a vulnerability?

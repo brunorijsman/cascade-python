@@ -12,7 +12,6 @@ import cqc.pythonLib as cqclib
 # TODO: Stop all processes and simulaqron at script exit
 # TODO: Count classical messages
 # TODO: Fix eve observing script
-# TODO: Carry block size in protocol (client chooses)
 
 def percent_str(count, total):
     if total == 0:
@@ -215,9 +214,9 @@ class Server:
         self._key = []
         self._stats = Stats()
 
-    def receive_block_size_from_client(self):
+    def receive_parameters(self):
         msg = self._cqc_connection.recvClassical()
-        assert len(msg) == 2, "Block size message must be 2 bytes"
+        assert len(msg) == 2, "Parameters message must be 2 bytes"
         self._block_size = int.from_bytes(msg, 'big')
 
     def send_qubits_block(self):
@@ -309,7 +308,7 @@ class Server:
 
     def agree_key(self, report=False):
         start_time = time.perf_counter()
-        self.receive_block_size_from_client()
+        self.receive_parameters()
         while not self.key_is_complete():
             self.process_block()
         elapsed_time = time.perf_counter() - start_time
@@ -332,7 +331,7 @@ class Client:
     def __del__(self):
         self._cqc_connection.__exit__(None, None, None)
 
-    def send_block_size_to_server(self):
+    def send_parameters(self):
         msg = self._block_size.to_bytes(2, 'big')
         self._cqc_connection.sendClassical(self._server_name, msg)
 
@@ -415,7 +414,7 @@ class Client:
 
     def agree_key(self, report=False):
         start_time = time.perf_counter()
-        self.send_block_size_to_server()
+        self.send_parameters()
         while not self.key_is_complete():
             self.process_block()
         elapsed_time = time.perf_counter() - start_time

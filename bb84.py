@@ -1,6 +1,6 @@
 import random
-# import time
 import sys
+import time
 import cqc.pythonLib as cqclib
 
 # TODO: Add authentication and data integrety on classical channel (see http://bit.ly/bb84auth)
@@ -9,7 +9,6 @@ import cqc.pythonLib as cqclib
 # TODO: Add noise estimation
 # TODO: Add information reconciliation
 # TODO: Add privacy amplification
-# TODO: Add throughput
 # TODO: Stop all processes and simulaqron at script exit
 # TODO: Reveal count seems too low; should be the same as key bits count
 # TODO: Count classical messages
@@ -21,9 +20,9 @@ def percent_str(count, total):
     percentage = 100.0 * float(count) / float(total)
     return f"{percentage:.1f}%"
 
-# def throughput_str(count, duration):
-#     throughput = count / duration
-#     return f"{throughput:.1f} qubits/sec"
+def throughput_str(count, duration, unit):
+    throughput = count / duration
+    return f"[{throughput:.1f} {unit}/sec]"
 
 class Report:
 
@@ -200,7 +199,7 @@ class Stats:
         self._key_bits_count = 0
         self._revealed_bits_count = 0
         self._comparison_same_count = 0
-        self._comparison_different_count = 0
+        self._comparison_diff_count = 0
 
     def count_block(self):
         self._blocks_count += 1
@@ -221,23 +220,30 @@ class Stats:
         self._comparison_same_count += 1
 
     def count_comparison_different(self):
-        self._comparison_different_count += 1
+        self._comparison_diff_count += 1
 
-    def add_to_report(self, report):
-        report.add(f"Blocks: {self._blocks_count}")
-        report.add(f"Total qubits: {self._qubits_count}")
+    def add_to_report(self, report, elapsed_time):
+        report.add(f"Blocks: {self._blocks_count} " +
+                   f"{throughput_str(self._blocks_count, elapsed_time, 'blocks')}")
+        report.add(f"Total qubits: {self._qubits_count} " +
+                   f"{throughput_str(self._qubits_count, elapsed_time, 'qubits')}")
         report.add(f"Basis mismatches: {self._basis_mismatch_count} " +
-                   f"({percent_str(self._basis_mismatch_count, self._qubits_count)} of total)")
+                   f"({percent_str(self._basis_mismatch_count, self._qubits_count)} of total) " +
+                   f"{throughput_str(self._basis_mismatch_count, elapsed_time, 'mismatches')}")
         report.add(f"Key bits: {self._key_bits_count} " +
-                   f"({percent_str(self._key_bits_count, self._qubits_count)} of total)")
+                   f"({percent_str(self._key_bits_count, self._qubits_count)} of total) " +
+                   f"{throughput_str(self._key_bits_count, elapsed_time, 'bits')}")
         report.add(f"Revealed bits: {self._revealed_bits_count} " +
-                   f"({percent_str(self._revealed_bits_count, self._qubits_count)} of total)")
+                   f"({percent_str(self._revealed_bits_count, self._qubits_count)} of total) " +
+                   f"{throughput_str(self._revealed_bits_count, elapsed_time, 'bits')}")
         report.add(f"Comparison same: {self._comparison_same_count} " +
                    f"({percent_str(self._comparison_same_count, self._revealed_bits_count)} " +
-                   f"of revealed)")
-        report.add(f"Comparison different: {self._comparison_different_count} " +
-                   f"({percent_str(self._comparison_different_count, self._revealed_bits_count)} " +
-                   f"of revealed)")
+                   f"of revealed) " +
+                   f"{throughput_str(self._comparison_same_count, elapsed_time, 'comparisons')}")
+        report.add(f"Comparison different: {self._comparison_diff_count} " +
+                   f"({percent_str(self._comparison_diff_count, self._revealed_bits_count)} " +
+                   f"of revealed) " +
+                   f"{throughput_str(self._comparison_diff_count, elapsed_time, 'comparisons')}")
 
 class Server:
 
@@ -334,21 +340,24 @@ class Server:
         self.send_decisions(block)
         self.receive_reveal_comparison(block)
 
-    def print_report(self):
+    def print_report(self, elapsed_time):
         report = Report()
         report.add(f"Server {self._server_name}")
+        report.add(f"Elpased time: {elapsed_time:.1f} secs")
         report.add(f"Key size: {self._key_size}")
         report.add(f"Key: {self._key}")
         report.add(f"Block size: {self._block_size}")
-        self._stats.add_to_report(report)
+        self._stats.add_to_report(report, elapsed_time)
         report.print()
 
     def agree_key(self, report=False):
+        start_time = time.perf_counter()
         self.receive_block_size_from_client()
         while not self.key_is_complete():
             self.process_block()
+        elapsed_time = time.perf_counter() - start_time
         if report:
-            self.print_report()
+            self.print_report(elapsed_time)
         return self._key
 
 class Client:
@@ -438,19 +447,22 @@ class Client:
         self.receive_decisions(block)
         self.send_reveal_comparison(block)
 
-    def print_report(self):
+    def print_report(self, elapsed_time):
         report = Report()
         report.add(f"Client {self._client_name}")
+        report.add(f"Elpased time: {elapsed_time:.1f} secs")
         report.add(f"Key size: {self._key_size}")
         report.add(f"Key: {self._key}")
         report.add(f"Block size: {self._block_size}")
-        self._stats.add_to_report(report)
+        self._stats.add_to_report(report, elapsed_time)
         report.print()
 
     def agree_key(self, report=False):
+        start_time = time.perf_counter()
         self.send_block_size_to_server()
         while not self.key_is_complete():
             self.process_block()
+        elapsed_time = time.perf_counter() - start_time
         if report:
-            self.print_report()
+            self.print_report(elapsed_time)
         return self._key

@@ -213,11 +213,11 @@ class Stats:
                        f"{throughput_str(compared, elapsed_time, 'bits')}")
             if compared:
                 report.add(f"      Same: {self.comparison_same} " +
-                        f"({percent_str(self.comparison_same, compared)}) " +
-                        f"{throughput_str(self.comparison_same, elapsed_time, 'bits')}")
+                           f"({percent_str(self.comparison_same, compared)}) " +
+                           f"{throughput_str(self.comparison_same, elapsed_time, 'bits')}")
                 report.add(f"      Different: {self.comparison_different} " +
-                        f"({percent_str(self.comparison_different, compared)}) " +
-                        f"{throughput_str(self.comparison_different, elapsed_time, 'bits')}")
+                           f"({percent_str(self.comparison_different, compared)}) " +
+                           f"{throughput_str(self.comparison_different, elapsed_time, 'bits')}")
 
 class Base:
 

@@ -17,6 +17,7 @@ import cqc.pythonLib as cqclib
 # TODO: Eve to report which key bits she gleaned ?=wrongbasis 01=gleaned .=did not measure
 # TODO: Keep stats for measured qubits
 # TODO: If qubit is measured, do so immediately
+# TODO: Report Alice and Bob key, and differences at end of run
 
 def percent_str(count, total):
     if total == 0:
@@ -27,6 +28,16 @@ def percent_str(count, total):
 def throughput_str(count, duration, unit):
     throughput = count / duration
     return f"[{throughput:.1f} {unit}/sec]"
+
+def key_str(key):
+    # TODO: ? if Eve is not certain of key bit because of wrong basis
+    string = ""
+    for bit in key:
+        if bit is None:
+            string += '.'
+        else:
+            string += str(bit)
+    return string
 
 class Basis:
 
@@ -287,6 +298,7 @@ class Base:
             if measure:
                 bit_state.client_basis = Basis.random()
                 bit_state.measure_qubit()
+                bit_state.basis = bit_state.client_basis
         return block
 
     def key_is_complete(self):
@@ -413,7 +425,7 @@ class Base:
         report.add(f"*** {self._name} ***")
         report.add(f"Elpased time: {elapsed_time:.1f} secs")
         report.add(f"Key size: {self._key_size}")
-        report.add(f"Key: {''.join([str(bit) for bit in self._key])}")
+        report.add(f"Key: {key_str(self._key)}")
         report.add(f"Block size: {self._block_size}")
         self._tx_stats.add_to_report(report, elapsed_time)
         self._rx_stats.add_to_report(report, elapsed_time)

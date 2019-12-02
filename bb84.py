@@ -189,12 +189,17 @@ class Stats:
             report.add(f"    Use as key: {self.decision_use_as_key} " +
                        f"({percent_str(self.decision_use_as_key, cnt)}) " +
                        f"{throughput_str(self.decision_use_as_key, elapsed_time, 'bits')}")
-            report.add(f"    Reveal as 0: {self.decision_reveal_as_0} " +
-                       f"({percent_str(self.decision_reveal_as_0, cnt)}) " +
-                       f"{throughput_str(self.decision_reveal_as_0, elapsed_time, 'bits')}")
-            report.add(f"    Reveal as 1: {self.decision_reveal_as_1} " +
-                       f"({percent_str(self.decision_reveal_as_1, cnt)}) " +
-                       f"{throughput_str(self.decision_reveal_as_1, elapsed_time, 'bits')}")
+            reveal = self.decision_reveal_as_0 + self.decision_reveal_as_1
+            report.add(f"    Reveal: {reveal} " +
+                       f"({percent_str(reveal, cnt)}) " +
+                       f"{throughput_str(reveal, elapsed_time, 'bits')}")
+            if reveal:
+                report.add(f"      Reveal as 0: {self.decision_reveal_as_0} " +
+                           f"({percent_str(self.decision_reveal_as_0, reveal)}) " +
+                           f"{throughput_str(self.decision_reveal_as_0, elapsed_time, 'bits')}")
+                report.add(f"      Reveal as 1: {self.decision_reveal_as_1} " +
+                           f"({percent_str(self.decision_reveal_as_1, reveal)}) " +
+                           f"{throughput_str(self.decision_reveal_as_1, elapsed_time, 'bits')}")
         if self.comparison_msg:
             report.add(f"  Comparison messages: {self.comparison_msg} " +
                        f"{throughput_str(self.comparison_msg, elapsed_time, 'messages')}")
@@ -206,12 +211,13 @@ class Stats:
             report.add(f"    Compared: {compared} " +
                        f"({percent_str(compared, cnt)}) " +
                        f"{throughput_str(compared, elapsed_time, 'bits')}")
-            report.add(f"      Same: {self.comparison_same} " +
-                       f"({percent_str(self.comparison_same, compared)}) " +
-                       f"{throughput_str(self.comparison_same, elapsed_time, 'bits')}")
-            report.add(f"      Different: {self.comparison_different} " +
-                       f"({percent_str(self.comparison_different, compared)}) " +
-                       f"{throughput_str(self.comparison_different, elapsed_time, 'bits')}")
+            if compared:
+                report.add(f"      Same: {self.comparison_same} " +
+                        f"({percent_str(self.comparison_same, compared)}) " +
+                        f"{throughput_str(self.comparison_same, elapsed_time, 'bits')}")
+                report.add(f"      Different: {self.comparison_different} " +
+                        f"({percent_str(self.comparison_different, compared)}) " +
+                        f"{throughput_str(self.comparison_different, elapsed_time, 'bits')}")
 
 class Base:
 

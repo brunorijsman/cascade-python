@@ -402,7 +402,6 @@ class Base:
         elif comparison == BitState.COMPARISON_DIFFERENT:
             stats.comparison_different += 1
 
-
     def send_comparison(self, block, peer_name):
         msg = b""
         for bit_state in block:

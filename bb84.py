@@ -12,7 +12,6 @@ import cqc.pythonLib as cqclib
 # TODO: Stop all processes and simulaqron at script exit
 # TODO: Add observe_qubit_percentage to Middle class
 # TODO: Control message tracing with environment variable
-# TODO: Eve to report which key bits she gleaned ?=wrongbasis 01=gleaned .=did not measure
 # TODO: Keep stats for measured qubits
 # TODO: Report Alice and Bob key, and differences at end of run
 # TODO: More deterministic selection of key and test bits (actually select precisely half)
@@ -46,16 +45,6 @@ def throughput_str(count, duration, unit):
     throughput = count / duration
     return f"[{throughput:.1f} {unit}/sec]"
 
-def key_str(key):
-    # TODO: ? if Eve is not certain of key bit because of wrong basis
-    string = ""
-    for bit in key:
-        if bit is None:
-            string += '.'
-        else:
-            string += str(bit)
-    return string
-
 def random_basis():
     if random.randint(0, 1) == 0:
         return _BASIS_COMPUTATIONAL
@@ -63,10 +52,11 @@ def random_basis():
 
 class BitState:
 
-    def __init__(self, bit, basis, qubit):
+    def __init__(self, bit, tx_basis, qubit):
         self.bit = bit
-        self.basis = basis
-        self.client_basis = None
+        self.tx_basis = tx_basis
+        self.measure_basis = None
+        self.base_mismatch = False
         self.qubit = qubit
         self.decision = _DECISION_NONE
         self.comparison = _COMPARISON_NONE
@@ -75,11 +65,11 @@ class BitState:
         self.qubit = cqclib.qubit(cqc_connection)
         if self.bit == 1:
             self.qubit.X()
-        if self.basis == _BASIS_HADAMARD:
+        if self.tx_basis == _BASIS_HADAMARD:
             self.qubit.H()
 
     def measure_qubit(self):
-        if self.client_basis == _BASIS_HADAMARD:
+        if self.measure_basis == _BASIS_HADAMARD:
             self.qubit.H()
         self.bit = self.qubit.measure()
         self.qubit = None
@@ -211,21 +201,17 @@ class Base:
         self._tx_stats.block_size = self._block_size
         self._rx_stats.block_size = self._block_size
 
-    def create_random_qubits_window(self):
+    def send_random_qubits_window(self, peer_name):
         window = []
         for _ in range(self._window_size):
             bit = random.randint(0, 1)
-            basis = random_basis()
-            bit_state = BitState(bit, basis, None)
+            tx_basis = random_basis()
+            bit_state = BitState(bit, tx_basis, None)    ###@@@
+            bit_state.encode_qubit(self._cqc_connection)
             window.append(bit_state)
-        return window
-
-    def send_qubits_window(self, window, peer_name):
-        for bit_state in window:
-            if bit_state.qubit is None:
-                bit_state.encode_qubit(self._cqc_connection)
             self._cqc_connection.sendQubit(bit_state.qubit, peer_name)
             self._tx_stats.qubit += 1
+        return window
 
     def receive_and_measure_qubits_window(self, measure_percentage):
         window = []
@@ -234,10 +220,18 @@ class Base:
             self._rx_stats.qubit += 1
             bit_state = BitState(None, None, qubit)
             if random.randint(1, 100) <= measure_percentage:
-                bit_state.client_basis = random_basis()
+                bit_state.measure_basis = random_basis()
                 bit_state.measure_qubit()
-                bit_state.basis = bit_state.client_basis
             window.append(bit_state)
+        return window
+
+    def propagate_qubits_window(self, window, peer_name):
+        for bit_state in window:
+            bit_state.tx_basis = bit_state.measure_basis
+            if bit_state.qubit is None:
+                bit_state.encode_qubit(self._cqc_connection)
+            self._cqc_connection.sendQubit(bit_state.qubit, peer_name)
+            self._tx_stats.qubit += 1
         return window
 
     def key_is_complete(self):
@@ -248,7 +242,7 @@ class Base:
         return True
 
     def decide_what_to_do_with_bit(self, bit_state):
-        if bit_state.basis != bit_state.client_basis:
+        if bit_state.tx_basis != bit_state.measure_basis:
             bit_state.decision = _DECISION_BASIS_MISMATCH
             return
         if self.key_is_complete():
@@ -282,20 +276,22 @@ class Base:
         elif decision == _DECISION_REVEAL_AS_1:
             stats.decision_reveal_as_1 += 1
 
-    def send_client_basis(self, block, peer_name):
+    def send_measure_basis(self, block, peer_name):
         msg = b""
         for bit_state in block:
-            msg += bit_state.client_basis
+            msg += bit_state.measure_basis
         self.send_msg(peer_name, "basis", msg)
         self._tx_stats.basis_msg += 1
 
-    def receive_client_basis(self, block):
+    def receive_measure_basis(self, block):
         msg = self.recv_msg("basis")
         self._rx_stats.basis_msg += 1
         assert len(msg) == self._block_size, "Chosen basis message has wrong size"
         i = 0
         for bit_state in block:
-            bit_state.client_basis = msg[i:i+1]
+            bit_state.measure_basis = msg[i:i+1]
+            if bit_state.tx_basis is not None and bit_state.measure_basis != bit_state.tx_basis:
+                bit_state.base_mismatch = True
             i += 1
 
     def send_decisions(self, block, peer_name):
@@ -315,7 +311,11 @@ class Base:
             bit_state.decision = msg[i:i+1]
             self.count_decision(bit_state.decision, self._rx_stats)
             if bit_state.decision == _DECISION_KEEP_AS_KEY:
-                self._key.append(bit_state.bit)
+                if bit_state.base_mismatch:
+                    # If this is Eve and Eve guessed the wrong basis, the key bit is set to -1
+                    self._key.append(-1)
+                else:
+                    self._key.append(bit_state.bit)
             i += 1
 
     @staticmethod
@@ -360,12 +360,23 @@ class Base:
             self.count_comparison(bit_state.comparison, self._rx_stats)
             i += 1
 
+    def key_str(self):
+        string = ""
+        for bit in self._key:
+            if bit is None:
+                string += '.'
+            elif bit is -1:
+                string += '?'
+            else:
+                string += str(bit)
+        return string
+
     def print_report(self, elapsed_time):
         report = Report()
         report.add(f"*** {self._name} ***")
         report.add(f"Elpased time: {elapsed_time:.1f} secs")
         report.add(f"Key size: {self._key_size}")
-        report.add(f"Key: {key_str(self._key)}")
+        report.add(f"Key: {self.key_str()}")
         report.add(f"Block size: {self._block_size}")
         self._tx_stats.add_to_report(report, elapsed_time)
         self._rx_stats.add_to_report(report, elapsed_time)
@@ -384,11 +395,10 @@ class Server(Base):
         assert self._block_size % self._window_size == 0
         block = []
         for _ in range(self._block_size // self._window_size):
-            window = self.create_random_qubits_window()
-            self.send_qubits_window(window, self._client_name)
+            window = self.send_random_qubits_window(self._client_name)
             block += window
             self.recv_msg("ack")
-        self.receive_client_basis(block)
+        self.receive_measure_basis(block)
         self.decide_what_to_do_with_block(block)
         self.send_decisions(block, self._client_name)
         self.receive_comparison(block)
@@ -423,7 +433,7 @@ class Client(Base):
             window = self.receive_and_measure_qubits_window(100)
             block += window
             self.send_msg(self._server_name, "ack", _ACK)
-        self.send_client_basis(block, self._server_name)
+        self.send_measure_basis(block, self._server_name)
         self.receive_decisions(block)
         self.compute_comparison(block)
         self.send_comparison(block, self._server_name)
@@ -455,11 +465,11 @@ class Middle(Base):
         for _ in range(self._block_size // self._window_size):
             window = self.receive_and_measure_qubits_window(self._observe_percentage)
             self.send_msg(self._server_name, "ack", _ACK)
-            self.send_qubits_window(window, self._client_name)
+            self.propagate_qubits_window(window, self._client_name)
             self.recv_msg("ack")
             block += window
-        self.receive_client_basis(block)
-        self.send_client_basis(block, self._server_name)
+        self.receive_measure_basis(block)
+        self.send_measure_basis(block, self._server_name)
         self.receive_decisions(block)
         self.send_decisions(block, self._client_name)
         self.receive_comparison(block)

@@ -22,7 +22,7 @@ import cqc.pythonLib as cqclib
 # TODO: Automated unit test
 # TODO: CI/CD pipeline
 
-_DECISION_NONE = b'?'
+_DECISION_NONE = b'.'
 _DECISION_BASIS_MISMATCH = b'M'
 _DECISION_KEEP_AS_KEY = b'K'
 _DECISION_REVEAL_AS_0 = b'0'
@@ -31,6 +31,9 @@ _DECISION_REVEAL_AS_1 = b'1'
 _COMPARISON_NONE = b'.'
 _COMPARISON_SAME = b'S'
 _COMPARISON_DIFFERENT = b'D'
+
+_BASIS_COMPUTATIONAL = b'+'
+_BASIS_HADAMARD = b'x'
 
 def percent_str(count, total):
     if total == 0:
@@ -52,52 +55,10 @@ def key_str(key):
             string += str(bit)
     return string
 
-class Basis:
-
-    _COMPUTATIONAL = 0
-    _HADAMARD = 1
-
-    def __init__(self, basis):
-        assert basis in [self._COMPUTATIONAL, self._HADAMARD], \
-               "Basis must be COMPUTATIONAL or HADAMARD"
-        self._basis = basis
-
-    def __eq__(self, other):
-        return self._basis == other._basis
-
-    def __repr__(self):
-        return self.to_str()
-
-    @classmethod
-    def random(cls):
-        basis = random.randint(0, 1)
-        return Basis(basis)
-
-    def is_computational(self):
-        return self._basis == self._COMPUTATIONAL
-
-    def is_hadamard(self):
-        return self._basis == self._HADAMARD
-
-    def to_str(self):
-        if self.is_computational():
-            return "+"
-        assert self.is_hadamard()
-        return "x"
-
-    def to_bytes(self):
-        if self.is_computational():
-            return b"+"
-        assert self.is_hadamard()
-        return b"x"
-
-    @classmethod
-    def from_bytes(cls, data):
-        assert len(data) == 1, "Bytes representation of basis much have length 1"
-        if data == b"+":
-            return Basis(cls._COMPUTATIONAL)
-        assert data == b"x", "Bytes representation of basis must be + or x"
-        return Basis(cls._HADAMARD)
+def random_basis():
+    if random.randint(0, 1) == 0:
+        return _BASIS_COMPUTATIONAL
+    return _BASIS_HADAMARD
 
 class BitState:
 
@@ -238,7 +199,7 @@ class Base:
         block = []
         for _ in range(self._block_size):
             bit = random.randint(0, 1)
-            basis = Basis.random()
+            basis = random_basis()
             bit_state = BitState(bit, basis, None)
             block.append(bit_state)
         return block
@@ -269,7 +230,7 @@ class Base:
             else:
                 measure = random.randint(1, 100) <= measure_percentage
             if measure:
-                bit_state.client_basis = Basis.random()
+                bit_state.client_basis = random_basis()
                 bit_state.measure_qubit()
                 bit_state.basis = bit_state.client_basis
         return block
@@ -327,7 +288,7 @@ class Base:
         assert len(msg) == self._block_size, "Chosen basis message has wrong size"
         i = 0
         for bit_state in block:
-            bit_state.client_basis = Basis.from_bytes(msg[i:i+1])
+            bit_state.client_basis = msg[i:i+1]
             i += 1
 
     def send_decisions(self, block, peer_name):

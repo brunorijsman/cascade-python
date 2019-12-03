@@ -21,6 +21,7 @@ import cqc.pythonLib as cqclib
 # TODO: Generate documentation
 # TODO: Automated unit test
 # TODO: CI/CD pipeline
+# TODO: Handle case that block size is not multiple of window size
 
 _DECISION_NONE = b'.'
 _DECISION_BASIS_MISMATCH = b'M'
@@ -34,6 +35,8 @@ _COMPARISON_DIFFERENT = b'D'
 
 _BASIS_COMPUTATIONAL = b'+'
 _BASIS_HADAMARD = b'x'
+
+_ACK = b'A'
 
 def percent_str(count, total):
     if total == 0:
@@ -72,13 +75,13 @@ class BitState:
 
     def encode_qubit(self, cqc_connection):
         self.qubit = cqclib.qubit(cqc_connection)
-        if self.basis.is_hadamard():
-            self.qubit.H()
         if self.bit == 1:
             self.qubit.X()
+        if self.basis == _BASIS_HADAMARD:
+            self.qubit.H()
 
     def measure_qubit(self):
-        if self.client_basis.is_hadamard():
+        if self.client_basis == _BASIS_HADAMARD:
             self.qubit.H()
         self.bit = self.qubit.measure()
         self.qubit = None
@@ -171,8 +174,9 @@ class Base:
         self._cqc_connection = cqclib.CQCConnection(name)
         self._cqc_connection.__enter__()
         self._key_size = None
-        self._revealed_bits_in_block = 0
+        self._window_size = None
         self._block_size = None
+        self._revealed_bits_in_block = 0
         self._key = []
         self._tx_stats = Stats(False, None)
         self._rx_stats = Stats(True, None)
@@ -181,49 +185,58 @@ class Base:
         # TODO: Is this inherited?
         self._cqc_connection.__exit__(None, None, None)
 
+    def send_msg(self, to, kind, msg):
+        print(f"TX [{self._name}->{to}] ({kind}) {msg}")
+        self._cqc_connection.sendClassical(to, msg)
+
+    def recv_msg(self, kind):
+        msg = self._cqc_connection.recvClassical()
+        print(f"RX [{self._name}] ({kind}) {msg}")
+        return msg
+
     def send_parameters(self, peer_name):
-        assert self._block_size is not None, "Block size must be set"
-        assert self._key_size is not None, "Key size must be set"
-        msg = self._block_size.to_bytes(2, 'big') + self._key_size.to_bytes(2, 'big')
-        self._cqc_connection.sendClassical(peer_name, msg)
+        msg = (self._key_size.to_bytes(2, 'big') +
+               self._window_size.to_bytes(2, 'big') +
+               self._block_size.to_bytes(2, 'big'))
+        self.send_msg(peer_name, "paramters", msg)
 
     def receive_parameters(self):
-        msg = self._cqc_connection.recvClassical()
-        assert len(msg) == 4, "Parameters message must be 2 bytes"
-        self._block_size = int.from_bytes(msg[0:2], 'big')
-        self._key_size = int.from_bytes(msg[2:4], 'big')
+        msg = self.recv_msg("parameters")
+        assert len(msg) == 6, "Parameters message must be 6 bytes"
+        self._key_size = int.from_bytes(msg[0:2], 'big')
+        self._window_size = int.from_bytes(msg[2:4], 'big')
+        self._block_size = int.from_bytes(msg[4:6], 'big')
         self._tx_stats.block_size = self._block_size
         self._rx_stats.block_size = self._block_size
 
-    def create_random_qubits_block(self):
-        block = []
-        for _ in range(self._block_size):
+    def create_random_qubits_window(self):
+        window = []
+        for _ in range(self._window_size):
             bit = random.randint(0, 1)
             basis = random_basis()
             bit_state = BitState(bit, basis, None)
-            block.append(bit_state)
-        return block
+            window.append(bit_state)
+        return window
 
-    def send_qubits_block(self, block, peer_name):
-        for bit_state in block:
+    def send_qubits_window(self, window, peer_name):
+        for bit_state in window:
             if bit_state.qubit is None:
                 bit_state.encode_qubit(self._cqc_connection)
             self._cqc_connection.sendQubit(bit_state.qubit, peer_name)
             self._tx_stats.qubit += 1
-        return block
 
-    def receive_qubits_block(self):
-        block = []
-        for _ in range(self._block_size):
+    def receive_qubits_window(self):
+        window = []
+        for _ in range(self._window_size):
             qubit = self._cqc_connection.recvQubit()
             self._rx_stats.qubit += 1
             bit_state = BitState(None, None, qubit)
-            block.append(bit_state)
-        return block
+            window.append(bit_state)
+        return window
 
     @staticmethod
-    def measure_qubits_block(block, measure_percentage=None):
-        for bit_state in block:
+    def measure_qubits_window(window, measure_percentage=None):
+        for bit_state in window:
             assert bit_state.basis is None, "Basis must be none"
             if measure_percentage is None:
                 measure = True
@@ -233,7 +246,6 @@ class Base:
                 bit_state.client_basis = random_basis()
                 bit_state.measure_qubit()
                 bit_state.basis = bit_state.client_basis
-        return block
 
     def key_is_complete(self):
         key_len = len(self._key)
@@ -280,11 +292,11 @@ class Base:
     def send_client_basis(self, block, peer_name):
         msg = b""
         for bit_state in block:
-            msg += bit_state.client_basis.to_bytes()
-        self._cqc_connection.sendClassical(peer_name, msg)
+            msg += bit_state.client_basis
+        self.send_msg(peer_name, "basis", msg)
 
     def receive_client_basis(self, block):
-        msg = self._cqc_connection.recvClassical()
+        msg = self.recv_msg("basis")
         assert len(msg) == self._block_size, "Chosen basis message has wrong size"
         i = 0
         for bit_state in block:
@@ -296,16 +308,16 @@ class Base:
         for bit_state in block:
             msg += bit_state.decision
             self.count_decision(bit_state.decision, self._tx_stats)
-        self._cqc_connection.sendClassical(peer_name, msg)
+        self.send_msg(peer_name, "decision", msg)
         self._tx_stats.decision_msg += 1
 
     def receive_decisions(self, block):
-        msg = self._cqc_connection.recvClassical()
+        msg = self.recv_msg("decision")
         self._rx_stats.decision_msg += 1
         assert len(msg) == self._block_size, "Server decisions message has wrong size"
         i = 0
         for bit_state in block:
-            bit_state.decission = msg[i:i+1]
+            bit_state.decision = msg[i:i+1]
             self.count_decision(bit_state.decision, self._rx_stats)
             if bit_state.decision == _DECISION_KEEP_AS_KEY:
                 self._key.append(bit_state.bit)
@@ -342,10 +354,10 @@ class Base:
             msg += bit_state.comparison
             self.count_comparison(bit_state.comparison, self._tx_stats)
         self._tx_stats.comparison_msg += 1
-        self._cqc_connection.sendClassical(peer_name, msg)
+        self.send_msg(peer_name, "comparison", msg)
 
     def receive_comparison(self, block):
-        msg = self._cqc_connection.recvClassical()
+        msg = self.recv_msg("comparison")
         self._rx_stats.comparison_msg += 1
         i = 0
         for bit_state in block:
@@ -374,8 +386,13 @@ class Server(Base):
         self._tx_stats.block += 1
         self._rx_stats.block += 1
         self._revealed_bits_in_block = 0
-        block = self.create_random_qubits_block()
-        self.send_qubits_block(block, self._client_name)
+        assert self._block_size % self._window_size == 0
+        block = []
+        for _ in range(self._block_size // self._window_size):
+            window = self.create_random_qubits_window()
+            self.send_qubits_window(window, self._client_name)
+            block += window
+            self.recv_msg("ack")
         self.receive_client_basis(block)
         self.decide_what_to_do_with_block(block)
         self.send_decisions(block, self._client_name)
@@ -393,10 +410,11 @@ class Server(Base):
 
 class Client(Base):
 
-    def __init__(self, name, server_name, key_size, block_size):
+    def __init__(self, name, server_name, key_size, window_size, block_size):
         Base.__init__(self, name)
         self._server_name = server_name
         self._key_size = key_size
+        self._window_size = window_size
         self._block_size = block_size
         self._tx_stats.block_size = self._block_size
         self._rx_stats.block_size = self._block_size
@@ -404,8 +422,13 @@ class Client(Base):
     def process_block(self):
         self._tx_stats.block += 1
         self._rx_stats.block += 1
-        block = self.receive_qubits_block()
-        self.measure_qubits_block(block)
+        assert self._block_size % self._window_size == 0
+        block = []
+        for _ in range(self._block_size // self._window_size):
+            window = self.receive_qubits_window()
+            self.measure_qubits_window(window)
+            block += window
+            self.send_msg(self._server_name, "ack", _ACK)
         self.send_client_basis(block, self._server_name)
         self.receive_decisions(block)
         self.compute_comparison(block)
@@ -433,9 +456,15 @@ class Middle(Base):
         self._tx_stats.block += 1
         self._rx_stats.block += 1
         self._revealed_bits_in_block = 0
-        block = self.receive_qubits_block()
-        self.measure_qubits_block(block, self._observe_percentage)
-        self.send_qubits_block(block, self._client_name)
+        assert self._block_size % self._window_size == 0
+        block = []
+        for _ in range(self._block_size // self._window_size):
+            window = self.receive_qubits_window()
+            self.measure_qubits_window(window, self._observe_percentage)
+            self.send_msg(self._server_name, "ack", _ACK)
+            self.send_qubits_window(window, self._client_name)
+            self.recv_msg("ack")
+            block += window
         self.receive_client_basis(block)
         self.send_client_basis(block, self._server_name)
         self.receive_decisions(block)

@@ -1,13 +1,15 @@
 import argparse
 import bb84
 
-def main(observe_percentage):
-    middle = bb84.Middle("Eve", "Alice", "Bob", observe_percentage)
-    middle.pass_through(report=True)
+def main(observe_percentage, trace, report):
+    middle = bb84.Middle("Eve", "Alice", "Bob", observe_percentage, trace=trace, report=report)
+    middle.pass_through()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Eve')
     parser.add_argument('-o', '--observe', type=int, default='0',
                         help='Percentage of observed qubits')
+    parser.add_argument('-r', '--report', action='store_true', help='Report statistics')
+    parser.add_argument('-t', '--trace', action='store_true', help='Trace classical messages')
     args = parser.parse_args()
-    main(args.observe)
+    main(args.observe, args.trace, args.report)

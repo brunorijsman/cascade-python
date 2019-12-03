@@ -9,12 +9,8 @@ import cqc.pythonLib as cqclib
 # TODO: Add noise estimation
 # TODO: Add information reconciliation
 # TODO: Add privacy amplification
-# TODO: Stop all processes and simulaqron at script exit
-# TODO: Add observe_qubit_percentage to Middle class
-# TODO: Control message tracing with environment variable
 # TODO: Keep stats for measured qubits
 # TODO: Report Alice and Bob key, and differences at end of run
-# TODO: More deterministic selection of key and test bits (actually select precisely half)
 # TODO: Generate documentation
 # TODO: Automated unit test
 # TODO: CI/CD pipeline
@@ -161,7 +157,7 @@ class Stats:
 
 class Base:
 
-    def __init__(self, name):
+    def __init__(self, name, **kwargs):
         self._name = name
         self._cqc_connection = cqclib.CQCConnection(name)
         self._cqc_connection.__enter__()
@@ -172,18 +168,22 @@ class Base:
         self._key = []
         self._tx_stats = Stats(False, None)
         self._rx_stats = Stats(True, None)
+        self._trace = kwargs.get("trace")
+        self._report = kwargs.get("report")
 
     def __del__(self):
         # TODO: Is this inherited?
         self._cqc_connection.__exit__(None, None, None)
 
     def send_msg(self, to, kind, msg):
-        print(f"TX [{self._name}->{to}] ({kind}) {msg}")
+        if self._trace:
+            print(f"TX [{self._name}->{to}] ({kind}) {msg}")
         self._cqc_connection.sendClassical(to, msg)
 
     def recv_msg(self, kind):
         msg = self._cqc_connection.recvClassical()
-        print(f"RX [{self._name}] ({kind}) {msg}")
+        if self._trace:
+            print(f"RX [{self._name}] ({kind}) {msg}")
         return msg
 
     def send_parameters(self, peer_name):
@@ -259,7 +259,7 @@ class Base:
                 bit_state.decision = _DECISION_REVEAL_AS_0
             else:
                 bit_state.decision = _DECISION_REVEAL_AS_1
-            self._revealed_bits_in_block += 1  ###@@@ Right thing for middle?
+            self._revealed_bits_in_block += 1
 
     def decide_what_to_do_with_block(self, block):
         for bit_state in block:
@@ -384,8 +384,8 @@ class Base:
 
 class Server(Base):
 
-    def __init__(self, name, client_name):
-        Base.__init__(self, name)
+    def __init__(self, name, client_name, **kwargs):
+        Base.__init__(self, name, **kwargs)
         self._client_name = client_name
 
     def process_block(self):
@@ -403,20 +403,20 @@ class Server(Base):
         self.send_decisions(block, self._client_name)
         self.receive_comparison(block)
 
-    def agree_key(self, report=False):
+    def agree_key(self):
         start_time = time.perf_counter()
         self.receive_parameters()
         while not self.key_is_complete():
             self.process_block()
         elapsed_time = time.perf_counter() - start_time
-        if report:
+        if self._report:
             self.print_report(elapsed_time)
         return self._key
 
 class Client(Base):
 
-    def __init__(self, name, server_name, key_size, window_size, block_size):
-        Base.__init__(self, name)
+    def __init__(self, name, server_name, key_size, window_size, block_size, **kwargs):
+        Base.__init__(self, name, **kwargs)
         self._server_name = server_name
         self._key_size = key_size
         self._window_size = window_size
@@ -438,20 +438,20 @@ class Client(Base):
         self.compute_comparison(block)
         self.send_comparison(block, self._server_name)
 
-    def agree_key(self, report=False):
+    def agree_key(self):
         start_time = time.perf_counter()
         self.send_parameters(self._server_name)
         while not self.key_is_complete():
             self.process_block()
         elapsed_time = time.perf_counter() - start_time
-        if report:
+        if self._report:
             self.print_report(elapsed_time)
         return self._key
 
 class Middle(Base):
 
-    def __init__(self, name, server_name, client_name, observe_percentage):
-        Base.__init__(self, name)
+    def __init__(self, name, server_name, client_name, observe_percentage, **kwargs):
+        Base.__init__(self, name, **kwargs)
         self._server_name = server_name
         self._client_name = client_name
         self._observe_percentage = observe_percentage
@@ -475,12 +475,12 @@ class Middle(Base):
         self.receive_comparison(block)
         self.send_comparison(block, self._server_name)
 
-    def pass_through(self, report=False):
+    def pass_through(self):
         start_time = time.perf_counter()
         self.receive_parameters()
         self.send_parameters(self._server_name)
         while not self.key_is_complete():
             self.process_block()
         elapsed_time = time.perf_counter() - start_time
-        if report:
+        if self._report:
             self.print_report(elapsed_time)

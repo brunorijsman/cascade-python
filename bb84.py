@@ -21,7 +21,6 @@ import cqc.pythonLib as cqclib
 # TODO: Automated unit test
 # TODO: CI/CD pipeline
 # TODO: Handle case that block size is not multiple of window size
-# TODO: Count basis messages in stats
 
 _DECISION_NONE = b'.'
 _DECISION_BASIS_MISMATCH = b'M'
@@ -106,6 +105,7 @@ class Stats:
         self.block_size = block_size
         self.qubit = 0
         self.qubit_measured = 0
+        self.basis_msg = 0
         self.decision_msg = 0
         self.decision_basis_mismatch = 0
         self.decision_use_as_key = 0
@@ -127,6 +127,9 @@ class Stats:
             report.add(f"  Qubits: {self.qubit} " +
                        f"{throughput_str(self.qubit, elapsed_time, 'qubits')}")
             # TODO: Measured qubits
+        if self.basis_msg:
+            report.add(f"  Basis messages: {self.basis_msg} " +
+                       f"{throughput_str(self.basis_msg, elapsed_time, 'messages')}")
         if self.decision_msg:
             report.add(f"  Decision messages: {self.decision_msg} " +
                        f"{throughput_str(self.decision_msg, elapsed_time, 'messages')}")
@@ -294,9 +297,11 @@ class Base:
         for bit_state in block:
             msg += bit_state.client_basis
         self.send_msg(peer_name, "basis", msg)
+        self._tx_stats.basis_msg += 1
 
     def receive_client_basis(self, block):
         msg = self.recv_msg("basis")
+        self._rx_stats.basis_msg += 1
         assert len(msg) == self._block_size, "Chosen basis message has wrong size"
         i = 0
         for bit_state in block:

@@ -14,7 +14,6 @@ import cqc.pythonLib as cqclib
 # TODO: Control message tracing with environment variable
 # TODO: Eve to report which key bits she gleaned ?=wrongbasis 01=gleaned .=did not measure
 # TODO: Keep stats for measured qubits
-# TODO: If qubit is measured, do so immediately
 # TODO: Report Alice and Bob key, and differences at end of run
 # TODO: More deterministic selection of key and test bits (actually select precisely half)
 # TODO: Generate documentation
@@ -228,27 +227,18 @@ class Base:
             self._cqc_connection.sendQubit(bit_state.qubit, peer_name)
             self._tx_stats.qubit += 1
 
-    def receive_qubits_window(self):
+    def receive_and_measure_qubits_window(self, measure_percentage):
         window = []
         for _ in range(self._window_size):
             qubit = self._cqc_connection.recvQubit()
             self._rx_stats.qubit += 1
             bit_state = BitState(None, None, qubit)
-            window.append(bit_state)
-        return window
-
-    @staticmethod
-    def measure_qubits_window(window, measure_percentage=None):
-        for bit_state in window:
-            assert bit_state.basis is None, "Basis must be none"
-            if measure_percentage is None:
-                measure = True
-            else:
-                measure = random.randint(1, 100) <= measure_percentage
-            if measure:
+            if random.randint(1, 100) <= measure_percentage:
                 bit_state.client_basis = random_basis()
                 bit_state.measure_qubit()
                 bit_state.basis = bit_state.client_basis
+            window.append(bit_state)
+        return window
 
     def key_is_complete(self):
         key_len = len(self._key)
@@ -430,8 +420,7 @@ class Client(Base):
         assert self._block_size % self._window_size == 0
         block = []
         for _ in range(self._block_size // self._window_size):
-            window = self.receive_qubits_window()
-            self.measure_qubits_window(window)
+            window = self.receive_and_measure_qubits_window(100)
             block += window
             self.send_msg(self._server_name, "ack", _ACK)
         self.send_client_basis(block, self._server_name)
@@ -464,8 +453,7 @@ class Middle(Base):
         assert self._block_size % self._window_size == 0
         block = []
         for _ in range(self._block_size // self._window_size):
-            window = self.receive_qubits_window()
-            self.measure_qubits_window(window, self._observe_percentage)
+            window = self.receive_and_measure_qubits_window(self._observe_percentage)
             self.send_msg(self._server_name, "ack", _ACK)
             self.send_qubits_window(window, self._client_name)
             self.recv_msg("ack")

@@ -3,7 +3,6 @@ import sys
 import time
 import cqc.pythonLib as cqclib
 
-# TODO: Window vs block
 # TODO: Add authentication and data integrety on classical channel (see http://bit.ly/bb84auth)
 # TODO: Add documentation comments
 # TODO: Add type annotations
@@ -22,6 +21,7 @@ import cqc.pythonLib as cqclib
 # TODO: Automated unit test
 # TODO: CI/CD pipeline
 # TODO: Handle case that block size is not multiple of window size
+# TODO: Count basis messages in stats
 
 _DECISION_NONE = b'.'
 _DECISION_BASIS_MISMATCH = b'M'

@@ -3,6 +3,7 @@ import sys
 import time
 import cqc.pythonLib as cqclib
 
+# TODO: Window vs block
 # TODO: Add authentication and data integrety on classical channel (see http://bit.ly/bb84auth)
 # TODO: Add documentation comments
 # TODO: Add type annotations
@@ -17,6 +18,19 @@ import cqc.pythonLib as cqclib
 # TODO: If qubit is measured, do so immediately
 # TODO: Report Alice and Bob key, and differences at end of run
 # TODO: More deterministic selection of key and test bits (actually select precisely half)
+# TODO: Generate documentation
+# TODO: Automated unit test
+# TODO: CI/CD pipeline
+
+_DECISION_NONE = b'?'
+_DECISION_BASIS_MISMATCH = b'M'
+_DECISION_KEEP_AS_KEY = b'K'
+_DECISION_REVEAL_AS_0 = b'0'
+_DECISION_REVEAL_AS_1 = b'1'
+
+_COMPARISON_NONE = b'.'
+_COMPARISON_SAME = b'S'
+_COMPARISON_DIFFERENT = b'D'
 
 def percent_str(count, total):
     if total == 0:
@@ -87,66 +101,26 @@ class Basis:
 
 class BitState:
 
-    DECISION_NONE = b'?'
-    DECISION_BASIS_MISMATCH = b'M'
-    DECISION_KEEP_AS_KEY = b'K'
-    DECISION_REVEAL_AS_0 = b'0'
-    DECISION_REVEAL_AS_1 = b'1'
-
-    COMPARISON_NONE = b'.'
-    COMPARISON_SAME = b'S'
-    COMPARISON_DIFFERENT = b'D'
-
     def __init__(self, bit, basis, qubit):
         self.bit = bit
         self.basis = basis
         self.client_basis = None
         self.qubit = qubit
-        self.decision = self.DECISION_NONE
-        self.comparison = self.COMPARISON_NONE
+        self.decision = _DECISION_NONE
+        self.comparison = _COMPARISON_NONE
 
     def encode_qubit(self, cqc_connection):
         self.qubit = cqclib.qubit(cqc_connection)
-        if self.basis.is_computational():
-            if self.bit == 0:
-                pass
-            elif self.bit == 1:
-                self.qubit.X()
-            else:
-                assert False, "Unknown bit value"
-        elif self.basis.is_hadamard():
-            if self.bit == 0:
-                self.qubit.H()
-            elif self.bit == 1:
-                self.qubit.X()
-                self.qubit.H()
-            else:
-                assert False, "Unknown bit value"
-        else:
-            assert False, "Unknown basis"
+        if self.basis.is_hadamard():
+            self.qubit.H()
+        if self.bit == 1:
+            self.qubit.X()
 
     def measure_qubit(self):
-        if self.client_basis.is_computational():
-            pass
-        elif self.client_basis.is_hadamard():
+        if self.client_basis.is_hadamard():
             self.qubit.H()
-        else:
-            assert False, "Unknown basis"
         self.bit = self.qubit.measure()
         self.qubit = None
-
-    def encode_decision(self):
-        return self.decision
-
-    def decode_decission(self, encoded_decision):
-        assert len(encoded_decision) == 1, "Encoded decision must be 1 byte"
-        assert self.decision in [self.DECISION_NONE,
-                                 self.DECISION_BASIS_MISMATCH,
-                                 self.DECISION_KEEP_AS_KEY,
-                                 self.DECISION_REVEAL_AS_0,
-                                 self.DECISION_REVEAL_AS_1], \
-               f"Encoded decision has unexpected value {encoded_decision}"
-        self.decision = encoded_decision
 
 class Report:
 
@@ -309,7 +283,7 @@ class Base:
 
     def decide_what_to_do_with_bit(self, bit_state):
         if bit_state.basis != bit_state.client_basis:
-            bit_state.decision = BitState.DECISION_BASIS_MISMATCH
+            bit_state.decision = _DECISION_BASIS_MISMATCH
             return
         if self.key_is_complete():
             keep_as_key = False
@@ -318,13 +292,13 @@ class Base:
         else:
             keep_as_key = random.randint(0, 1) == 0
         if keep_as_key:
-            bit_state.decision = BitState.DECISION_KEEP_AS_KEY
+            bit_state.decision = _DECISION_KEEP_AS_KEY
             self._key.append(bit_state.bit)
         else:
             if bit_state.bit == 0:
-                bit_state.decision = BitState.DECISION_REVEAL_AS_0
+                bit_state.decision = _DECISION_REVEAL_AS_0
             else:
-                bit_state.decision = BitState.DECISION_REVEAL_AS_1
+                bit_state.decision = _DECISION_REVEAL_AS_1
             self._revealed_bits_in_block += 1  ###@@@ Right thing for middle?
 
     def decide_what_to_do_with_block(self, block):
@@ -333,13 +307,13 @@ class Base:
 
     @staticmethod
     def count_decision(decision, stats):
-        if decision == BitState.DECISION_BASIS_MISMATCH:
+        if decision == _DECISION_BASIS_MISMATCH:
             stats.decision_basis_mismatch += 1
-        elif decision == BitState.DECISION_KEEP_AS_KEY:
+        elif decision == _DECISION_KEEP_AS_KEY:
             stats.decision_use_as_key += 1
-        elif decision == BitState.DECISION_REVEAL_AS_0:
+        elif decision == _DECISION_REVEAL_AS_0:
             stats.decision_reveal_as_0 += 1
-        elif decision == BitState.DECISION_REVEAL_AS_1:
+        elif decision == _DECISION_REVEAL_AS_1:
             stats.decision_reveal_as_1 += 1
 
     def send_client_basis(self, block, peer_name):
@@ -359,7 +333,7 @@ class Base:
     def send_decisions(self, block, peer_name):
         msg = b""
         for bit_state in block:
-            msg += bit_state.encode_decision()
+            msg += bit_state.decision
             self.count_decision(bit_state.decision, self._tx_stats)
         self._cqc_connection.sendClassical(peer_name, msg)
         self._tx_stats.decision_msg += 1
@@ -370,35 +344,35 @@ class Base:
         assert len(msg) == self._block_size, "Server decisions message has wrong size"
         i = 0
         for bit_state in block:
-            bit_state.decode_decission(msg[i:i+1])
+            bit_state.decission = msg[i:i+1]
             self.count_decision(bit_state.decision, self._rx_stats)
-            if bit_state.decision == BitState.DECISION_KEEP_AS_KEY:
+            if bit_state.decision == _DECISION_KEEP_AS_KEY:
                 self._key.append(bit_state.bit)
             i += 1
 
     @staticmethod
     def compute_comparison(block):
         for bit_state in block:
-            if bit_state.decision == bit_state.DECISION_REVEAL_AS_0:
+            if bit_state.decision == _DECISION_REVEAL_AS_0:
                 if bit_state.bit == 0:
-                    bit_state.comparison = BitState.COMPARISON_SAME
+                    bit_state.comparison = _COMPARISON_SAME
                 else:
-                    bit_state.comparison = BitState.COMPARISON_DIFFERENT
-            elif bit_state.decision == bit_state.DECISION_REVEAL_AS_1:
+                    bit_state.comparison = _COMPARISON_DIFFERENT
+            elif bit_state.decision == _DECISION_REVEAL_AS_1:
                 if bit_state.bit == 1:
-                    bit_state.comparison = BitState.COMPARISON_SAME
+                    bit_state.comparison = _COMPARISON_SAME
                 else:
-                    bit_state.comparison = BitState.COMPARISON_DIFFERENT
+                    bit_state.comparison = _COMPARISON_DIFFERENT
             else:
-                bit_state.comparison = BitState.COMPARISON_NONE
+                bit_state.comparison = _COMPARISON_NONE
 
     @staticmethod
     def count_comparison(comparison, stats):
-        if comparison == BitState.COMPARISON_NONE:
+        if comparison == _COMPARISON_NONE:
             stats.comparison_none += 1
-        elif comparison == BitState.COMPARISON_SAME:
+        elif comparison == _COMPARISON_SAME:
             stats.comparison_same += 1
-        elif comparison == BitState.COMPARISON_DIFFERENT:
+        elif comparison == _COMPARISON_DIFFERENT:
             stats.comparison_different += 1
 
     def send_comparison(self, block, peer_name):

@@ -5,9 +5,7 @@ install:
   - virtualenv env --python=python3
   - source env/bin/activate
   - pip install -r requirements.txt
-  - simulaqron version
-  - pytest --version
 script:
-  - pytest -v -s
+  - pylint *.py && pytest -v -s --cov
 after_success:
   - codecov

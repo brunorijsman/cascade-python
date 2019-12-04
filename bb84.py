@@ -15,6 +15,7 @@ import cqc.pythonLib as cqclib
 # TODO: Automated unit test
 # TODO: CI/CD pipeline
 # TODO: Handle case that block size is not multiple of window size
+# TODO: Get rid of report kwarg, instead make report public
 
 _DECISION_NONE = b'.'
 _DECISION_BASIS_MISMATCH = b'M'

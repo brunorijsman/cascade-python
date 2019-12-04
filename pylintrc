@@ -10,4 +10,5 @@ disable=
     too-many-instance-attributes,
     too-few-public-methods,
     too-many-public-methods,
-    fixme
+    fixme,
+    global-statement,  # TODO Remove this once issue #246 is fixed.

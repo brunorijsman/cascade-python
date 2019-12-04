@@ -7,9 +7,13 @@ echo
 echo "***** Scenario: Alice and Bob, Eve is present but does not observe qubits *****"
 echo
 
-# In case it was still running from a previous test
-echo "Stopping SimulaQron"
-simulaqron stop
+echo "killing old SimulaQron"
+pkill -f simulaqron
+
+echo "killing old Alice, Bob, and Eve"
+pkill -f alice.py
+pkill -f bob.py
+pkill -f eve.py
 
 echo "Starting SimulaQron"
 simulaqron start --force --nodes Alice,Eve,Bob --topology path
@@ -19,7 +23,8 @@ python alice.py --eve "$@" &
 alice_pid=$!
 
 echo "Starting Bob"
-python bob.py --eve --key-size ${KEY_SIZE} "$@" &
+###@@@ python bob.py --eve --key-size ${KEY_SIZE} "$@" &
+python bob.py --eve --key-size 8 --window-size 2 --block-size 2 "$@" &
 bob_pid=$!
 
 echo "Starting Eve"

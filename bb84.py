@@ -1,3 +1,4 @@
+import logging
 import random
 import sys
 import time
@@ -31,6 +32,10 @@ _BASIS_COMPUTATIONAL = b'+'
 _BASIS_HADAMARD = b'x'
 
 _ACK = b'A'
+
+# TODO: The following is a terrible hack to avoid BrokenPipe errors in Simulaqron
+# when a node sends two messages in succession. Remove this once issue #246 is fixed.
+NEED_SLEEP_BEFORE_SEND = False
 
 def percent_str(count, total):
     if total == 0:
@@ -160,6 +165,7 @@ class Base:
 
     def __init__(self, name, **kwargs):
         self._name = name
+        # TODO: Add log_level=logging.DEBUG to the following line to debug Simulaqron issues
         self._cqc_connection = cqclib.CQCConnection(name)
         self._cqc_connection.__enter__()
         self._key_size = None
@@ -177,11 +183,27 @@ class Base:
         self._cqc_connection.__exit__(None, None, None)
 
     def send_msg(self, to, kind, msg):
+
+        # TODO: The following is a terrible hack to avoid BrokenPipe errors in Simulaqron
+        # when a node sends two messages in succession. Remove this once issue #246 is fixed.
+        global NEED_SLEEP_BEFORE_SEND
+        if NEED_SLEEP_BEFORE_SEND:
+            time.sleep(1)
+        NEED_SLEEP_BEFORE_SEND = True
+
         if self._trace:
             print(f"TX [{self._name}->{to}] ({kind}) {msg}")
+        # TODO: Add close_after=False once we have fixed the issues in Simulaqron
         self._cqc_connection.sendClassical(to, msg)
 
     def recv_msg(self, kind):
+
+        # TODO: The following is a terrible hack to avoid BrokenPipe errors in Simulaqron
+        # when a node sends two messages in succession. Remove this once issue #246 is fixed.
+        global NEED_SLEEP_BEFORE_SEND
+        NEED_SLEEP_BEFORE_SEND = False
+
+        # TODO: Add close_after=False once we have fixed the issues in Simulaqron
         msg = self._cqc_connection.recvClassical()
         if self._trace:
             print(f"RX [{self._name}] ({kind}) {msg}")
@@ -215,6 +237,12 @@ class Base:
         return window
 
     def receive_and_measure_qubits_window(self, measure_percentage):
+
+        # TODO: The following is a terrible hack to avoid BrokenPipe errors in Simulaqron
+        # when a node sends two messages in succession. Remove this once issue #246 is fixed.
+        global NEED_SLEEP_BEFORE_SEND
+        NEED_SLEEP_BEFORE_SEND = False
+
         window = []
         for _ in range(self._window_size):
             qubit = self._cqc_connection.recvQubit()

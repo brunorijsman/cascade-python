@@ -1,0 +1,11 @@
+language: python
+python:
+  - "3.7"
+install:
+  - virtualenv env --python=python3
+  - source env/bin/activate
+  - pip install -r requirements.txt
+script:
+  - pytest -v && pylint *.py  
+after_success:
+  - codecov

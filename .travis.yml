@@ -7,6 +7,9 @@ install:
   - pip install -r requirements.txt
   - simulaqron version
   - pytest --version
+  # Python3 needs root to kill old simulaqron processes
+  - sudo chown root env/bin/python3  
+  - sudo chmod u+s env/bin/python3
 script:
   - pytest -v -s && pylint *.py  
 after_success:

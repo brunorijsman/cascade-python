@@ -5,10 +5,10 @@ import bb84
 
 def start_simulaqron(eve_present=False):
 
-    print("Killing old simulaqron processes...")
-    subprocess.call(["pkill", "-f", "simulaqron"])
-    time.sleep(1)
-    print("Old simulaqron processes killed")
+    print("Stopping old simulaqron processes...")
+    subprocess.call(['simulaqron', 'stop'])
+    time.sleep(3)
+    print("Old simulaqron processes stopped")
 
     print("Starting Simulaqron...")
     nodes = 'Alice,Eve,Bob' if eve_present else 'Alice,Bob'

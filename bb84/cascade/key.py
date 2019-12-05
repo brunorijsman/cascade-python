@@ -1,3 +1,5 @@
+import random
+
 class Key:
 
     def __init__(self, key_size, copy_of_key=None, error_rate=None):
@@ -9,7 +11,7 @@ class Key:
             copy_of_key (None or Key): If not None, set the bits in this key to random values.
                 If not None, create a copy of this key
             error_rate (None or float between 0.0 and 1.0 inclusive): If None, no noise is applied.
-                If not None, this is the probability of a bit flip when copying a key. 
+                If not None, this is the probability of a bit flip when copying a key.
         """
 
         # Validate arguments
@@ -32,7 +34,7 @@ class Key:
                 if error_rate and random.random() < error_rate:
                     bit_value = 1 - bit_value
                 self._bits[i] = bit_value
-            
+
         else:
 
             # Create a new random key

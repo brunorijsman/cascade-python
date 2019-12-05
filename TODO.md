@@ -32,6 +32,8 @@
 
  * Progress on Cascade implementation (information reconciliation):
 
+   * Add unit test cases for Key
+
    * Each key bit keeps track of which Blocks it is used in
 
    * Implement Block class

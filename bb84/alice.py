@@ -1,8 +1,8 @@
 import argparse
-import bb84
+from .server import Server
 
 def agree_key_with_client(client_name, trace, report):
-    server = bb84.Server("Alice", client_name, trace=trace, report=report)
+    server = Server("Alice", client_name, trace=trace, report=report)
     _key = server.agree_key()
 
 if __name__ == "__main__":

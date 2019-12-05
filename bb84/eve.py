@@ -1,8 +1,8 @@
 import argparse
-import bb84
+from .middle import Middle
 
 def main(observe_percentage, trace, report):
-    middle = bb84.Middle("Eve", "Alice", "Bob", observe_percentage, trace=trace, report=report)
+    middle = Middle("Eve", "Alice", "Bob", observe_percentage, trace=trace, report=report)
     middle.pass_through()
 
 if __name__ == "__main__":

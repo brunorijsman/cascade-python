@@ -12,4 +12,6 @@ disable=
     too-many-public-methods,
     fixme,
     duplicate-code,
+    wildcard-import,
+    unused-wildcard-import,
     global-statement,  # TODO Remove this once issue #246 is fixed.

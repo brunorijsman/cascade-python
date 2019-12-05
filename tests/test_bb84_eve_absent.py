@@ -1,15 +1,15 @@
 import pytest
-import test_common
+from .common import *
 
 @pytest.fixture(scope="function", autouse=True)
 def start_stop_simulaqron():
-    test_common.start_simulaqron()
+    start_simulaqron()
     yield
-    test_common.stop_simulaqron()
+    stop_simulaqron()
 
 def run_eve_absent_scenario(key_size, block_size, window_size):
 
-    (alice, bob) = test_common.run_nodes(key_size, block_size, window_size)
+    (alice, bob) = run_nodes(key_size, block_size, window_size)
 
     alice_key = alice.key_str()
     print(f"Alice key: {alice_key}")

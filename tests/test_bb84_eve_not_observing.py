@@ -1,15 +1,15 @@
 import pytest
-import test_common
+from .common import *
 
 @pytest.fixture(scope="function", autouse=True)
 def start_stop_simulaqron():
-    test_common.start_simulaqron(True)
+    start_simulaqron(True)
     yield
-    test_common.stop_simulaqron()
+    stop_simulaqron()
 
 def run_eve_not_observing_scenario(key_size, block_size, window_size):
 
-    (alice, bob, eve) = test_common.run_nodes(key_size, block_size, window_size, True, 0)
+    (alice, bob, eve) = run_nodes(key_size, block_size, window_size, True, 0)
 
     alice_key = alice.key_str()
     print(f"Alice key: {alice_key}")

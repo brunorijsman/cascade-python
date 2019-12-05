@@ -1,7 +1,8 @@
 import subprocess
 import threading
 import time
-import bb84
+
+import bb84.server
 
 def start_simulaqron(eve_present=False):
 

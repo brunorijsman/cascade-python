@@ -22,9 +22,11 @@ echo "killing old Alice, Bob, and Eve"
 pkill -f alice.py
 pkill -f bob.py
 pkill -f eve.py
+sleep 1
 
 echo "Starting SimulaQron"
 simulaqron start --force --nodes Alice,Bob --topology path
+sleep 3
 
 echo "Starting Alice"
 python alice.py --report "$@" &

@@ -22,16 +22,18 @@ echo "killing old Alice, Bob, and Eve"
 pkill -f alice.py
 pkill -f bob.py
 pkill -f eve.py
+sleep 1
 
 echo "Starting SimulaQron"
 simulaqron start --force --nodes Alice,Eve,Bob --topology path
+sleep 3
 
 echo "Starting Alice"
 python alice.py --report --eve "$@" &
 alice_pid=$!
 
 echo "Starting Bob"
-python bob.py --report --eve --key-size 8 --window-size 2 --block-size 2 "$@" &
+python bob.py --report --eve --key-size ${KEY_SIZE} --window-size 2 --block-size 2 "$@" &
 bob_pid=$!
 
 echo "Starting Eve"
@@ -42,6 +44,9 @@ echo "Waiting for Alice to finish"
 wait $alice_pid
 
 echo "Waiting for Bob to finish"
+wait $bob_pid
+
+echo "Waiting for Eve to finish"
 wait $bob_pid
 
 echo "Stopping SimulaQron"

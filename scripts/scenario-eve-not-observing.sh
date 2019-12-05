@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [ -z ${VIRTUAL_ENV+X} ]; then
+    echo "Virtual environment is not activated"
+    exit 1
+fi
+cd ${VIRTUAL_ENV}/../scripts
+export PYTHONPATH=${VIRTUAL_ENV}/..
+
 # TODO: Only set if not already set
 KEY_SIZE=32
 
@@ -19,16 +26,15 @@ echo "Starting SimulaQron"
 simulaqron start --force --nodes Alice,Eve,Bob --topology path
 
 echo "Starting Alice"
-python alice.py --eve "$@" &
+python alice.py --report --eve "$@" &
 alice_pid=$!
 
 echo "Starting Bob"
-###@@@ python bob.py --eve --key-size ${KEY_SIZE} "$@" &
-python bob.py --eve --key-size 8 --window-size 2 --block-size 2 "$@" &
+python bob.py --report --eve --key-size 8 --window-size 2 --block-size 2 "$@" &
 bob_pid=$!
 
 echo "Starting Eve"
-python eve.py "$@" &
+python eve.py --report "$@" &
 eve_pid=$!
 
 echo "Waiting for Alice to finish"
@@ -39,3 +45,4 @@ wait $bob_pid
 
 echo "Stopping SimulaQron"
 simulaqron stop
+sleep 3

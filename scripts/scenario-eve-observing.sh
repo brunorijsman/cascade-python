@@ -17,7 +17,6 @@ echo
 echo "Stopping old SimulaQron"
 simulaqron stop
 sleep 3
-sleep 1
 
 echo "killing old Alice, Bob, and Eve"
 pkill -f alice.py

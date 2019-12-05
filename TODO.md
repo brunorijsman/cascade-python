@@ -2,11 +2,9 @@
 
  * Add documentation comments
 
- * Add type annotations
+ * Add type annotations (later, makes the code very less readable)
 
  * Add noise estimation
-
- * Add information reconciliation
 
  * Add privacy amplification
 
@@ -25,3 +23,19 @@
  * Introduce "Evan" who does a full man-in-the-middle attack
 
  * Introduce a middle node for modeling normal (non-attack) noise
+
+ * Move tests directory into module directory of module being tested
+
+ * Start Sphinx documentation
+
+ * Integrate Sphinx documentation into CI/CD workflow (travis and read the docs)
+
+ * Progress on Cascade implementation (information reconciliation):
+
+   * Each key bit keeps track of which Blocks it is used in
+
+   * Implement Block class
+
+   * Implement basic Cascade algorithm
+
+   * Replicate Andre Reis Cascade study to make sure that my implementation is sane

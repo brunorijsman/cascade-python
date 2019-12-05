@@ -1,10 +1,10 @@
 import time
-from .base import Base
+from .node import Node
 
-class Server(Base):
+class Server(Node):
 
     def __init__(self, name, client_name, **kwargs):
-        Base.__init__(self, name, **kwargs)
+        Node.__init__(self, name, **kwargs)
         self._client_name = client_name
 
     def process_block(self):

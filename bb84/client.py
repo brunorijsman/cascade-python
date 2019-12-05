@@ -1,11 +1,11 @@
 import time
-from .base import Base
+from .node import Node
 from .constants import *
 
-class Client(Base):
+class Client(Node):
 
     def __init__(self, name, server_name, key_size, window_size, block_size, **kwargs):
-        Base.__init__(self, name, **kwargs)
+        Node.__init__(self, name, **kwargs)
         self._server_name = server_name
         self._key_size = key_size
         self._window_size = window_size

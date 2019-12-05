@@ -1,11 +1,11 @@
 import time
-from .base import Base
+from .node import Node
 from .constants import *
 
-class Middle(Base):
+class Middle(Node):
 
     def __init__(self, name, server_name, client_name, observe_percentage, **kwargs):
-        Base.__init__(self, name, **kwargs)
+        Node.__init__(self, name, **kwargs)
         self._server_name = server_name
         self._client_name = client_name
         self._observe_percentage = observe_percentage

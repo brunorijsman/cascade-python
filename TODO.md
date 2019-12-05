@@ -22,8 +22,6 @@
 
  * Populate README.md file
 
- * Rename Base to Node
-
  * Introduce "Evan" who does a full man-in-the-middle attack
 
  * Introduce a middle node for modeling normal (non-attack) noise

@@ -15,7 +15,7 @@ def random_basis():
         return BASIS_COMPUTATIONAL
     return BASIS_HADAMARD
 
-class Base:
+class Node:
 
     def __init__(self, name, **kwargs):
         self._name = name

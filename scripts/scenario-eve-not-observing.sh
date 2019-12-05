@@ -14,8 +14,9 @@ echo
 echo "***** Scenario: Alice and Bob, Eve is present but does not observe qubits *****"
 echo
 
-echo "killing old SimulaQron"
-pkill -f simulaqron
+echo "Stopping old SimulaQron"
+simulaqron stop
+sleep 3
 
 echo "killing old Alice, Bob, and Eve"
 pkill -f alice.py

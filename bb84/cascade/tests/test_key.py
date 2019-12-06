@@ -111,10 +111,10 @@ def test_copy_with_noise():
     # Make sure that each key has an independent copy of the bits; i.e. that changing a bit in the
     # original key does not affect the copied key, or vice versa.
     original_value = key.get_bit(1)
-    assert key_copy.get_bit(1) == original_value
+    noisy_copy_value = key_copy.get_bit(1)
     key_copy.flip_bit(1)
     assert key.get_bit(1) == original_value
-    assert key_copy.get_bit(1) == 1 - original_value
+    assert key_copy.get_bit(1) == 1 - noisy_copy_value
     # Extreme case, flip all bits.
     key_copy = key.copy(64)
     assert key.size == key_copy.size

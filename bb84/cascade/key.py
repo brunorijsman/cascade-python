@@ -11,6 +11,31 @@ class Key:
         self._size = 0
         self._bits = {}  # Bits are stored as dictionary, indexed by index [0..size), value 0 or 1
 
+    @staticmethod
+    def create_random_key(size):
+        """
+        Create an random key.
+
+        Args:
+            size (int): The size of the key in bits. Must be >= 0.
+
+        Returns:
+            A new key of the specified size with random bits.
+        """
+
+        # Validate arguments
+        assert isinstance(size, int)
+        assert size >= 0
+
+        # Create a new random key
+        # pylint:disable=protected-access
+        key = Key()
+        key._size = size
+        for i in range(size):
+            key._bits[i] = random.randint(0, 1)
+
+        return key
+
     @property
     def size(self):
         """
@@ -56,31 +81,6 @@ class Key:
 
         # Set the bit value
         self._bits[index] = value
-
-    @staticmethod
-    def create_random_key(size):
-        """
-        Create an random key.
-
-        Args:
-            size (int): The size of the key in bits. Must be >= 0.
-
-        Returns:
-            A new key of the specified size with random bits.
-        """
-
-        # Validate arguments
-        assert isinstance(size, int)
-        assert size >= 0
-
-        # Create a new random key
-        # pylint:disable=protected-access
-        key = Key()
-        key._size = size
-        for i in range(size):
-            key._bits[i] = random.randint(0, 1)
-
-        return key
 
     def copy(self, error_count=0):
         """

@@ -5,6 +5,13 @@ def test_create_empty_key():
     key = Key()
     assert key.size == 0
 
+def test_create_random_key():
+    key = Key.create_random_key(32)
+    assert key.size == 32
+    assert key.get_bit(0) in [0, 1]
+    assert key.get_bit(7) in [0, 1]
+    assert key.get_bit(31) in [0, 1]
+
 def test_size():
     key = Key()
     assert key.size == 0
@@ -53,13 +60,6 @@ def test_set_bit():
         key.set_bit("hello", 0)
     with pytest.raises(AssertionError):
         key.set_bit(1, "hello")
-
-def test_create_random_key():
-    key = Key.create_random_key(32)
-    assert key.size == 32
-    assert key.get_bit(0) in [0, 1]
-    assert key.get_bit(7) in [0, 1]
-    assert key.get_bit(31) in [0, 1]
 
 def test_copy_without_noise():
     key = Key.create_random_key(64)

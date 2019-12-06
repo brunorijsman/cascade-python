@@ -12,7 +12,7 @@ lint:
 
 test:
 	rm -f .coverage*
-	pytest -v --cov --cov-report=html tests
+	pytest -v --cov --cov-report=html bb84/tests
 
 test-detailed:
 	rm -f .coverage*

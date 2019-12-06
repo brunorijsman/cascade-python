@@ -36,8 +36,6 @@
 
  * Introduce a middle node for modeling normal (non-attack) noise
 
- * Move tests directory into module directory of module being tested
-
  * Start Sphinx documentation
 
  * Integrate Sphinx documentation into CI/CD workflow (travis and read the docs)

@@ -80,10 +80,60 @@ def test_flip_bit():
         key.flip_bit("hello")
 
 def test_copy_without_noise():
-    key = Key.create_random_key(64)
+    # Copy an empty key.
+    key = Key()
     key_copy = key.copy()
     assert key.size == key_copy.size
     # Make sure it is an accurate copy.
+    assert key.size == key_copy.size
+    assert key.difference(key_copy) == 0
+    # Copy a non-empty key.
+    key = Key.create_random_key(64)
+    key_copy = key.copy()
+    # Make sure it is an accurate copy.
+    assert key.size == key_copy.size
     assert key.difference(key_copy) == 0
     # Make sure that each key has an independent copy of the bits; i.e. that changing a bit in the
     # original key does not affect the copied key, or vice versa.
+    original_value = key.get_bit(1)
+    assert key_copy.get_bit(1) == original_value
+    key_copy.flip_bit(1)
+    assert key.get_bit(1) == original_value
+    assert key_copy.get_bit(1) == 1 - original_value
+
+def test_copy_with_noise():
+    # Copy a non-empty key.
+    key = Key.create_random_key(64)
+    key_copy = key.copy(5)
+    # Make sure the copy has the expected amount of noise.
+    assert key.size == key_copy.size
+    assert key.difference(key_copy) == 5
+    # Make sure that each key has an independent copy of the bits; i.e. that changing a bit in the
+    # original key does not affect the copied key, or vice versa.
+    original_value = key.get_bit(1)
+    assert key_copy.get_bit(1) == original_value
+    key_copy.flip_bit(1)
+    assert key.get_bit(1) == original_value
+    assert key_copy.get_bit(1) == 1 - original_value
+    # Extreme case, flip all bits.
+    key_copy = key.copy(64)
+    assert key.size == key_copy.size
+    assert key.difference(key_copy) == 64
+    # Test parameter checks.
+    with pytest.raises(AssertionError):
+        key.copy(65)
+
+def test_difference():
+    # Normal case.
+    key = Key.create_random_key(64)
+    key_copy = key.copy(5)
+    assert key.difference(key_copy) == 5
+    # Special case: compare with self.
+    assert key.difference(key) == 0
+    # Special case: empty key.
+    empty_key_1 = Key()
+    empty_key_2 = Key()
+    assert empty_key_1.difference(empty_key_2) == 0
+    # Keys of different sizes.
+    with pytest.raises(AssertionError):
+        key.difference(empty_key_1)

@@ -1,3 +1,15 @@
+ * Am I using the correct CQC-Python library? https://github.com/SoftwareQuTech/CQC-Python vs https://github.com/SoftwareQuTech/SimulaQron
+
+ * File SimulaQron bug: b'01' turns into b'\0x01'
+
+ * Use SimulaQron from GitHub source instead of pip install
+
+ * File SimulaQron enhancement request: report sender when receiving message
+
+ * File SimulaQron enhancement request: wait for any event (qubit or classical message or timeout)
+
+ * File SimulaQron enhancement request: asynchronous model (or is there already a low-level API for this)?
+
  * Add authentication and data integrity on classical channel (see http://bit.ly/bb84auth)
 
  * Add documentation comments

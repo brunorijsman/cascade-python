@@ -8,15 +8,17 @@ clean:
 	rm -rf tests/__pycache__
 
 lint:
-	pylint bb84 tests
+	pylint bb84 bb84/tests bb84/cascade bb84/cascade/tests
 
 test:
 	rm -f .coverage*
+	pytest -v --cov --cov-report=html bb84/cascade/tests
 	pytest -v --cov --cov-report=html bb84/tests
 
 test-detailed:
 	rm -f .coverage*
-	pytest -v -s --cov --cov-report=html tests
+	pytest -v -s --cov --cov-report=html bb84/cascade/tests
+	pytest -v -s --cov --cov-report=html bb84/tests
 
 pre-commit: lint test
 	@echo "OK"

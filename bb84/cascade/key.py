@@ -82,6 +82,21 @@ class Key:
         # Set the bit value
         self._bits[index] = value
 
+    def flip_bit(self, index):
+        """
+        Flip the value of the key bit at a given index (0 to 1, and vice versa).
+
+        Params:
+            index (int): The index of the bit. Index must be in range [0, key.size).
+        """
+
+        # Validate arguments
+        assert isinstance(index, int)
+        assert 0 <= index < self._size
+
+        # Fkip the bit value
+        self._bits[index] = 1 - self._bits[index]
+
     def copy(self, error_count=0):
         """
         Copy a key and optionally apply noise.

@@ -61,6 +61,24 @@ def test_set_bit():
     with pytest.raises(AssertionError):
         key.set_bit(1, "hello")
 
+def test_flip_bit():
+    key = Key.create_random_key(9)
+    original_value = key.get_bit(0)
+    key.flip_bit(0)
+    assert key.get_bit(0) == 1 - original_value
+    original_value = key.get_bit(3)
+    key.flip_bit(3)
+    assert key.get_bit(3) == 1 - original_value
+    original_value = key.get_bit(8)
+    key.flip_bit(8)
+    assert key.get_bit(8) == 1 - original_value
+    with pytest.raises(AssertionError):
+        key.flip_bit(10)
+    with pytest.raises(AssertionError):
+        key.flip_bit(-1)
+    with pytest.raises(AssertionError):
+        key.flip_bit("hello")
+
 def test_copy_without_noise():
     key = Key.create_random_key(64)
     key_copy = key.copy()

@@ -27,6 +27,33 @@ def test_get_bit():
     with pytest.raises(AssertionError):
         assert key.get_bit("hello")
 
+def test_set_bit():
+    key = Key.create_random_key(13)
+    key.set_bit(0, 0)
+    assert key.get_bit(0) == 0
+    key.set_bit(0, 1)
+    assert key.get_bit(0) == 1
+    key.set_bit(4, 0)
+    assert key.get_bit(4) == 0
+    key.set_bit(4, 1)
+    assert key.get_bit(4) == 1
+    key.set_bit(12, 0)
+    assert key.get_bit(12) == 0
+    key.set_bit(12, 1)
+    assert key.get_bit(12) == 1
+    with pytest.raises(AssertionError):
+        key.set_bit(14, 0)
+    with pytest.raises(AssertionError):
+        key.set_bit(-1, 0)
+    with pytest.raises(AssertionError):
+        key.set_bit(1, 2)
+    with pytest.raises(AssertionError):
+        key.set_bit(1, -1)
+    with pytest.raises(AssertionError):
+        key.set_bit("hello", 0)
+    with pytest.raises(AssertionError):
+        key.set_bit(1, "hello")
+
 def test_create_random_key():
     key = Key.create_random_key(32)
     assert key.size == 32

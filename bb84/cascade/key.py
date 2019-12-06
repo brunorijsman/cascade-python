@@ -39,6 +39,24 @@ class Key:
         # Return the bit value
         return self._bits[index]
 
+    def set_bit(self, index, value):
+        """
+        Set the value of the key bit at a given index.
+
+        Params:
+            index (int): The index of the bit. Index must be in range [0, key.size).
+            value (int): The new value of the but. Must be 0 or 1.
+        """
+
+        # Validate arguments
+        assert isinstance(index, int)
+        assert 0 <= index < self._size
+        assert isinstance(value, int)
+        assert value in [0, 1]
+
+        # Set the bit value
+        self._bits[index] = value
+
     @staticmethod
     def create_random_key(size):
         """

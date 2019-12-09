@@ -2,30 +2,38 @@ from bb84.cascade.shuffle import Shuffle
 
 class Block:
 
-    def __init__(self, shuffle, start_index, end_index):
+    def __init__(self, shuffle, start_index, end_index, parent=None):
         """
         Create a block that represents a subset of a shuffled key.
 
         Params:
-            shuffle (Shuffled): the shuffled key from which to create the block.
+            shuffle (Shuffled): the shuffled key from which to create the block. The shuffle must
+            not be empty.
             start_index (int): The shuffle index, inclusive, at which the block starts. Must be in
             range [0, shuffle.size).
             end_index (int): The shuffle index, exclusive, at which the block end. Must be in range
-            [0, shuffle.size] and end_index >= start_index.
+            [0, shuffle.size]. The range must encompass at least 1 bit, i.e.
+            end_index > start_index.
+            parent (Block): The parent block of this block.
         """
 
         # Validate arguments.
         assert isinstance(shuffle, Shuffle)
+        assert shuffle.size > 0
         assert isinstance(start_index, int)
         assert 0 <= start_index < shuffle.size
         assert isinstance(end_index, int)
         assert 0 <= end_index <= shuffle.size
-        assert end_index >= start_index
+        assert end_index > start_index
+        assert parent is None or isinstance(parent, Block)
 
         # The subset of the shuffle underlying this block.
         self._shuffle = shuffle
         self._start_index = start_index
         self._end_index = end_index
+        self._parent = parent
+        self._left_child = None
+        self._right_child = None
 
     @staticmethod
     def create_blocks_covering_shuffle(shuffle, block_size):
@@ -84,3 +92,24 @@ class Block:
         for shuffle_index in range(self._start_index, self._end_index):
             string += str(self._shuffle.get_bit(shuffle_index))
         return string
+
+    def split(self):
+        """
+        Split this block into two child blocks of equal size (plus or minus one). If the block has
+        an odd size, the left child block will be one bit larger than th right child block.
+        This block must be at least 2 bits in size and most not already have been split before.
+
+        Returns:
+            (left_child_block, right_child_block)
+        """
+
+        # Validate arguments.
+        assert self._end_index - self._start_index > 1
+        assert self._left_child is None
+        assert self._right_child is None
+
+        # Split the block down the middle.
+        middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
+        self._left_child = Block(self._shuffle, self._start_index, middle_index, self)
+        self._right_child = Block(self._shuffle, middle_index, self._end_index, self)
+        return (self._left_child, self._right_child)

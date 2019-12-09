@@ -20,23 +20,28 @@ def test_create_validate_args():
         Block(shuffle, 3, 9)
     with pytest.raises(AssertionError):
         Block(shuffle, 3, 2)
+    with pytest.raises(AssertionError):
+        Block(shuffle, 2, 3, "hello")
 
 def test_create_block():
+
+    # Special case: block covers entire shuffle
     key = Key.create_random_key(8, seed=123)
     assert key.__repr__() == "Key: 01011001"
     shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=456)
     assert shuffle.__repr__() == "Shuffle: 0->0=0 1->4=1 2->1=1 3->7=1 4->3=1 5->2=0 6->6=0 7->5=0"
     block = Block(shuffle, 3, 6)
     assert block.__repr__() == "Block: 3->7=1 4->3=1 5->2=0"
-    # Special case: block covers entire shuffle
     block = Block(shuffle, 0, 8)
     assert block.__repr__() == "Block: 0->0=0 1->4=1 2->1=1 3->7=1 4->3=1 5->2=0 6->6=0 7->5=0"
+
     # Special case: single bit block
     block = Block(shuffle, 2, 3)
     assert block.__repr__() == "Block: 2->1=1"
+
     # Special case: empty block
-    block = Block(shuffle, 2, 2)
-    assert block.__repr__() == "Block:"
+    with pytest.raises(AssertionError):
+        block = Block(shuffle, 2, 2)
 
 def test_create_blocks_covering_shuffle():
 
@@ -102,3 +107,37 @@ def test_str():
     blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
     assert len(blocks) == 1
     assert blocks[0].__str__() == "0111"
+
+
+def test_split():
+
+    # Split top block with even number of bits into child blocks.
+    key = Key.create_random_key(10, seed=12345)
+    assert key.__str__() == "1011011010"
+    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=67890)
+    assert shuffle.__str__() == "1111101000"
+    blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
+    assert len(blocks) == 1
+    parent_block = blocks[0]
+    assert parent_block.__str__() == "1111101000"
+    (left_child_block, right_child_block) = parent_block.split()
+    assert left_child_block.__str__() == "11111"
+    assert right_child_block.__str__() == "01000"
+
+    # Split right child block with odd number of bits into grand-child blocks.
+    (left_gchild_block, right_gchild_block) = right_child_block.split()
+    assert left_gchild_block.__str__() == "010"
+    assert right_gchild_block.__str__() == "00"
+
+    # Split left grand-child block with odd number of bits into grand-grand-child blocks.
+    (left_ggchild_block, right_ggchild_block) = left_gchild_block.split()
+    assert left_ggchild_block.__str__() == "01"
+    assert right_ggchild_block.__str__() == "0"
+
+    # A block that was already split is not allowed to be split again.
+    with pytest.raises(AssertionError):
+        parent_block.split()
+
+    # Not allowed to split a block of size 1.
+    with pytest.raises(AssertionError):
+        right_ggchild_block.split()

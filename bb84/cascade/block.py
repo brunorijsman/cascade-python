@@ -35,7 +35,7 @@ class Block:
         Params:
             shuffle (Shuffle): The shuffled key to be covered by the blocks.
             block_size (int): The size of each block. Each block in the list, except for the last
-                one, will be exactly this size. The last block may be smaller.
+            one, will be exactly this size. The last block may be smaller.
 
         Returns:
             A list of blocks that cover the shuffled key.

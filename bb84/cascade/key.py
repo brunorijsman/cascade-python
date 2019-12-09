@@ -12,12 +12,15 @@ class Key:
         self._bits = {}  # Bits are stored as dictionary, indexed by index [0..size), value 0 or 1
 
     @staticmethod
-    def create_random_key(size):
+    def create_random_key(size, seed=None):
         """
         Create an random key.
 
         Args:
             size (int): The size of the key in bits. Must be >= 0.
+            seed(None or int): The seed value for the random number generator for algorithm. Using
+                the same seed value is guaranteed to produce the same key. This is intended to
+                allow experiments or test cases to be reproduced exactly.
 
         Returns:
             A new key of the specified size with random bits.
@@ -26,15 +29,26 @@ class Key:
         # Validate arguments
         assert isinstance(size, int)
         assert size >= 0
+        assert seed is None or isinstance(seed, int)
 
         # Create a new random key
         # pylint:disable=protected-access
         key = Key()
         key._size = size
+        local_random = random.Random(seed)
         for i in range(size):
-            key._bits[i] = random.randint(0, 1)
+            key._bits[i] = local_random.randint(0, 1)
 
         return key
+
+    def __repr__(self):
+        return "Key: " + self.__str__()
+
+    def __str__(self):
+        string = ""
+        for i in range(self._size):
+            string += str(self._bits[i])
+        return string
 
     @property
     def size(self):

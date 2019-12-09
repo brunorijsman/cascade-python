@@ -1,6 +1,14 @@
 import pytest
 from bb84.cascade.key import Key
 
+def test_create_validate_args():
+    with pytest.raises(AssertionError):
+        assert Key.create_random_key(-1)
+    with pytest.raises(AssertionError):
+        assert Key.create_random_key("hello")
+    with pytest.raises(AssertionError):
+        assert Key.create_random_key(64, "hello")
+
 def test_create_empty_key():
     key = Key()
     assert key.size == 0
@@ -11,23 +19,21 @@ def test_create_random_key():
     assert key.get_bit(0) in [0, 1]
     assert key.get_bit(7) in [0, 1]
     assert key.get_bit(31) in [0, 1]
-    key = Key.create_random_key(16, 1234567890)
+    key = Key.create_random_key(16, seed=1234567890)
     assert key.size == 16
     assert key.__str__() == "0101101010011110"
-    with pytest.raises(AssertionError):
-        assert Key.create_random_key(-1)
-    with pytest.raises(AssertionError):
-        assert Key.create_random_key("hello")
-    with pytest.raises(AssertionError):
-        assert Key.create_random_key(64, "hello")
 
 def test_repr():
-    # TODO
-    pass
+    key = Key()
+    assert key.__repr__() == "Key: "
+    key = Key.create_random_key(8, seed=1234)
+    assert key.__repr__() == "Key: 10000001"
 
 def test_str():
-    # TODO
-    pass
+    key = Key()
+    assert key.__str__() == ""
+    key = Key.create_random_key(8, seed=1234)
+    assert key.__str__() == "10000001"
 
 def test_size():
     key = Key()

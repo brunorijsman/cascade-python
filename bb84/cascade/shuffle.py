@@ -39,21 +39,52 @@ class Shuffle:
             local_random = random.Random(seed)
             local_random.shuffle(self._shuffle_index_to_key_index, local_random.random)
 
-    def get_key_bit(self, shuffle_index):
+    def __repr__(self):
+        """
+        Get the unambiguous string representation of the shuffle.
+
+        Returns:
+            The unambiguous string representation of the shuffle.
+        """
+        return "Shuffle: " + self.__str__()
+
+    def __str__(self):
+        """
+        Get the human-readable string representation of the shuffle.
+
+        Returns:
+            The human-readable string representation of the shuffle.
+        """
+        string = ""
+        for i in range(self.size):
+            string += str(self.get_bit(i))
+        return string
+
+    @property
+    def size(self):
+        """
+        Get the size of the shuffled key in bits.
+
+        Returns:
+            The size of the shuffled key in bits.
+        """
+        return self._key.size
+
+    def get_bit(self, index):
         """
         Get the key bit value for the given shuffle index.
 
         Params:
-            shuffle_index (int): The shuffle index.
+            index (int): The shuffle index.
 
         Returns:
             The key bit value for the given shuffle index.
         """
 
         # Validate arguments.
-        assert isinstance(shuffle_index, int)
-        assert shuffle_index in self._shuffle_index_to_key_index
+        assert isinstance(index, int)
+        assert index in self._shuffle_index_to_key_index
 
         # Return the key bit.
-        key_index = self._shuffle_index_to_key_index[shuffle_index]
+        key_index = self._shuffle_index_to_key_index[index]
         return self._key.get_bit(key_index)

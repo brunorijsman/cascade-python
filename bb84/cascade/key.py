@@ -42,9 +42,21 @@ class Key:
         return key
 
     def __repr__(self):
+        """
+        Get the unambiguous string representation of the key.
+
+        Returns:
+            The unambiguous string representation of the key.
+        """
         return "Key: " + self.__str__()
 
     def __str__(self):
+        """
+        Get the human-readable string representation of the key.
+
+        Returns:
+            The human-readable string representation of the key.
+        """
         string = ""
         for i in range(self._size):
             string += str(self._bits[i])

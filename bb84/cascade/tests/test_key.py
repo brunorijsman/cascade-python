@@ -3,11 +3,11 @@ from bb84.cascade.key import Key
 
 def test_create_validate_args():
     with pytest.raises(AssertionError):
-        assert Key.create_random_key(-1)
+        Key.create_random_key(-1)
     with pytest.raises(AssertionError):
-        assert Key.create_random_key("hello")
+        Key.create_random_key("hello")
     with pytest.raises(AssertionError):
-        assert Key.create_random_key(64, "hello")
+        Key.create_random_key(64, "hello")
 
 def test_create_empty_key():
     key = Key()
@@ -47,11 +47,11 @@ def test_get_bit():
     assert key.get_bit(3) in [0, 1]
     assert key.get_bit(10) in [0, 1]
     with pytest.raises(AssertionError):
-        assert key.get_bit(11)
+        key.get_bit(11)
     with pytest.raises(AssertionError):
-        assert key.get_bit(-1)
+        key.get_bit(-1)
     with pytest.raises(AssertionError):
-        assert key.get_bit("hello")
+        key.get_bit("hello")
 
 def test_set_bit():
     key = Key.create_random_key(13)

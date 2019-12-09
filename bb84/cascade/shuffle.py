@@ -112,3 +112,22 @@ class Shuffle:
         # Return the key bit.
         key_index = self._shuffle_index_to_key_index[index]
         self._key.set_bit(key_index, value)
+
+    def get_key_index(self, shuffle_index):
+        """
+        Get the key index that a given shuffle index is mapped to.
+
+        Params:
+            shuffle_index (int): The shuffle index of the bit. Index must be in range
+                [0, shuffle.size).
+
+        Returns:
+            The key index.
+        """
+
+        # Validate arguments.
+        assert isinstance(shuffle_index, int)
+        assert shuffle_index in self._shuffle_index_to_key_index
+
+        # Return the key index.
+        return self._shuffle_index_to_key_index[shuffle_index]

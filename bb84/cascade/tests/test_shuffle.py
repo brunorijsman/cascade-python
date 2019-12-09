@@ -35,18 +35,22 @@ def test_create_shuffle_random():
 def test_repr():
     key = Key()
     shuffle = Shuffle(key, Shuffle.ALGORITHM_NONE)
-    assert shuffle.__repr__() == "Shuffle: "
-    key = Key.create_random_key(16, seed=1234)
+    assert shuffle.__repr__() == "Shuffle:"
+    key = Key.create_random_key(8, seed=1234)
     shuffle = Shuffle(key, Shuffle.ALGORITHM_NONE)
-    assert shuffle.__repr__() == "Shuffle: 1000000100001110"
+    assert shuffle.__repr__() == "Shuffle: 0->0=1 1->1=0 2->2=0 3->3=0 4->4=0 5->5=0 6->6=0 7->7=1"
+    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=5678)
+    assert shuffle.__repr__() == "Shuffle: 0->6=0 1->4=0 2->1=0 3->3=0 4->2=0 5->7=1 6->0=1 7->5=0"
 
 def test_str():
     key = Key()
     shuffle = Shuffle(key, Shuffle.ALGORITHM_NONE)
     assert shuffle.__str__() == ""
-    key = Key.create_random_key(16, seed=1234)
+    key = Key.create_random_key(8, seed=1234)
     shuffle = Shuffle(key, Shuffle.ALGORITHM_NONE)
-    assert shuffle.__str__() == "1000000100001110"
+    assert shuffle.__str__() == "10000001"
+    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=5678)
+    assert shuffle.__str__() == "00000110"
 
 def test_size():
     key = Key()
@@ -70,3 +74,30 @@ def test_get_bit():
         shuffle.get_bit(13)
     with pytest.raises(AssertionError):
         shuffle.get_bit("hello")
+
+def test_set_bit():
+    key = Key.create_random_key(6, seed=9876)
+    assert key.__repr__() == "Key: 101110"
+    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=5432)
+    assert shuffle.__repr__() == "Shuffle: 0->2=1 1->0=1 2->5=0 3->4=1 4->3=1 5->1=0"
+    shuffle.set_bit(0, 0)
+    assert shuffle.__repr__() == "Shuffle: 0->2=0 1->0=1 2->5=0 3->4=1 4->3=1 5->1=0"
+    assert key.__repr__() == "Key: 100110"
+    shuffle.set_bit(1, 0)
+    assert shuffle.__repr__() == "Shuffle: 0->2=0 1->0=0 2->5=0 3->4=1 4->3=1 5->1=0"
+    assert key.__repr__() == "Key: 000110"
+    shuffle.set_bit(5, 1)
+    assert shuffle.__repr__() == "Shuffle: 0->2=0 1->0=0 2->5=0 3->4=1 4->3=1 5->1=1"
+    assert key.__repr__() == "Key: 010110"
+    with pytest.raises(AssertionError):
+        shuffle.set_bit(-1, 0)
+    with pytest.raises(AssertionError):
+        shuffle.set_bit(13, 0)
+    with pytest.raises(AssertionError):
+        shuffle.set_bit("hello", 0)
+    with pytest.raises(AssertionError):
+        shuffle.set_bit(1, -1)
+    with pytest.raises(AssertionError):
+        shuffle.set_bit(1, 2)
+    with pytest.raises(AssertionError):
+        shuffle.set_bit(1, "hello")

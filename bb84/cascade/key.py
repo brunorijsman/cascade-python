@@ -96,7 +96,7 @@ class Key:
 
         Params:
             index (int): The index of the bit. Index must be in range [0, key.size).
-            value (int): The new value of the but. Must be 0 or 1.
+            value (int): The new value of the bit. Must be 0 or 1.
         """
 
         # Validate arguments

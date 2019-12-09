@@ -46,7 +46,12 @@ class Shuffle:
         Returns:
             The unambiguous string representation of the shuffle.
         """
-        return "Shuffle: " + self.__str__()
+        string = "Shuffle:"
+        for shuffle_index in range(self.size):
+            key_index = self._shuffle_index_to_key_index[shuffle_index]
+            key_bit = self._key.get_bit(key_index)
+            string += f" {shuffle_index}->{key_index}={key_bit}"
+        return string
 
     def __str__(self):
         """
@@ -75,10 +80,10 @@ class Shuffle:
         Get the key bit value for the given shuffle index.
 
         Params:
-            index (int): The shuffle index.
+            index (int): The shuffle index of the bit. Index must be in range [0, shuffle.size).
 
         Returns:
-            The key bit value for the given shuffle index.
+            The value (0 or 1) of the key bit at the given shuffle index.
         """
 
         # Validate arguments.
@@ -88,3 +93,22 @@ class Shuffle:
         # Return the key bit.
         key_index = self._shuffle_index_to_key_index[index]
         return self._key.get_bit(key_index)
+
+    def set_bit(self, index, value):
+        """
+        Set the key bit value for the given shuffle index.
+
+        Params:
+            index (int): The shuffle index of the bit. Index must be in range [0, shuffle.size).
+            value (int): The new value of the bit. Must be 0 or 1.
+        """
+
+        # Validate arguments.
+        assert isinstance(index, int)
+        assert index in self._shuffle_index_to_key_index
+        assert isinstance(value, int)
+        assert value in [0, 1]
+
+        # Return the key bit.
+        key_index = self._shuffle_index_to_key_index[index]
+        self._key.set_bit(key_index, value)

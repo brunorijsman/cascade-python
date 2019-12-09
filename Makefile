@@ -18,7 +18,7 @@ test-cascade:
 
 docs:
 	cd docs && \
-	sphinx-apidoc -f -o source/_modules ../bb84 $(find .. -name tests) && \
+	sphinx-apidoc -f -o source/_modules ../bb84 `find .. -name tests` && \
 	sphinx-build -a source build
 
 clean:

@@ -108,6 +108,40 @@ def test_str():
     assert len(blocks) == 1
     assert blocks[0].__str__() == "0111"
 
+def test_current_parity():
+
+    # Even parity parent block.
+    key = Key.create_random_key(10, seed=12345)
+    assert key.__str__() == "1011011010"
+    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=67890)
+    assert shuffle.__str__() == "1111101000"
+    blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
+    assert len(blocks) == 1
+    parent_block = blocks[0]
+    assert parent_block.__str__() == "1111101000"
+    assert parent_block.current_parity == 0
+
+    # Odd parity parent block.
+    key = Key.create_random_key(10, seed=111111)
+    assert key.__str__() == "0011001011"
+    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=22222)
+    assert shuffle.__str__() == "0010110011"
+    blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
+    assert len(blocks) == 1
+    parent_block = blocks[0]
+    assert parent_block.__str__() == "0010110011"
+    assert parent_block.current_parity == 1
+
+    # Split parent into children
+    (left_child_block, right_child_block) = parent_block.split()
+
+    # Even parity child block.
+    assert left_child_block.__str__() == "00101"
+    assert left_child_block.current_parity == 0
+
+    # Odd parity child block.
+    assert right_child_block.__str__() == "10011"
+    assert right_child_block.current_parity == 1
 
 def test_split():
 

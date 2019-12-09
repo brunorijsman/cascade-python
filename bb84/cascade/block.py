@@ -31,9 +31,17 @@ class Block:
         self._shuffle = shuffle
         self._start_index = start_index
         self._end_index = end_index
+
+        # Keep track of family tree.
         self._parent = parent
         self._left_child = None
         self._right_child = None
+
+        # Calculate the actual parity of this block.
+        self._current_parity = 0
+        for index in range(start_index, end_index):
+            if shuffle.get_bit(index) == 1:
+                self._current_parity = 1 - self._current_parity
 
     @staticmethod
     def create_blocks_covering_shuffle(shuffle, block_size):
@@ -92,6 +100,16 @@ class Block:
         for shuffle_index in range(self._start_index, self._end_index):
             string += str(self._shuffle.get_bit(shuffle_index))
         return string
+
+    @property
+    def current_parity(self):
+        """
+        Get the current parity of the block.
+
+        Returns:
+            The current parity (0 or 1) of the block.
+        """
+        return self._current_parity
 
     def split(self):
         """

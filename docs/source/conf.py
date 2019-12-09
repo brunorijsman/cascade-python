@@ -22,6 +22,10 @@ exclude_patterns = []
 
 html_theme = 'sphinx_rtd_theme'
 
+autodoc_default_options = {
+    'special-members': '__init__, __repr__, __str__',
+}
+
 def is_venv():
     return (hasattr(sys, 'real_prefix') or
             (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))

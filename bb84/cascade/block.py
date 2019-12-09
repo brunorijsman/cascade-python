@@ -9,9 +9,9 @@ class Block:
         Params:
             shuffle (Shuffled): the shuffled key from which to create the block.
             start_index (int): The shuffle index, inclusive, at which the block starts. Must be in
-                range [0, shuffle.size).
+            range [0, shuffle.size).
             end_index (int): The shuffle index, exclusive, at which the block end. Must be in range
-                [0, shuffle.size] and end_index >= start_index.
+            [0, shuffle.size] and end_index >= start_index.
         """
 
         # Validate arguments.

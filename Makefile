@@ -12,15 +12,14 @@ lint:
 
 test:
 	rm -f .coverage*
-	pytest -v --cov --cov-report=html bb84/cascade/tests
-	pytest -v --cov --cov-report=html bb84/tests
+	pytest -v -s --cov=bb84 --cov-report=html --cov-report term bb84/tests
+	pytest -v -s --cov=bb84/cascade --cov-report=html --cov-report term bb84/cascade/tests
 
-test-detailed:
+test-cascade:
 	rm -f .coverage*
-	pytest -v -s --cov --cov-report=html bb84/cascade/tests
-	pytest -v -s --cov --cov-report=html bb84/tests
+	pytest -v -s --cov=bb84/cascade --cov-report=html --cov-report term bb84/cascade/tests
 
 pre-commit: lint test
 	@echo "OK"
 
-.PHONY: install clean lint test test-detailed pre-commit
+.PHONY: install clean lint test test-cascade pre-commit

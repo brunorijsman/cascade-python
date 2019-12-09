@@ -19,9 +19,6 @@ test-cascade:
 docs:
 	sphinx-build -a docs/source docs/build
 
-#	cd docs && \
-#	sphinx-apidoc -f -o source/_modules ../bb84 `find .. -name tests` && \
-
 clean:
 	rm -f .coverage*
 	rm -rf __pycache__

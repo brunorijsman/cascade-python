@@ -37,14 +37,6 @@ def run_apidoc(_):
             apidoc = os.path.abspath(os.path.join(sys.prefix, 'bin', 'sphinx-apidoc'))
         exclude_pattern = f"`find {module} -name tests`"
         cmd = f"{apidoc} -f -e -o {output_dir} {module} {exclude_pattern}"
-
-        print(f"cur_dir = {cur_dir}")
-        print(f"module = {module}")
-        print(f"output_dir = {output_dir}")
-        print(f"apidoc = {apidoc}")
-        print(f"exclude_pattern = {exclude_pattern}")
-        print(f"cmd = {cmd}")
-
         subprocess.check_call(cmd, shell=True)
 
 def setup(app):

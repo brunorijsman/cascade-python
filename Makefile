@@ -17,9 +17,10 @@ test-cascade:
 	pytest -v -s --cov=bb84/cascade --cov-report=html --cov-report term bb84/cascade/tests
 
 docs:
-	cd docs && \
-	sphinx-apidoc -f -o source/_modules ../bb84 `find .. -name tests` && \
-	sphinx-build -a source build
+	sphinx-build -a docs/source docs/build
+
+#	cd docs && \
+#	sphinx-apidoc -f -o source/_modules ../bb84 `find .. -name tests` && \
 
 clean:
 	rm -f .coverage*

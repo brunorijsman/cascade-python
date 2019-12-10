@@ -10,29 +10,34 @@ class Shuffle:
     SHUFFLE_RANDOM = 1
     """Randomly shuffle the bits in the key."""
 
-    def __init__(self, key, algorithm):
+    def __init__(self, size, algorithm):
         """
-        Create a shuffle, i.e. shuffle the bits of a key according to some algorithm.
+        Create a shuffle. A shuffle represents a permutation of the bits in a key. The shuffle
+        can be random or deterministic depending on the shuffle algorithm. A Shuffle object is
+        de-coupled from the Key objects: the same Shuffle object can be applied to multiple
+        different Key objects, to permute (shuffle) the bits in those different keys according to
+        the same pattern. In practice this allows Alice to shuffle the original sent key according
+        to the same pattern as Bob shuffles the noisy received key when executing the Cascade
+        protocol.
 
         Args:
-            key (Key): The key to be shuffled. The key itself is not modified in any way; all the
-                bookkeeping to keep track of the shuffling is in the created Shuffle object.
-            algorirthm (int): How to shuffle the bits in the key.
+            size (int): The size of the shuffle, i.e. the number of bits in the keys that this
+                shuffle will be applied to.
+            algorirthm (int): The algoritm for generating the shuffle pattern:
                 SHUFFLE_NONE: Do not shuffle the key (keep the key bits in the original order).
-                SHUFFLE_RANDOM: Randomly shuffle th key.
+                SHUFFLE_RANDOM: Randomly shuffle the key.
         """
 
         # Validate arguments.
-        assert isinstance(key, Key)
+        assert isinstance(size, int)
+        assert size > 0
         assert algorithm in [self.SHUFFLE_NONE, self.SHUFFLE_RANDOM]
 
-        # The key underlying this block.
-        self._key = key
-
-        # Map the shuffle indexes to key indexes.
+        # Create a mapping from "shuffle indexes" to "key indexes".
+        self._size = size
         self._shuffle_index_to_key_index = {}
-        for index in range(0, key.size):
-            self._shuffle_index_to_key_index[index] = index
+        for shuffle_index in range(0, size):
+            self._shuffle_index_to_key_index[shuffle_index] = shuffle_index
         if algorithm == self.SHUFFLE_RANDOM:
             random.shuffle(self._shuffle_index_to_key_index, Shuffle._random.random)
 
@@ -42,13 +47,12 @@ class Shuffle:
 
         Returns:
             The unambiguous string representation of the shuffle.
+
+        Example:
+            >>> shuffle.__repr__()
+            'Shuffle: 0->3 1->1 2->2 3->0 4->4 5->5'
         """
-        string = "Shuffle:"
-        for shuffle_index in range(self.size):
-            key_index = self._shuffle_index_to_key_index[shuffle_index]
-            key_bit = self._key.get_bit(key_index)
-            string += f" {shuffle_index}->{key_index}={key_bit}"
-        return string
+        return "Shuffle: " + self.__str__()
 
     def __str__(self):
         """
@@ -56,10 +60,17 @@ class Shuffle:
 
         Returns:
             The human-readable string representation of the shuffle.
+
+        Example:
+            >>> shuffle.__str__()
+            '0->3 1->1 2->2 3->0 4->4 5->5'
         """
         string = ""
-        for i in range(self.size):
-            string += str(self.get_bit(i))
+        for shuffle_index in range(self.size):
+            key_index = self._shuffle_index_to_key_index[shuffle_index]
+            if string:
+                string += " "
+            string += f"{shuffle_index}->{key_index}"
         return string
 
     @staticmethod
@@ -78,66 +89,84 @@ class Shuffle:
     @property
     def size(self):
         """
-        Get the size of the shuffled key in bits.
+        Get the size of the shuffle in bits.
 
         Returns:
-            The size of the shuffled key in bits.
+            The size of the shuffle in bits.
         """
-        return self._key.size
+        return self._size
 
-    def get_bit(self, index):
+    def get_bit(self, key, shuffle_index):
         """
-        Get the key bit value for the given shuffle index.
+        Get a bit from a shuffled key.
 
         Args:
-            index (int): The shuffle index of the bit. Index must be in range [0, shuffle.size).
+            key (Key): The key. We first shuffle this key according to this shuffle pattern and
+                then retrieve the bit at shuffle_index in the shuffled key. The size of the key
+                must be equal to the size of this shuffle.
+            shuffle_index (int): The index of the bit in the shuffled key. The index must be in
+                range [0, shuffle.size).
 
         Returns:
-            The value (0 or 1) of the key bit at the given shuffle index.
+            The value (0 or 1) of the shuffled key bit at the given index.
         """
 
         # Validate arguments.
-        assert isinstance(index, int)
-        assert index in self._shuffle_index_to_key_index
+        assert isinstance(key, Key)
+        assert key.size == self._size
+        assert isinstance(shuffle_index, int)
+        assert shuffle_index in self._shuffle_index_to_key_index
 
         # Return the key bit.
-        key_index = self._shuffle_index_to_key_index[index]
-        return self._key.get_bit(key_index)
+        key_index = self._shuffle_index_to_key_index[shuffle_index]
+        return key.get_bit(key_index)
 
-    def set_bit(self, index, value):
+    def set_bit(self, key, shuffle_index, value):
         """
-        Set the key bit value for the given shuffle index.
+        Set a bit in a shuffled key to a given value.
 
         Args:
-            index (int): The shuffle index of the bit. Index must be in range [0, shuffle.size).
+            key (Key): The key. We first shuffle this key according to this shuffle pattern and
+                then set the bit at shuffle_index in the shuffled key to the given value. The size
+                of the key must be equal to the size of this shuffle.
+            shuffle_index (int): The index of the bit in the shuffled key. The index must be in
+                range [0, shuffle.size).
             value (int): The new value of the bit. Must be 0 or 1.
         """
 
         # Validate arguments.
-        assert isinstance(index, int)
-        assert index in self._shuffle_index_to_key_index
+        assert isinstance(key, Key)
+        assert key.size == self._size
+        assert isinstance(shuffle_index, int)
+        assert shuffle_index in self._shuffle_index_to_key_index
         assert isinstance(value, int)
         assert value in [0, 1]
 
-        # Return the key bit.
-        key_index = self._shuffle_index_to_key_index[index]
-        self._key.set_bit(key_index, value)
+        # Set the key bit.
+        key_index = self._shuffle_index_to_key_index[shuffle_index]
+        key.set_bit(key_index, value)
 
-    def flip_bit(self, index):
+    def flip_bit(self, key, shuffle_index):
         """
-        Flip the value of the shuffle bit at a given shuffle index (0 to 1, and vice versa).
+        Flip a bit in a shuffled key (flip 0 to 1 and vice versa).
 
         Args:
-            index (int): The shuffle index of the bit. Index must be in range [0, shuffle.size).
+            key (Key): The key. We first shuffle this key according to this shuffle pattern and
+                then flip the bit at shuffle_index in the shuffled key. The size of the key must be
+                equal to the size of this shuffle.
+            shuffle_index (int): The index of the bit in the shuffled key. The index must be in
+                range [0, shuffle.size).
         """
 
         # Validate arguments.
-        assert isinstance(index, int)
-        assert 0 <= index < self.size
+        assert isinstance(key, Key)
+        assert key.size == self._size
+        assert isinstance(shuffle_index, int)
+        assert shuffle_index in self._shuffle_index_to_key_index
 
         # Flip the bit value.
-        key_index = self._shuffle_index_to_key_index[index]
-        self._key.flip_bit(key_index)
+        key_index = self._shuffle_index_to_key_index[shuffle_index]
+        key.flip_bit(key_index)
 
     def get_key_index(self, shuffle_index):
         """

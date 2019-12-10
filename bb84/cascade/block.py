@@ -1,3 +1,4 @@
+from bb84.cascade.key import Key
 from bb84.cascade.shuffle import Shuffle
 
 class Block:
@@ -7,13 +8,13 @@ class Block:
 
     _key_index_to_blocks = {}
 
-    def __init__(self, shuffle, start_index, end_index):
+    def __init__(self, key, shuffle, start_index, end_index):
         """
         Create a block, which is a contiguous subset of bits in a potentially shuffled key.
 
         Args:
-            shuffle (Shuffle): the shuffled key from which to create the block. The shuffle must
-                not be empty.
+            key (Key): The key for which to create one single block that covers a subset of the key.
+            shuffle (Shuffle): The shuffle to apply to the key before creating the block.
             start_index (int): The shuffle index, inclusive, at which the block starts. Must be in
                 range [0, shuffle.size).
             end_index (int): The shuffle index, exclusive, at which the block end. Must be in range
@@ -22,15 +23,17 @@ class Block:
         """
 
         # Validate arguments.
+        assert isinstance(key, Key)
         assert isinstance(shuffle, Shuffle)
-        assert shuffle.size > 0
+        assert shuffle.size == key.size
         assert isinstance(start_index, int)
         assert 0 <= start_index < shuffle.size
         assert isinstance(end_index, int)
         assert 0 <= end_index <= shuffle.size
         assert end_index > start_index
 
-        # The subset of the shuffle underlying this block.
+        # Store block attributes.
+        self._key = key
         self._shuffle = shuffle
         self._start_index = start_index
         self._end_index = end_index
@@ -41,7 +44,7 @@ class Block:
         # Calculate the actual parity of this block.
         self._current_parity = 0
         for index in range(start_index, end_index):
-            if shuffle.get_bit(index) == 1:
+            if shuffle.get_bit(key, index) == 1:
                 self._current_parity = 1 - self._current_parity
 
         # Update key bit to block map.
@@ -53,23 +56,27 @@ class Block:
                 Block._key_index_to_blocks[key_index] = [self]
 
     @staticmethod
-    def create_blocks_covering_shuffle(shuffle, block_size):
+    def create_covering_blocks(key, shuffle, block_size):
         """
         Create a list of blocks of a given size that cover a given shuffled key.
 
         Args:
-            shuffle (Shuffle): The shuffled key to be covered by the blocks.
+            key (Key): The key for which to create a list of block that collectively cover the
+                entire key.
+            shuffle (Shuffle): The shuffle to apply to the key before creating the blocks.
             block_size (int): The size of each block. Each block in the list, except for the last
-            one, will be exactly this size. The last block may be smaller.
+                one, will be exactly this size. The last block may be smaller.
 
         Returns:
             A list of blocks that cover the shuffled key.
         """
 
         # Validate arguments.
+        assert isinstance(key, Key)
+        assert isinstance(shuffle, Shuffle)
+        assert shuffle.size == key.size
         assert isinstance(block_size, int)
         assert block_size > 0
-        assert isinstance(shuffle, Shuffle)
 
         # Generate the blocks.
         blocks = []
@@ -78,7 +85,7 @@ class Block:
         while remaining_bits > 0:
             actual_block_size = min(block_size, remaining_bits)
             end_index = start_index + actual_block_size
-            block = Block(shuffle, start_index, end_index)
+            block = Block(key, shuffle, start_index, end_index)
             blocks.append(block)
             start_index += actual_block_size
             remaining_bits -= actual_block_size
@@ -94,7 +101,7 @@ class Block:
         string = "Block:"
         for shuffle_index in range(self._start_index, self._end_index):
             key_index = self._shuffle.get_key_index(shuffle_index)
-            key_bit = self._shuffle.get_bit(shuffle_index)
+            key_bit = self._shuffle.get_bit(self._key, shuffle_index)
             string += f" {shuffle_index}->{key_index}={key_bit}"
         return string
 
@@ -107,7 +114,7 @@ class Block:
         """
         string = ""
         for shuffle_index in range(self._start_index, self._end_index):
-            string += str(self._shuffle.get_bit(shuffle_index))
+            string += str(self._shuffle.get_bit(self._key, shuffle_index))
         return string
 
     @property
@@ -147,8 +154,8 @@ class Block:
         # Split the block down the middle.
         self._has_been_split = True
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
-        left_sub_block = Block(self._shuffle, self._start_index, middle_index)
-        right_sub_block = Block(self._shuffle, middle_index, self._end_index)
+        left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index)
+        right_sub_block = Block(self._key, self._shuffle, middle_index, self._end_index)
         return (left_sub_block, right_sub_block)
 
     def correct_one_bit(self, ask_correct_parity_function):
@@ -220,9 +227,10 @@ class Block:
         return True
 
     @staticmethod
-    def clear_key_index_to_block_map():
+    def clear_history():
         """
-        Clear key index to block map.
+        Clear all history about previously created blocks:
+         * The key index to blocks map, which is used to find cascading blocks.
         """
         Block._key_index_to_blocks = {}
 

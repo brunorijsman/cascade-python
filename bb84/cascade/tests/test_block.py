@@ -7,21 +7,23 @@ def test_create_validate_args():
     Key.set_random_seed(1111)
     Shuffle.set_random_seed(1112)
     key = Key.create_random_key(8)
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     with pytest.raises(AssertionError):
-        Block("hello", 0, 1)
+        Block("hello", shuffle, 0, 1)
     with pytest.raises(AssertionError):
-        Block(shuffle, -1, 1)
+        Block(key, "hello", 0, 1)
     with pytest.raises(AssertionError):
-        Block(shuffle, 8, 1)
+        Block(key, shuffle, -1, 1)
     with pytest.raises(AssertionError):
-        Block(shuffle, "hello", 1)
+        Block(key, shuffle, 8, 1)
     with pytest.raises(AssertionError):
-        Block(shuffle, 3, -1)
+        Block(key, shuffle, "hello", 1)
     with pytest.raises(AssertionError):
-        Block(shuffle, 3, 9)
+        Block(key, shuffle, 3, -1)
     with pytest.raises(AssertionError):
-        Block(shuffle, 3, 2)
+        Block(key, shuffle, 3, 9)
+    with pytest.raises(AssertionError):
+        Block(key, shuffle, 3, 2)
 
 def test_create_block():
 
@@ -31,34 +33,33 @@ def test_create_block():
     # Special case: block covers entire shuffle
     key = Key.create_random_key(8)
     assert key.__repr__() == "Key: 10111010"
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__repr__() == "Shuffle: 0->2=1 1->3=1 2->5=0 3->6=1 4->4=1 5->0=1 6->7=0 7->1=0"
-    block = Block(shuffle, 3, 6)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == "Shuffle: 0->2 1->3 2->5 3->6 4->4 5->0 6->7 7->1"
+    block = Block(key, shuffle, 3, 6)
     assert block.__repr__() == "Block: 3->6=1 4->4=1 5->0=1"
-    block = Block(shuffle, 0, 8)
+    block = Block(key, shuffle, 0, 8)
     assert block.__repr__() == "Block: 0->2=1 1->3=1 2->5=0 3->6=1 4->4=1 5->0=1 6->7=0 7->1=0"
 
     # Special case: single bit block
-    block = Block(shuffle, 2, 3)
+    block = Block(key, shuffle, 2, 3)
     assert block.__repr__() == "Block: 2->5=0"
 
     # Special case: empty block
     with pytest.raises(AssertionError):
-        block = Block(shuffle, 2, 2)
+        block = Block(key, shuffle, 2, 2)
 
-def test_create_blocks_covering_shuffle():
+def test_create_covering_blocks():
 
     Key.set_random_seed(3331)
     Shuffle.set_random_seed(3332)
     key = Key.create_random_key(16)
     assert key.__repr__() == "Key: 0011011001100110"
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__repr__() == ("Shuffle: 0->4=0 1->10=1 2->6=1 3->5=1 4->15=0 5->12=0 6->7=0 "
-                                  "7->9=1 8->0=0 9->14=1 10->11=0 11->8=0 12->3=1 13->2=1 "
-                                  "14->13=1 15->1=0")
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == ("Shuffle: 0->4 1->10 2->6 3->5 4->15 5->12 6->7 7->9 "
+                                  "8->0 9->14 10->11 11->8 12->3 13->2 14->13 15->1")
 
     # Multiple blocks, last block is partially filled
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
+    blocks = Block.create_covering_blocks(key, shuffle, 5)
     assert len(blocks) == 4
     assert blocks[0].__repr__() == "Block: 0->4=0 1->10=1 2->6=1 3->5=1 4->15=0"
     assert blocks[1].__repr__() == "Block: 5->12=0 6->7=0 7->9=1 8->0=0 9->14=1"
@@ -66,7 +67,7 @@ def test_create_blocks_covering_shuffle():
     assert blocks[3].__repr__() == "Block: 15->1=0"
 
     # Multiple blocks, last block is fully filled
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 4)
+    blocks = Block.create_covering_blocks(key, shuffle, 4)
     assert len(blocks) == 4
     assert blocks[0].__repr__() == "Block: 0->4=0 1->10=1 2->6=1 3->5=1"
     assert blocks[1].__repr__() == "Block: 4->15=0 5->12=0 6->7=0 7->9=1"
@@ -76,33 +77,25 @@ def test_create_blocks_covering_shuffle():
     # Single block, partially filled
     key = Key.create_random_key(4)
     assert key.__repr__() == "Key: 1111"
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__repr__() == "Shuffle: 0->2=1 1->3=1 2->1=1 3->0=1"
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == "Shuffle: 0->2 1->3 2->1 3->0"
+    blocks = Block.create_covering_blocks(key, shuffle, 5)
     assert len(blocks) == 1
     assert blocks[0].__repr__() == "Block: 0->2=1 1->3=1 2->1=1 3->0=1"
 
     # Single block, fully filled
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 4)
+    blocks = Block.create_covering_blocks(key, shuffle, 4)
     assert len(blocks) == 1
     assert blocks[0].__repr__() == "Block: 0->2=1 1->3=1 2->1=1 3->0=1"
-
-    # No blocks (empty shuffle)
-    key = Key.create_random_key(0)
-    assert key.__repr__() == "Key: "
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__repr__() == "Shuffle:"
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
-    assert len(blocks) == 0
 
 def test_repr():
     Key.set_random_seed(4441)
     Shuffle.set_random_seed(4442)
     key = Key.create_random_key(4)
     assert key.__repr__() == "Key: 1111"
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__repr__() == "Shuffle: 0->2=1 1->3=1 2->1=1 3->0=1"
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == "Shuffle: 0->2 1->3 2->1 3->0"
+    blocks = Block.create_covering_blocks(key, shuffle, 5)
     assert len(blocks) == 1
     assert blocks[0].__repr__() == "Block: 0->2=1 1->3=1 2->1=1 3->0=1"
 
@@ -111,9 +104,9 @@ def test_str():
     Shuffle.set_random_seed(55522)
     key = Key.create_random_key(4)
     assert key.__str__() == "1010"
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__str__() == "1001"
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__str__() == "0->0 1->1 2->3 3->2"
+    blocks = Block.create_covering_blocks(key, shuffle, 5)
     assert len(blocks) == 1
     assert blocks[0].__str__() == "1001"
 
@@ -121,8 +114,8 @@ def test_size():
     Key.set_random_seed(5551)
     Shuffle.set_random_seed(5552)
     key = Key.create_random_key(65)
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 30)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    blocks = Block.create_covering_blocks(key, shuffle, 30)
     assert len(blocks) == 3
     assert blocks[0].size == 30
     assert blocks[1].size == 30
@@ -136,9 +129,9 @@ def test_current_parity():
     # Even parity block.
     key = Key.create_random_key(10)
     assert key.__str__() == "0111101111"
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__str__() == "1101111101"
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__str__() == "0->8 1->1 2->0 3->2 4->3 5->4 6->7 7->9 8->5 9->6"
+    blocks = Block.create_covering_blocks(key, shuffle, 10)
     assert len(blocks) == 1
     block = blocks[0]
     assert block.__str__() == "1101111101"
@@ -147,9 +140,9 @@ def test_current_parity():
     # Odd parity block.
     key = Key.create_random_key(12)
     assert key.__str__() == "010100111101"
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__str__() == "110101100110"
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 12)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__str__() == "0->1 1->8 2->10 3->9 4->0 5->6 6->7 7->5 8->2 9->3 10->11 11->4"
+    blocks = Block.create_covering_blocks(key, shuffle, 12)
     assert len(blocks) == 1
     block = blocks[0]
     assert block.__str__() == "110101100110"
@@ -174,9 +167,9 @@ def test_split():
     # Split block with even number of bits into sub-blocks.
     key = Key.create_random_key(10)
     assert key.__str__() == "0100110001"
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__str__() == "0001001101"
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__str__() == "0->3 1->2 2->6 3->1 4->7 5->0 6->4 7->9 8->8 9->5"
+    blocks = Block.create_covering_blocks(key, shuffle, 10)
     assert len(blocks) == 1
     block = blocks[0]
     assert block.__str__() == "0001001101"
@@ -202,18 +195,18 @@ def test_split():
     with pytest.raises(AssertionError):
         right_sub_sub_sub_block.split()
 
-def test_clear_key_index_to_block_map():
+def test_clear_history():
 
     Key.set_random_seed(12345)
     Shuffle.set_random_seed(67890)
 
     # Forget about blocks that were added in other test cases.
-    Block.clear_key_index_to_block_map()
+    Block.clear_history()
 
     # Set key index to block map to known state.
     key = Key.create_random_key(5)
-    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
-    block = Block(shuffle, 0, 3)
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    block = Block(key, shuffle, 0, 3)
     assert block.__repr__() == ("Block: 0->3=1 1->2=1 2->1=0")
     assert Block.get_blocks_containing_key_index(0) == []
     assert Block.get_blocks_containing_key_index(1) == [block]
@@ -223,7 +216,7 @@ def test_clear_key_index_to_block_map():
     assert Block.get_blocks_containing_key_index(5) == []
 
     # Clear key index to block map.
-    Block.clear_key_index_to_block_map()
+    Block.clear_history()
     for key_index in range(0, 6):
         assert Block.get_blocks_containing_key_index(key_index) == []
 
@@ -231,14 +224,14 @@ def test_get_blocks_containing_key_index():
 
     Key.set_random_seed(9991)
     Shuffle.set_random_seed(9992)
-    Block.clear_key_index_to_block_map()
+    Block.clear_history()
 
     # A block that contains only key bits 1, 3, and 4
     key1 = Key.create_random_key(5)
     assert key1.__repr__() == "Key: 00011"
-    shuffle1 = Shuffle(key1, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle1.__repr__() == ("Shuffle: 0->1=0 1->4=1 2->3=1 3->0=0 4->2=0")
-    block1 = Block(shuffle1, 0, 3)
+    shuffle1 = Shuffle(key1.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle1.__repr__() == ("Shuffle: 0->1 1->4 2->3 3->0 4->2")
+    block1 = Block(key1, shuffle1, 0, 3)
     assert block1.__repr__() == ("Block: 0->1=0 1->4=1 2->3=1")
     assert Block.get_blocks_containing_key_index(0) == []
     assert Block.get_blocks_containing_key_index(1) == [block1]
@@ -250,9 +243,9 @@ def test_get_blocks_containing_key_index():
     # A block that contains only key bits 0, 2, and 3
     key2 = Key.create_random_key(6)
     assert key2.__repr__() == "Key: 001001"
-    shuffle2 = Shuffle(key2, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle2.__repr__() == ("Shuffle: 0->4=0 1->1=0 2->5=1 3->2=1 4->0=0 5->3=0")
-    block2 = Block(shuffle2, 3, 6)
+    shuffle2 = Shuffle(key2.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle2.__repr__() == ("Shuffle: 0->4 1->1 2->5 3->2 4->0 5->3")
+    block2 = Block(key2, shuffle2, 3, 6)
     assert block2.__repr__() == ("Block: 3->2=1 4->0=0 5->3=0")
     assert Block.get_blocks_containing_key_index(0) == [block2]
     assert Block.get_blocks_containing_key_index(1) == [block1]
@@ -276,7 +269,7 @@ def test_correct_one_bit():
 
     Key.set_random_seed(12345)
     Shuffle.set_random_seed(67890)
-    Block.clear_key_index_to_block_map()
+    Block.clear_history()
 
     # Prepare the original (sent) key
     original_key = Key.create_random_key(16)

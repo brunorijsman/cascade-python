@@ -60,10 +60,9 @@ def test_size():
     assert key.size == 7
 
 def test_get_bit():
+    Key.set_random_seed(1234)
     key = Key.create_random_key(11)
-    assert key.get_bit(0) in [0, 1]
-    assert key.get_bit(3) in [0, 1]
-    assert key.get_bit(10) in [0, 1]
+    assert key.__str__() == "10000001000"
     with pytest.raises(AssertionError):
         key.get_bit(11)
     with pytest.raises(AssertionError):
@@ -72,19 +71,21 @@ def test_get_bit():
         key.get_bit("hello")
 
 def test_set_bit():
+    Key.set_random_seed(2345)
     key = Key.create_random_key(13)
+    assert key.__str__() == "1001011111011"
     key.set_bit(0, 0)
-    assert key.get_bit(0) == 0
+    assert key.__str__() == "0001011111011"
     key.set_bit(0, 1)
-    assert key.get_bit(0) == 1
+    assert key.__str__() == "1001011111011"
     key.set_bit(4, 0)
-    assert key.get_bit(4) == 0
+    assert key.__str__() == "1001011111011"
     key.set_bit(4, 1)
-    assert key.get_bit(4) == 1
+    assert key.__str__() == "1001111111011"
     key.set_bit(12, 0)
-    assert key.get_bit(12) == 0
+    assert key.__str__() == "1001111111010"
     key.set_bit(12, 1)
-    assert key.get_bit(12) == 1
+    assert key.__str__() == "1001111111011"
     with pytest.raises(AssertionError):
         key.set_bit(14, 0)
     with pytest.raises(AssertionError):
@@ -99,16 +100,15 @@ def test_set_bit():
         key.set_bit(1, "hello")
 
 def test_flip_bit():
+    Key.set_random_seed(3456)
     key = Key.create_random_key(9)
-    original_value = key.get_bit(0)
+    assert key.__str__() == "111001100"
     key.flip_bit(0)
-    assert key.get_bit(0) == 1 - original_value
-    original_value = key.get_bit(3)
+    assert key.__str__() == "011001100"
     key.flip_bit(3)
-    assert key.get_bit(3) == 1 - original_value
-    original_value = key.get_bit(8)
+    assert key.__str__() == "011101100"
     key.flip_bit(8)
-    assert key.get_bit(8) == 1 - original_value
+    assert key.__str__() == "011101101"
     with pytest.raises(AssertionError):
         key.flip_bit(10)
     with pytest.raises(AssertionError):
@@ -117,48 +117,56 @@ def test_flip_bit():
         key.flip_bit("hello")
 
 def test_copy_without_noise():
+
+    Key.set_random_seed(3456)
+
     # Copy an empty key.
     key = Key()
+    assert key.__str__() == ""
     key_copy = key.copy()
-    assert key.size == key_copy.size
-    # Make sure it is an accurate copy.
-    assert key.size == key_copy.size
-    assert key.difference(key_copy) == 0
+    assert key.__str__() == ""
+    assert key_copy.__str__() == ""
+
     # Copy a non-empty key.
     key = Key.create_random_key(64)
+    assert key.__str__() == "1110011000011110100111010001100011100000010011010101110100000010"
     key_copy = key.copy()
-    # Make sure it is an accurate copy.
-    assert key.size == key_copy.size
-    assert key.difference(key_copy) == 0
+    assert key.__str__() == "1110011000011110100111010001100011100000010011010101110100000010"
+    assert key_copy.__str__() == "1110011000011110100111010001100011100000010011010101110100000010"
+
     # Make sure that each key has an independent copy of the bits; i.e. that changing a bit in the
     # original key does not affect the copied key, or vice versa.
-    original_value = key.get_bit(1)
-    assert key_copy.get_bit(1) == original_value
     key_copy.flip_bit(1)
-    assert key.get_bit(1) == original_value
-    assert key_copy.get_bit(1) == 1 - original_value
+    assert key.__str__() == "1110011000011110100111010001100011100000010011010101110100000010"
+    assert key_copy.__str__() == "1010011000011110100111010001100011100000010011010101110100000010"
 
 def test_copy_with_noise():
-    # Copy a non-empty key.
-    key = Key.create_random_key(64)
-    key_copy = key.copy(5)
-    # Make sure the copy has the expected amount of noise.
-    assert key.size == key_copy.size
-    assert key.difference(key_copy) == 5
+
+    Key.set_random_seed(5678)
+
+    # Copy a non-empty key with noise
+    key = Key.create_random_key(6)
+    assert key.__str__() == "001101"
+    key_copy = key.copy(3)
+    assert key.__str__() == "001101"
+    assert key_copy.__str__() == "011011"
+
     # Make sure that each key has an independent copy of the bits; i.e. that changing a bit in the
     # original key does not affect the copied key, or vice versa.
-    original_value = key.get_bit(1)
-    noisy_copy_value = key_copy.get_bit(1)
     key_copy.flip_bit(1)
-    assert key.get_bit(1) == original_value
-    assert key_copy.get_bit(1) == 1 - noisy_copy_value
+    assert key.__str__() == "001101"
+    assert key_copy.__str__() == "001011"
+
     # Extreme case, flip all bits.
-    key_copy = key.copy(64)
-    assert key.size == key_copy.size
-    assert key.difference(key_copy) == 64
+    key_copy = key.copy(6)
+    assert key_copy.__str__() == "110010"
+
     # Test parameter checks.
     with pytest.raises(AssertionError):
         key.copy(65)
+    with pytest.raises(AssertionError):
+        key = Key()
+        key_copy = key.copy(3)
 
 def test_difference():
     # Normal case.

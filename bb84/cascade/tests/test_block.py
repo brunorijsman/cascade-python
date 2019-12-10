@@ -204,18 +204,20 @@ def test_split():
 
 def test_clear_key_index_to_block_map():
 
+    Key.set_random_seed(12345)
+    Shuffle.set_random_seed(67890)
+
     # Forget about blocks that were added in other test cases.
     Block.clear_key_index_to_block_map()
 
     # Set key index to block map to known state.
-    Key.set_random_seed(12345)
     key = Key.create_random_key(5)
     shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
     block = Block(shuffle, 0, 3)
-    assert block.__repr__() == ("Block: 0->3=1 1->1=0 2->0=1")
-    assert Block.get_blocks_containing_key_index(0) == [block]
+    assert block.__repr__() == ("Block: 0->3=1 1->2=1 2->1=0")
+    assert Block.get_blocks_containing_key_index(0) == []
     assert Block.get_blocks_containing_key_index(1) == [block]
-    assert Block.get_blocks_containing_key_index(2) == []
+    assert Block.get_blocks_containing_key_index(2) == [block]
     assert Block.get_blocks_containing_key_index(3) == [block]
     assert Block.get_blocks_containing_key_index(4) == []
     assert Block.get_blocks_containing_key_index(5) == []
@@ -229,8 +231,6 @@ def test_get_blocks_containing_key_index():
 
     Key.set_random_seed(9991)
     Shuffle.set_random_seed(9992)
-
-    # Forget about blocks that were added in other test cases.
     Block.clear_key_index_to_block_map()
 
     # A block that contains only key bits 1, 3, and 4
@@ -274,5 +274,20 @@ def test_get_blocks_containing_key_index():
 
 def test_correct_one_bit():
 
-    # TODO
+    Key.set_random_seed(12345)
+    Shuffle.set_random_seed(67890)
+    Block.clear_key_index_to_block_map()
+
+    # Prepare the original (sent) key
+    original_key = Key.create_random_key(16)
+    assert original_key.__repr__() == "Key: 1011010001110010"
+
+    # Prepare the noisy (received) key, which is the same as the original key except with 3 errors
+    noisy_key = original_key.copy(3)
+    assert noisy_key.__repr__() == "Key: 1011011010110010"
+
+    print(f"{original_key} {noisy_key}")
+
+
+    # TODO verify prority queue of blocks with 
     pass

@@ -155,9 +155,9 @@ class Key:
         key._bits = copy.deepcopy(self._bits)
 
         # Apply noise.
-        bits_to_flip = random.sample(self._bits.keys(), error_count)
+        bits_to_flip = Key._random.sample(self._bits.keys(), error_count)
         for index in bits_to_flip:
-            self._bits[index] = 1 - self._bits[index]
+            key._bits[index] = 1 - key._bits[index]
 
         return key
 

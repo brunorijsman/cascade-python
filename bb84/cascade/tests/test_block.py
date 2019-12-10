@@ -202,6 +202,29 @@ def test_split():
     with pytest.raises(AssertionError):
         right_sub_sub_sub_block.split()
 
+def test_clear_key_index_to_block_map():
+
+    # Forget about blocks that were added in other test cases.
+    Block.clear_key_index_to_block_map()
+
+    # Set key index to block map to known state.
+    Key.set_random_seed(12345)
+    key = Key.create_random_key(5)
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    block = Block(shuffle, 0, 3)
+    assert block.__repr__() == ("Block: 0->3=1 1->1=0 2->0=1")
+    assert Block.get_blocks_containing_key_index(0) == [block]
+    assert Block.get_blocks_containing_key_index(1) == [block]
+    assert Block.get_blocks_containing_key_index(2) == []
+    assert Block.get_blocks_containing_key_index(3) == [block]
+    assert Block.get_blocks_containing_key_index(4) == []
+    assert Block.get_blocks_containing_key_index(5) == []
+
+    # Clear key index to block map.
+    Block.clear_key_index_to_block_map()
+    for key_index in range(0, 6):
+        assert Block.get_blocks_containing_key_index(key_index) == []
+
 def test_get_blocks_containing_key_index():
 
     Key.set_random_seed(9991)
@@ -248,3 +271,8 @@ def test_get_blocks_containing_key_index():
     assert Block.get_blocks_containing_key_index(3) == [block1, block2, right_sub_block]
     assert Block.get_blocks_containing_key_index(4) == [block1]
     assert Block.get_blocks_containing_key_index(5) == []
+
+def test_correct_one_bit():
+
+    # TODO
+    pass

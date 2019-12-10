@@ -21,7 +21,7 @@ class Shuffle:
                 shuffle order. This is intended to allow experiments to be reproduced exactly.
         """
 
-        # Validate arguments.
+        # Validate parameters.
         assert isinstance(key, Key)
         assert algorithm in [self.ALGORITHM_NONE, self.ALGORITHM_RANDOM]
         assert seed is None or isinstance(seed, int)
@@ -86,7 +86,7 @@ class Shuffle:
             The value (0 or 1) of the key bit at the given shuffle index.
         """
 
-        # Validate arguments.
+        # Validate parameters.
         assert isinstance(index, int)
         assert index in self._shuffle_index_to_key_index
 
@@ -103,7 +103,7 @@ class Shuffle:
             value (int): The new value of the bit. Must be 0 or 1.
         """
 
-        # Validate arguments.
+        # Validate parameters.
         assert isinstance(index, int)
         assert index in self._shuffle_index_to_key_index
         assert isinstance(value, int)
@@ -112,6 +112,22 @@ class Shuffle:
         # Return the key bit.
         key_index = self._shuffle_index_to_key_index[index]
         self._key.set_bit(key_index, value)
+
+    def flip_bit(self, index):
+        """
+        Flip the value of the shuffle bit at a given shuffle index (0 to 1, and vice versa).
+
+        Params:
+            index (int): The shuffle index of the bit. Index must be in range [0, shuffle.size).
+        """
+
+        # Validate arguments.
+        assert isinstance(index, int)
+        assert 0 <= index < self.size
+
+        # Flip the bit value.
+        key_index = self._shuffle_index_to_key_index[index]
+        self._key.flip_bit(key_index)
 
     def get_key_index(self, shuffle_index):
         """
@@ -125,7 +141,7 @@ class Shuffle:
             The key index.
         """
 
-        # Validate arguments.
+        # Validate parameters.
         assert isinstance(shuffle_index, int)
         assert shuffle_index in self._shuffle_index_to_key_index
 

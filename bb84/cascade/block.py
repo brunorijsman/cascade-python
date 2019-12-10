@@ -21,7 +21,7 @@ class Block:
             end_index > start_index.
         """
 
-        # Validate arguments.
+        # Validate parameters.
         assert isinstance(shuffle, Shuffle)
         assert shuffle.size > 0
         assert isinstance(start_index, int)
@@ -66,7 +66,7 @@ class Block:
             A list of blocks that cover the shuffled key.
         """
 
-        # Validate arguments.
+        # Validate parameters.
         assert isinstance(block_size, int)
         assert block_size > 0
         assert isinstance(shuffle, Shuffle)
@@ -111,6 +111,16 @@ class Block:
         return string
 
     @property
+    def size(self):
+        """
+        Get the size of the block in bits.
+
+        Returns:
+            The size of the block in bits.
+        """
+        return self._end_index - self._start_index
+
+    @property
     def current_parity(self):
         """
         Get the current parity of the block.
@@ -130,7 +140,7 @@ class Block:
             (left_child_block, right_child_block)
         """
 
-        # Validate arguments.
+        # Validate parameters.
         assert self._end_index - self._start_index > 1
         assert not self._has_been_split
 
@@ -140,6 +150,76 @@ class Block:
         left_sub_block = Block(self._shuffle, self._start_index, middle_index)
         right_sub_block = Block(self._shuffle, middle_index, self._end_index)
         return (left_sub_block, right_sub_block)
+
+    def correct_one_bit(self, ask_correct_parity_function):
+        """
+        Try to correct a single bit error in this block by recursively dividing the block into
+        sub-blocks and comparing the current parity of each of those sub-blocks with the coorect
+        parity of the same sub-block.
+
+        Params:
+
+            ask_correct_parity_function: A function which takes a block as a parameter and returns
+            the correct parity for the block. In other words, we assume that the block contains some
+            errors due to noise and/or due to an eavesdropper, and we want the know the parity of
+            the block without the errors. In real life this involves asking the party who sent us
+            the block; in simulation we can get it more easily because we ourselves introduced the
+            errors on purpose.
+
+        Side effects:
+
+            @@@TODO
+
+        Returns:
+
+            True if a single error was corrected, False otherwise.
+        """
+
+        # Validate parameters.
+        assert callable(ask_correct_parity_function)
+
+        # We only attempt to correct a bit error if there is an odd number of errors, i.e. if
+        # the current parity if different from the correct parity. If the current and correct
+        # parity are the same, it doesn't mean there are no errors, it only means there is an even
+        # number (potentially zero) number of errors. In that case we don't attempt to correct and
+        # instead we "hope" that the error will be caught in another shuffle of the key.
+        correct_parity = ask_correct_parity_function(self)
+        if self._current_parity == correct_parity:
+            return False
+
+        # If this block contains a single bit, we have finished the recursion and found an error.
+        if self.size == 1:
+
+            # Fix the error by flipping the one and only bit in this block.
+            self._shuffle.flip_bit(self._start_index)
+
+            # TODO: Cascade
+
+            # We fixed an error.
+            return True
+
+        # Split the block into two sub-blocks. Since the whole block contains an odd number of
+        # errors, either the first sub-block contains an odd number of errors and the second
+        # sub-block contains an even number of errors, or vice versa. Recursively check each of
+        # the two sub-blocks. Whichever one has the odd number of errors will recurse more deeply
+        # until we find a single bit error and fix it.
+        (left_sub_block, right_sub_block) = self.split()
+        if left_sub_block.correct_one_bit(ask_correct_parity_function):
+
+            # The left sub-block had an odd number of errors. We know for a fact that the right
+            # sub-block has an even number of errors, so we don't need to recurse any deeper into
+            # the right sub-block. Not recursing avoid an unnecesary and potentially expensive call
+            # to ask_correct_parity_function.
+            pass
+
+        else:
+
+            # The left sub-block had an even number of errors. So that means that the right
+            # sub-block must contain an odd number of errors. Recurse deeper into the right
+            # sub-block.
+            assert right_sub_block.correct_one_bit(ask_correct_parity_function)
+
+        return True
 
     @staticmethod
     def clear_key_index_to_block_map():

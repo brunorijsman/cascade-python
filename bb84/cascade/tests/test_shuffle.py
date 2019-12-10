@@ -102,7 +102,22 @@ def test_set_bit():
     with pytest.raises(AssertionError):
         shuffle.set_bit(1, "hello")
 
-def test_get_bit_index():
+def test_flip_bit():
+    key = Key.create_random_key(6, seed=9876)
+    assert key.__repr__() == "Key: 101110"
+    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=5432)
+    assert shuffle.__repr__() == "Shuffle: 0->2=1 1->0=1 2->5=0 3->4=1 4->3=1 5->1=0"
+    shuffle.flip_bit(0)
+    assert key.__repr__() == "Key: 100110"
+    assert shuffle.__repr__() == "Shuffle: 0->2=0 1->0=1 2->5=0 3->4=1 4->3=1 5->1=0"
+    with pytest.raises(AssertionError):
+        shuffle.flip_bit(-1)
+    with pytest.raises(AssertionError):
+        shuffle.flip_bit(6)
+    with pytest.raises(AssertionError):
+        shuffle.flip_bit("hello")
+
+def test_get_key_index():
     key = Key.create_random_key(6, seed=9876)
     assert key.__repr__() == "Key: 101110"
     shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=5432)

@@ -51,3 +51,5 @@
    * Restructure controlled seeding of random function (will affect test cases).
 
    * Code coverage on codecov should also include bb84 module itself.
+
+   * Indent Google docstrings with more than one parameter.

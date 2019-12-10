@@ -106,6 +106,15 @@ def test_str():
     assert len(blocks) == 1
     assert blocks[0].__str__() == "0111"
 
+def test_size():
+    key = Key.create_random_key(65)
+    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM)
+    blocks = Block.create_blocks_covering_shuffle(shuffle, 30)
+    assert len(blocks) == 3
+    assert blocks[0].size == 30
+    assert blocks[1].size == 30
+    assert blocks[2].size == 5
+
 def test_current_parity():
 
     # Even parity block.

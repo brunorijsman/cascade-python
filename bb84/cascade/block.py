@@ -1,13 +1,18 @@
 from bb84.cascade.shuffle import Shuffle
 
 class Block:
+    """
+    A block is a contiguous subset of bits in a potentially shuffled key.
+    """
+
+    _key_index_to_blocks = {}
 
     def __init__(self, shuffle, start_index, end_index, parent=None):
         """
-        Create a block that represents a subset of a shuffled key.
+        Create a block, which is a contiguous subset of bits in a potentially shuffled key.
 
         Params:
-            shuffle (Shuffled): the shuffled key from which to create the block. The shuffle must
+            shuffle (Shuffle): the shuffled key from which to create the block. The shuffle must
             not be empty.
             start_index (int): The shuffle index, inclusive, at which the block starts. Must be in
             range [0, shuffle.size).
@@ -42,6 +47,14 @@ class Block:
         for index in range(start_index, end_index):
             if shuffle.get_bit(index) == 1:
                 self._current_parity = 1 - self._current_parity
+
+        # Update key bit to block map.
+        for shuffle_index in range(self._start_index, self._end_index):
+            key_index = self._shuffle.get_key_index(shuffle_index)
+            if key_index in Block._key_index_to_blocks:
+                Block._key_index_to_blocks[key_index].append(self)
+            else:
+                Block._key_index_to_blocks[key_index] = [self]
 
     @staticmethod
     def create_blocks_covering_shuffle(shuffle, block_size):
@@ -131,3 +144,25 @@ class Block:
         self._left_child = Block(self._shuffle, self._start_index, middle_index, self)
         self._right_child = Block(self._shuffle, middle_index, self._end_index, self)
         return (self._left_child, self._right_child)
+
+    @staticmethod
+    def clear_key_index_to_block_map():
+        """
+        Clear key index to block map.
+        """
+        Block._key_index_to_blocks = {}
+
+    @staticmethod
+    def get_blocks_containing_key_index(key_index):
+        """
+        Get a list of block that contain a given key index.
+
+        Params:
+            key_index (int): The key index that we are looking for.
+
+        Returns:
+            The list of block that contain a given key index.
+        """
+        assert isinstance(key_index, int)
+        assert key_index >= 0
+        return Block._key_index_to_blocks.get(key_index, [])

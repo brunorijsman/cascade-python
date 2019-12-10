@@ -1,7 +1,5 @@
  * Am I using the correct CQC-Python library? https://github.com/SoftwareQuTech/CQC-Python vs https://github.com/SoftwareQuTech/SimulaQron
 
- * File SimulaQron bug: b'01' turns into b'\0x01'
-
  * Use SimulaQron from GitHub source instead of pip install
 
  * File SimulaQron enhancement request: report sender when receiving message
@@ -12,9 +10,7 @@
 
  * Add authentication and data integrity on classical channel (see http://bit.ly/bb84auth)
 
- * Add documentation comments
-
- * Add type annotations (later, makes the code very less readable)
+ * Add documentation comments (bb84 module; cascade already done)
 
  * Add noise estimation
 
@@ -24,9 +20,9 @@
 
  * Report Alice and Bob key, and differences at end of run
 
- * Generate documentation
-
  * Handle case that block size is not multiple of window size
+
+ * Rename bb84 block to something else
 
  * Get rid of report kwargs, instead make report public
 
@@ -36,18 +32,20 @@
 
  * Introduce a middle node for modeling normal (non-attack) noise
 
- * Start Sphinx documentation
-
- * Integrate Sphinx documentation into CI/CD workflow (travis and read the docs)
-
  * Progress on Cascade implementation (information reconciliation):
-
-   * Add unit test cases for Key
 
    * Each key bit keeps track of which Blocks it is used in
 
-   * Implement Block class
+   * Implement basic Binary algorithm
 
    * Implement basic Cascade algorithm
 
+   * Implement Cascade variations
+
+     * Deterministic shuffle
+
+     * Discard corrected bits?
+
    * Replicate Andre Reis Cascade study to make sure that my implementation is sane
+
+   * Can we get rid of parent and child members in Block class?

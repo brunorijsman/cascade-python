@@ -175,3 +175,47 @@ def test_split():
     # Not allowed to split a block of size 1.
     with pytest.raises(AssertionError):
         right_ggchild_block.split()
+
+def test_get_blocks_containing_key_index():
+
+    # Forget about blocks that were added in other test cases.
+    Block.clear_key_index_to_block_map()
+
+    # A block that contains only key bits 1, 2, and 4
+    key1 = Key.create_random_key(5, seed=111)
+    assert key1.__repr__() == "Key: 01101"
+    shuffle1 = Shuffle(key1, Shuffle.ALGORITHM_RANDOM, seed=222)
+    assert shuffle1.__repr__() == ("Shuffle: 0->1=1 1->2=1 2->4=1 3->0=0 4->3=0")
+    block1 = Block(shuffle1, 0, 3)
+    assert block1.__repr__() == ("Block: 0->1=1 1->2=1 2->4=1")
+    assert Block.get_blocks_containing_key_index(0) == []
+    assert Block.get_blocks_containing_key_index(1) == [block1]
+    assert Block.get_blocks_containing_key_index(2) == [block1]
+    assert Block.get_blocks_containing_key_index(3) == []
+    assert Block.get_blocks_containing_key_index(4) == [block1]
+    assert Block.get_blocks_containing_key_index(5) == []
+
+    # A block that contains only key bits 0, 1, and 5
+    key2 = Key.create_random_key(6, seed=333)
+    assert key2.__repr__() == "Key: 110101"
+    shuffle2 = Shuffle(key2, Shuffle.ALGORITHM_RANDOM, seed=444)
+    assert shuffle2.__repr__() == ("Shuffle: 0->4=0 1->3=1 2->2=0 3->5=1 4->0=1 5->1=1")
+    block2 = Block(shuffle2, 3, 6)
+    assert block2.__repr__() == ("Block: 3->5=1 4->0=1 5->1=1")
+    assert Block.get_blocks_containing_key_index(0) == [block2]
+    assert Block.get_blocks_containing_key_index(1) == [block1, block2]
+    assert Block.get_blocks_containing_key_index(2) == [block1]
+    assert Block.get_blocks_containing_key_index(3) == []
+    assert Block.get_blocks_containing_key_index(4) == [block1]
+    assert Block.get_blocks_containing_key_index(5) == [block2]
+
+    # Create child blocks for block2
+    (left_child_block, right_child_block) = block2.split()
+    assert left_child_block.__repr__() == ("Block: 3->5=1 4->0=1")
+    assert right_child_block.__repr__() == ("Block: 5->1=1")
+    assert Block.get_blocks_containing_key_index(0) == [block2, left_child_block]
+    assert Block.get_blocks_containing_key_index(1) == [block1, block2, right_child_block]
+    assert Block.get_blocks_containing_key_index(2) == [block1]
+    assert Block.get_blocks_containing_key_index(3) == []
+    assert Block.get_blocks_containing_key_index(4) == [block1]
+    assert Block.get_blocks_containing_key_index(5) == [block2, left_child_block]

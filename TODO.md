@@ -48,4 +48,6 @@
 
    * Replicate Andre Reis Cascade study to make sure that my implementation is sane
 
-   * Can we get rid of parent and child members in Block class?
+   * Restructure controlled seeding of random function (will affect test cases).
+
+   * Code coverage on codecov should also include bb84 module itself.

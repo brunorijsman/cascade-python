@@ -7,7 +7,7 @@ class Block:
 
     _key_index_to_blocks = {}
 
-    def __init__(self, shuffle, start_index, end_index, parent=None):
+    def __init__(self, shuffle, start_index, end_index):
         """
         Create a block, which is a contiguous subset of bits in a potentially shuffled key.
 
@@ -19,7 +19,6 @@ class Block:
             end_index (int): The shuffle index, exclusive, at which the block end. Must be in range
             [0, shuffle.size]. The range must encompass at least 1 bit, i.e.
             end_index > start_index.
-            parent (Block): The parent block of this block.
         """
 
         # Validate arguments.
@@ -30,17 +29,14 @@ class Block:
         assert isinstance(end_index, int)
         assert 0 <= end_index <= shuffle.size
         assert end_index > start_index
-        assert parent is None or isinstance(parent, Block)
 
         # The subset of the shuffle underlying this block.
         self._shuffle = shuffle
         self._start_index = start_index
         self._end_index = end_index
 
-        # Keep track of family tree.
-        self._parent = parent
-        self._left_child = None
-        self._right_child = None
+        # To detect attempts to split more than once.
+        self._has_been_split = False
 
         # Calculate the actual parity of this block.
         self._current_parity = 0
@@ -126,9 +122,9 @@ class Block:
 
     def split(self):
         """
-        Split this block into two child blocks of equal size (plus or minus one). If the block has
-        an odd size, the left child block will be one bit larger than th right child block.
-        This block must be at least 2 bits in size and most not already have been split before.
+        Split this block into two sub-blocks of equal size (plus or minus one). If the block has
+        an odd size, the left sub-block will be one bit larger than th right sub-block.
+        This block must be at least 2 bits in size and must not have been split before.
 
         Returns:
             (left_child_block, right_child_block)
@@ -136,14 +132,14 @@ class Block:
 
         # Validate arguments.
         assert self._end_index - self._start_index > 1
-        assert self._left_child is None
-        assert self._right_child is None
+        assert not self._has_been_split
 
         # Split the block down the middle.
+        self._has_been_split = True
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
-        self._left_child = Block(self._shuffle, self._start_index, middle_index, self)
-        self._right_child = Block(self._shuffle, middle_index, self._end_index, self)
-        return (self._left_child, self._right_child)
+        left_sub_block = Block(self._shuffle, self._start_index, middle_index)
+        right_sub_block = Block(self._shuffle, middle_index, self._end_index)
+        return (left_sub_block, right_sub_block)
 
     @staticmethod
     def clear_key_index_to_block_map():

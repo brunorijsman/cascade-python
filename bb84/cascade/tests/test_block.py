@@ -20,8 +20,6 @@ def test_create_validate_args():
         Block(shuffle, 3, 9)
     with pytest.raises(AssertionError):
         Block(shuffle, 3, 2)
-    with pytest.raises(AssertionError):
-        Block(shuffle, 2, 3, "hello")
 
 def test_create_block():
 
@@ -110,71 +108,71 @@ def test_str():
 
 def test_current_parity():
 
-    # Even parity parent block.
+    # Even parity block.
     key = Key.create_random_key(10, seed=12345)
     assert key.__str__() == "1011011010"
     shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=67890)
     assert shuffle.__str__() == "1111101000"
     blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
     assert len(blocks) == 1
-    parent_block = blocks[0]
-    assert parent_block.__str__() == "1111101000"
-    assert parent_block.current_parity == 0
+    block = blocks[0]
+    assert block.__str__() == "1111101000"
+    assert block.current_parity == 0
 
-    # Odd parity parent block.
+    # Odd parity block.
     key = Key.create_random_key(10, seed=111111)
     assert key.__str__() == "0011001011"
     shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=22222)
     assert shuffle.__str__() == "0010110011"
     blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
     assert len(blocks) == 1
-    parent_block = blocks[0]
-    assert parent_block.__str__() == "0010110011"
-    assert parent_block.current_parity == 1
+    block = blocks[0]
+    assert block.__str__() == "0010110011"
+    assert block.current_parity == 1
 
-    # Split parent into children
-    (left_child_block, right_child_block) = parent_block.split()
+    # Split block into sub-blocks.
+    (left_sub_block, right_sub_block) = block.split()
 
-    # Even parity child block.
-    assert left_child_block.__str__() == "00101"
-    assert left_child_block.current_parity == 0
+    # Even parity sub-block.
+    assert left_sub_block.__str__() == "00101"
+    assert left_sub_block.current_parity == 0
 
-    # Odd parity child block.
-    assert right_child_block.__str__() == "10011"
-    assert right_child_block.current_parity == 1
+    # Odd parity sub-block.
+    assert right_sub_block.__str__() == "10011"
+    assert right_sub_block.current_parity == 1
 
 def test_split():
 
-    # Split top block with even number of bits into child blocks.
+    # Split block with even number of bits into sub-blocks.
     key = Key.create_random_key(10, seed=12345)
     assert key.__str__() == "1011011010"
     shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=67890)
     assert shuffle.__str__() == "1111101000"
     blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
     assert len(blocks) == 1
-    parent_block = blocks[0]
-    assert parent_block.__str__() == "1111101000"
-    (left_child_block, right_child_block) = parent_block.split()
-    assert left_child_block.__str__() == "11111"
-    assert right_child_block.__str__() == "01000"
+    block = blocks[0]
+    assert block.__str__() == "1111101000"
+    (left_sub_block, right_sub_block) = block.split()
+    assert left_sub_block.__str__() == "11111"
+    assert right_sub_block.__str__() == "01000"
 
-    # Split right child block with odd number of bits into grand-child blocks.
-    (left_gchild_block, right_gchild_block) = right_child_block.split()
-    assert left_gchild_block.__str__() == "010"
-    assert right_gchild_block.__str__() == "00"
+    # Split right sub-block with odd number of bits into sub-sub-blocks.
+    (left_sub_sub_block, right_sub_sub_block) = right_sub_block.split()
+    assert left_sub_sub_block.__str__() == "010"
+    assert right_sub_sub_block.__str__() == "00"
 
-    # Split left grand-child block with odd number of bits into grand-grand-child blocks.
-    (left_ggchild_block, right_ggchild_block) = left_gchild_block.split()
-    assert left_ggchild_block.__str__() == "01"
-    assert right_ggchild_block.__str__() == "0"
+    # Split left sub-sub-block with odd number of bits into sub-sub-sub-blocks.
+    (left_sub_sub_sub_block, right_sub_sub_sub_block) = left_sub_sub_block.split()
+    assert left_sub_sub_sub_block.__str__() == "01"
+    assert right_sub_sub_sub_block.__str__() == "0"
 
     # A block that was already split is not allowed to be split again.
     with pytest.raises(AssertionError):
-        parent_block.split()
+        block.split()
 
     # Not allowed to split a block of size 1.
     with pytest.raises(AssertionError):
-        right_ggchild_block.split()
+        right_sub_sub_sub_block.split()
 
 def test_get_blocks_containing_key_index():
 
@@ -209,13 +207,13 @@ def test_get_blocks_containing_key_index():
     assert Block.get_blocks_containing_key_index(4) == [block1]
     assert Block.get_blocks_containing_key_index(5) == [block2]
 
-    # Create child blocks for block2
-    (left_child_block, right_child_block) = block2.split()
-    assert left_child_block.__repr__() == ("Block: 3->5=1 4->0=1")
-    assert right_child_block.__repr__() == ("Block: 5->1=1")
-    assert Block.get_blocks_containing_key_index(0) == [block2, left_child_block]
-    assert Block.get_blocks_containing_key_index(1) == [block1, block2, right_child_block]
+    # Create sub-blocks for block2
+    (left_sub_block, right_sub_block) = block2.split()
+    assert left_sub_block.__repr__() == ("Block: 3->5=1 4->0=1")
+    assert right_sub_block.__repr__() == ("Block: 5->1=1")
+    assert Block.get_blocks_containing_key_index(0) == [block2, left_sub_block]
+    assert Block.get_blocks_containing_key_index(1) == [block1, block2, right_sub_block]
     assert Block.get_blocks_containing_key_index(2) == [block1]
     assert Block.get_blocks_containing_key_index(3) == []
     assert Block.get_blocks_containing_key_index(4) == [block1]
-    assert Block.get_blocks_containing_key_index(5) == [block2, left_child_block]
+    assert Block.get_blocks_containing_key_index(5) == [block2, left_sub_block]

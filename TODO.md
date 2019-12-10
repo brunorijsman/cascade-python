@@ -40,6 +40,8 @@
 
    * Implement basic Cascade algorithm
 
+   * De-couple shuffle from key (lots of ripple effects)
+
    * Implement Cascade variations
 
      * Deterministic shuffle

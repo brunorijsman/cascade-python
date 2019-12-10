@@ -280,14 +280,13 @@ def test_correct_one_bit():
 
     # Prepare the original (sent) key
     original_key = Key.create_random_key(16)
-    assert original_key.__repr__() == "Key: 1011010001110010"
+    assert original_key.__repr__() == "Key: 1011011010110010"
 
     # Prepare the noisy (received) key, which is the same as the original key except with 3 errors
     noisy_key = original_key.copy(3)
-    assert noisy_key.__repr__() == "Key: 1011011010110010"
+    assert original_key.__repr__() == "Key: 1011011010110010"
+    assert noisy_key.__repr__() == "Key: 1011011001110110"
 
-    print(f"{original_key} {noisy_key}")
+    # TODO: Continue here; must have a way to share shuffle between Alice and Bob
 
-
-    # TODO verify prority queue of blocks with 
-    pass
+    # TODO verify prority queue of blocks

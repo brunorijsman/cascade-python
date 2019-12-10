@@ -4,8 +4,10 @@ from bb84.cascade.key import Key
 from bb84.cascade.shuffle import Shuffle
 
 def test_create_validate_args():
-    key = Key.create_random_key(8, seed=123)
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=456)
+    Key.set_random_seed(1111)
+    Shuffle.set_random_seed(1112)
+    key = Key.create_random_key(8)
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
     with pytest.raises(AssertionError):
         Block("hello", 0, 1)
     with pytest.raises(AssertionError):
@@ -23,19 +25,22 @@ def test_create_validate_args():
 
 def test_create_block():
 
+    Key.set_random_seed(2221)
+    Shuffle.set_random_seed(2222)
+
     # Special case: block covers entire shuffle
-    key = Key.create_random_key(8, seed=123)
-    assert key.__repr__() == "Key: 01011001"
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=456)
-    assert shuffle.__repr__() == "Shuffle: 0->0=0 1->4=1 2->1=1 3->7=1 4->3=1 5->2=0 6->6=0 7->5=0"
+    key = Key.create_random_key(8)
+    assert key.__repr__() == "Key: 10111010"
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == "Shuffle: 0->2=1 1->3=1 2->5=0 3->6=1 4->4=1 5->0=1 6->7=0 7->1=0"
     block = Block(shuffle, 3, 6)
-    assert block.__repr__() == "Block: 3->7=1 4->3=1 5->2=0"
+    assert block.__repr__() == "Block: 3->6=1 4->4=1 5->0=1"
     block = Block(shuffle, 0, 8)
-    assert block.__repr__() == "Block: 0->0=0 1->4=1 2->1=1 3->7=1 4->3=1 5->2=0 6->6=0 7->5=0"
+    assert block.__repr__() == "Block: 0->2=1 1->3=1 2->5=0 3->6=1 4->4=1 5->0=1 6->7=0 7->1=0"
 
     # Special case: single bit block
     block = Block(shuffle, 2, 3)
-    assert block.__repr__() == "Block: 2->1=1"
+    assert block.__repr__() == "Block: 2->5=0"
 
     # Special case: empty block
     with pytest.raises(AssertionError):
@@ -43,72 +48,80 @@ def test_create_block():
 
 def test_create_blocks_covering_shuffle():
 
-    key = Key.create_random_key(16, seed=234)
-    assert key.__repr__() == "Key: 1101101111011101"
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=345)
-    assert shuffle.__repr__() == ("Shuffle: 0->6=1 1->7=1 2->9=1 3->3=1 4->14=0 5->11=1 "
-                                  "6->8=1 7->5=0 8->2=0 9->15=1 10->10=0 11->4=1 12->1=1 "
-                                  "13->13=1 14->0=1 15->12=1")
+    Key.set_random_seed(3331)
+    Shuffle.set_random_seed(3332)
+    key = Key.create_random_key(16)
+    assert key.__repr__() == "Key: 0011011001100110"
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == ("Shuffle: 0->4=0 1->10=1 2->6=1 3->5=1 4->15=0 5->12=0 6->7=0 "
+                                  "7->9=1 8->0=0 9->14=1 10->11=0 11->8=0 12->3=1 13->2=1 "
+                                  "14->13=1 15->1=0")
 
     # Multiple blocks, last block is partially filled
     blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
     assert len(blocks) == 4
-    assert blocks[0].__repr__() == "Block: 0->6=1 1->7=1 2->9=1 3->3=1 4->14=0"
-    assert blocks[1].__repr__() == "Block: 5->11=1 6->8=1 7->5=0 8->2=0 9->15=1"
-    assert blocks[2].__repr__() == "Block: 10->10=0 11->4=1 12->1=1 13->13=1 14->0=1"
-    assert blocks[3].__repr__() == "Block: 15->12=1"
+    assert blocks[0].__repr__() == "Block: 0->4=0 1->10=1 2->6=1 3->5=1 4->15=0"
+    assert blocks[1].__repr__() == "Block: 5->12=0 6->7=0 7->9=1 8->0=0 9->14=1"
+    assert blocks[2].__repr__() == "Block: 10->11=0 11->8=0 12->3=1 13->2=1 14->13=1"
+    assert blocks[3].__repr__() == "Block: 15->1=0"
 
     # Multiple blocks, last block is fully filled
     blocks = Block.create_blocks_covering_shuffle(shuffle, 4)
     assert len(blocks) == 4
-    assert blocks[0].__repr__() == "Block: 0->6=1 1->7=1 2->9=1 3->3=1"
-    assert blocks[1].__repr__() == "Block: 4->14=0 5->11=1 6->8=1 7->5=0"
-    assert blocks[2].__repr__() == "Block: 8->2=0 9->15=1 10->10=0 11->4=1"
-    assert blocks[3].__repr__() == "Block: 12->1=1 13->13=1 14->0=1 15->12=1"
+    assert blocks[0].__repr__() == "Block: 0->4=0 1->10=1 2->6=1 3->5=1"
+    assert blocks[1].__repr__() == "Block: 4->15=0 5->12=0 6->7=0 7->9=1"
+    assert blocks[2].__repr__() == "Block: 8->0=0 9->14=1 10->11=0 11->8=0"
+    assert blocks[3].__repr__() == "Block: 12->3=1 13->2=1 14->13=1 15->1=0"
 
     # Single block, partially filled
-    key = Key.create_random_key(4, seed=234)
-    assert key.__repr__() == "Key: 1101"
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=345)
-    assert shuffle.__repr__() == "Shuffle: 0->2=0 1->1=1 2->0=1 3->3=1"
+    key = Key.create_random_key(4)
+    assert key.__repr__() == "Key: 1111"
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == "Shuffle: 0->2=1 1->3=1 2->1=1 3->0=1"
     blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
     assert len(blocks) == 1
-    assert blocks[0].__repr__() == "Block: 0->2=0 1->1=1 2->0=1 3->3=1"
+    assert blocks[0].__repr__() == "Block: 0->2=1 1->3=1 2->1=1 3->0=1"
 
     # Single block, fully filled
     blocks = Block.create_blocks_covering_shuffle(shuffle, 4)
     assert len(blocks) == 1
-    assert blocks[0].__repr__() == "Block: 0->2=0 1->1=1 2->0=1 3->3=1"
+    assert blocks[0].__repr__() == "Block: 0->2=1 1->3=1 2->1=1 3->0=1"
 
     # No blocks (empty shuffle)
-    key = Key.create_random_key(0, seed=234)
+    key = Key.create_random_key(0)
     assert key.__repr__() == "Key: "
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=345)
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__repr__() == "Shuffle:"
     blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
     assert len(blocks) == 0
 
 def test_repr():
-    key = Key.create_random_key(4, seed=234)
-    assert key.__repr__() == "Key: 1101"
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=345)
-    assert shuffle.__repr__() == "Shuffle: 0->2=0 1->1=1 2->0=1 3->3=1"
+    Key.set_random_seed(4441)
+    Shuffle.set_random_seed(4442)
+    key = Key.create_random_key(4)
+    assert key.__repr__() == "Key: 1111"
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == "Shuffle: 0->2=1 1->3=1 2->1=1 3->0=1"
     blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
     assert len(blocks) == 1
-    assert blocks[0].__repr__() == "Block: 0->2=0 1->1=1 2->0=1 3->3=1"
+    assert blocks[0].__repr__() == "Block: 0->2=1 1->3=1 2->1=1 3->0=1"
 
 def test_str():
-    key = Key.create_random_key(4, seed=234)
-    assert key.__str__() == "1101"
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=345)
-    assert shuffle.__str__() == "0111"
+    Key.set_random_seed(55511)
+    Shuffle.set_random_seed(55522)
+    key = Key.create_random_key(4)
+    assert key.__str__() == "1010"
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__str__() == "1001"
     blocks = Block.create_blocks_covering_shuffle(shuffle, 5)
     assert len(blocks) == 1
-    assert blocks[0].__str__() == "0111"
+    assert blocks[0].__str__() == "1001"
 
 def test_size():
+    Key.set_random_seed(5551)
+    Shuffle.set_random_seed(5552)
     key = Key.create_random_key(65)
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM)
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
     blocks = Block.create_blocks_covering_shuffle(shuffle, 30)
     assert len(blocks) == 3
     assert blocks[0].size == 30
@@ -117,63 +130,69 @@ def test_size():
 
 def test_current_parity():
 
+    Key.set_random_seed(6661)
+    Shuffle.set_random_seed(6662)
+
     # Even parity block.
-    key = Key.create_random_key(10, seed=12345)
-    assert key.__str__() == "1011011010"
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=67890)
-    assert shuffle.__str__() == "1111101000"
+    key = Key.create_random_key(10)
+    assert key.__str__() == "0111101111"
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__str__() == "1101111101"
     blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
     assert len(blocks) == 1
     block = blocks[0]
-    assert block.__str__() == "1111101000"
+    assert block.__str__() == "1101111101"
     assert block.current_parity == 0
 
     # Odd parity block.
-    key = Key.create_random_key(10, seed=111111)
-    assert key.__str__() == "0011001011"
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=22222)
-    assert shuffle.__str__() == "0010110011"
-    blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
+    key = Key.create_random_key(12)
+    assert key.__str__() == "010100111101"
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__str__() == "110101100110"
+    blocks = Block.create_blocks_covering_shuffle(shuffle, 12)
     assert len(blocks) == 1
     block = blocks[0]
-    assert block.__str__() == "0010110011"
+    assert block.__str__() == "110101100110"
     assert block.current_parity == 1
 
     # Split block into sub-blocks.
     (left_sub_block, right_sub_block) = block.split()
 
     # Even parity sub-block.
-    assert left_sub_block.__str__() == "00101"
+    assert left_sub_block.__str__() == "110101"
     assert left_sub_block.current_parity == 0
 
     # Odd parity sub-block.
-    assert right_sub_block.__str__() == "10011"
+    assert right_sub_block.__str__() == "100110"
     assert right_sub_block.current_parity == 1
 
 def test_split():
 
+    Key.set_random_seed(7771)
+    Shuffle.set_random_seed(7772)
+
     # Split block with even number of bits into sub-blocks.
-    key = Key.create_random_key(10, seed=12345)
-    assert key.__str__() == "1011011010"
-    shuffle = Shuffle(key, Shuffle.ALGORITHM_RANDOM, seed=67890)
-    assert shuffle.__str__() == "1111101000"
+    key = Key.create_random_key(10)
+    assert key.__str__() == "0100110001"
+    shuffle = Shuffle(key, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__str__() == "0001001101"
     blocks = Block.create_blocks_covering_shuffle(shuffle, 10)
     assert len(blocks) == 1
     block = blocks[0]
-    assert block.__str__() == "1111101000"
+    assert block.__str__() == "0001001101"
     (left_sub_block, right_sub_block) = block.split()
-    assert left_sub_block.__str__() == "11111"
-    assert right_sub_block.__str__() == "01000"
+    assert left_sub_block.__str__() == "00010"
+    assert right_sub_block.__str__() == "01101"
 
     # Split right sub-block with odd number of bits into sub-sub-blocks.
     (left_sub_sub_block, right_sub_sub_block) = right_sub_block.split()
-    assert left_sub_sub_block.__str__() == "010"
-    assert right_sub_sub_block.__str__() == "00"
+    assert left_sub_sub_block.__str__() == "011"
+    assert right_sub_sub_block.__str__() == "01"
 
     # Split left sub-sub-block with odd number of bits into sub-sub-sub-blocks.
     (left_sub_sub_sub_block, right_sub_sub_sub_block) = left_sub_sub_block.split()
     assert left_sub_sub_sub_block.__str__() == "01"
-    assert right_sub_sub_sub_block.__str__() == "0"
+    assert right_sub_sub_sub_block.__str__() == "1"
 
     # A block that was already split is not allowed to be split again.
     with pytest.raises(AssertionError):
@@ -185,44 +204,47 @@ def test_split():
 
 def test_get_blocks_containing_key_index():
 
+    Key.set_random_seed(9991)
+    Shuffle.set_random_seed(9992)
+
     # Forget about blocks that were added in other test cases.
     Block.clear_key_index_to_block_map()
 
-    # A block that contains only key bits 1, 2, and 4
-    key1 = Key.create_random_key(5, seed=111)
-    assert key1.__repr__() == "Key: 01101"
-    shuffle1 = Shuffle(key1, Shuffle.ALGORITHM_RANDOM, seed=222)
-    assert shuffle1.__repr__() == ("Shuffle: 0->1=1 1->2=1 2->4=1 3->0=0 4->3=0")
+    # A block that contains only key bits 1, 3, and 4
+    key1 = Key.create_random_key(5)
+    assert key1.__repr__() == "Key: 00011"
+    shuffle1 = Shuffle(key1, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle1.__repr__() == ("Shuffle: 0->1=0 1->4=1 2->3=1 3->0=0 4->2=0")
     block1 = Block(shuffle1, 0, 3)
-    assert block1.__repr__() == ("Block: 0->1=1 1->2=1 2->4=1")
+    assert block1.__repr__() == ("Block: 0->1=0 1->4=1 2->3=1")
     assert Block.get_blocks_containing_key_index(0) == []
     assert Block.get_blocks_containing_key_index(1) == [block1]
-    assert Block.get_blocks_containing_key_index(2) == [block1]
-    assert Block.get_blocks_containing_key_index(3) == []
+    assert Block.get_blocks_containing_key_index(2) == []
+    assert Block.get_blocks_containing_key_index(3) == [block1]
     assert Block.get_blocks_containing_key_index(4) == [block1]
     assert Block.get_blocks_containing_key_index(5) == []
 
-    # A block that contains only key bits 0, 1, and 5
-    key2 = Key.create_random_key(6, seed=333)
-    assert key2.__repr__() == "Key: 110101"
-    shuffle2 = Shuffle(key2, Shuffle.ALGORITHM_RANDOM, seed=444)
-    assert shuffle2.__repr__() == ("Shuffle: 0->4=0 1->3=1 2->2=0 3->5=1 4->0=1 5->1=1")
+    # A block that contains only key bits 0, 2, and 3
+    key2 = Key.create_random_key(6)
+    assert key2.__repr__() == "Key: 001001"
+    shuffle2 = Shuffle(key2, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle2.__repr__() == ("Shuffle: 0->4=0 1->1=0 2->5=1 3->2=1 4->0=0 5->3=0")
     block2 = Block(shuffle2, 3, 6)
-    assert block2.__repr__() == ("Block: 3->5=1 4->0=1 5->1=1")
+    assert block2.__repr__() == ("Block: 3->2=1 4->0=0 5->3=0")
     assert Block.get_blocks_containing_key_index(0) == [block2]
-    assert Block.get_blocks_containing_key_index(1) == [block1, block2]
-    assert Block.get_blocks_containing_key_index(2) == [block1]
-    assert Block.get_blocks_containing_key_index(3) == []
+    assert Block.get_blocks_containing_key_index(1) == [block1]
+    assert Block.get_blocks_containing_key_index(2) == [block2]
+    assert Block.get_blocks_containing_key_index(3) == [block1, block2]
     assert Block.get_blocks_containing_key_index(4) == [block1]
-    assert Block.get_blocks_containing_key_index(5) == [block2]
+    assert Block.get_blocks_containing_key_index(5) == []
 
     # Create sub-blocks for block2
     (left_sub_block, right_sub_block) = block2.split()
-    assert left_sub_block.__repr__() == ("Block: 3->5=1 4->0=1")
-    assert right_sub_block.__repr__() == ("Block: 5->1=1")
+    assert left_sub_block.__repr__() == ("Block: 3->2=1 4->0=0")
+    assert right_sub_block.__repr__() == ("Block: 5->3=0")
     assert Block.get_blocks_containing_key_index(0) == [block2, left_sub_block]
-    assert Block.get_blocks_containing_key_index(1) == [block1, block2, right_sub_block]
-    assert Block.get_blocks_containing_key_index(2) == [block1]
-    assert Block.get_blocks_containing_key_index(3) == []
+    assert Block.get_blocks_containing_key_index(1) == [block1]
+    assert Block.get_blocks_containing_key_index(2) == [block2, left_sub_block]
+    assert Block.get_blocks_containing_key_index(3) == [block1, block2, right_sub_block]
     assert Block.get_blocks_containing_key_index(4) == [block1]
-    assert Block.get_blocks_containing_key_index(5) == [block2, left_sub_block]
+    assert Block.get_blocks_containing_key_index(5) == []

@@ -6,34 +6,52 @@ def test_create_validate_args():
         Key.create_random_key(-1)
     with pytest.raises(AssertionError):
         Key.create_random_key("hello")
-    with pytest.raises(AssertionError):
-        Key.create_random_key(64, "hello")
 
 def test_create_empty_key():
     key = Key()
     assert key.size == 0
 
 def test_create_random_key():
+    Key.set_random_seed(111)
     key = Key.create_random_key(32)
     assert key.size == 32
     assert key.get_bit(0) in [0, 1]
     assert key.get_bit(7) in [0, 1]
     assert key.get_bit(31) in [0, 1]
-    key = Key.create_random_key(16, seed=1234567890)
+    key = Key.create_random_key(16)
     assert key.size == 16
-    assert key.__str__() == "0101101010011110"
+    assert key.__str__() == "1000111110000110"
 
 def test_repr():
+    Key.set_random_seed(222)
     key = Key()
     assert key.__repr__() == "Key: "
-    key = Key.create_random_key(8, seed=1234)
-    assert key.__repr__() == "Key: 10000001"
+    key = Key.create_random_key(8)
+    assert key.__repr__() == "Key: 00110010"
 
 def test_str():
+    Key.set_random_seed(222)
     key = Key()
     assert key.__str__() == ""
-    key = Key.create_random_key(8, seed=1234)
-    assert key.__str__() == "10000001"
+    key = Key.create_random_key(8)
+    assert key.__str__() == "00110010"
+
+def test_set_random_seed():
+    Key.set_random_seed(333)
+    key = Key.create_random_key(8)
+    assert key.__str__() == "11010111"
+    key = Key.create_random_key(8)
+    assert key.__str__() == "10101010"
+    key = Key.create_random_key(16)
+    assert key.__str__() == "1111101101010000"
+    # Resetting the seed to the same original value should produce the same sequence of random keys
+    Key.set_random_seed(333)
+    key = Key.create_random_key(8)
+    assert key.__str__() == "11010111"
+    key = Key.create_random_key(8)
+    assert key.__str__() == "10101010"
+    key = Key.create_random_key(16)
+    assert key.__str__() == "1111101101010000"
 
 def test_size():
     key = Key()

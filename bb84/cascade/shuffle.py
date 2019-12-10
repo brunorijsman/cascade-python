@@ -3,30 +3,28 @@ from bb84.cascade.key import Key
 
 class Shuffle:
 
-    ALGORITHM_NONE = 0
-    ALGORITHM_RANDOM = 1
+    _random = random.Random()
 
-    def __init__(self, key, algorithm, seed=None):
+    SHUFFLE_NONE = 0
+    """Do not shuffle the bits in the key."""
+    SHUFFLE_RANDOM = 1
+    """Randomly shuffle the bits in the key."""
+
+    def __init__(self, key, algorithm):
         """
         Create a shuffle, i.e. shuffle the bits of a key according to some algorithm.
 
         Args:
             key (Key): The key to be shuffled. The key itself is not modified in any way; all the
                 bookkeeping to keep track of the shuffling is in the created Shuffle object.
-            algorirthm (int): The algorithm used to shuffle the key:
-                ALGORITHM_NONE: Do not shuffle the key (keep the key bits in the original order).
-                ALGORITHM_RANDOM: Randomly shuffle th key.
-            seed(None or int): The seed value for the random number generator for algorithm
-                to ALGORITHM_RANDOM. Using the same seed value is guaranteed to produce the same
-                shuffle order. This is intended to allow experiments to be reproduced exactly.
+            algorirthm (int): How to shuffle the bits in the key.
+                SHUFFLE_NONE: Do not shuffle the key (keep the key bits in the original order).
+                SHUFFLE_RANDOM: Randomly shuffle th key.
         """
 
         # Validate arguments.
         assert isinstance(key, Key)
-        assert algorithm in [self.ALGORITHM_NONE, self.ALGORITHM_RANDOM]
-        assert seed is None or isinstance(seed, int)
-        if algorithm != self.ALGORITHM_RANDOM:
-            assert seed is None
+        assert algorithm in [self.SHUFFLE_NONE, self.SHUFFLE_RANDOM]
 
         # The key underlying this block.
         self._key = key
@@ -35,9 +33,8 @@ class Shuffle:
         self._shuffle_index_to_key_index = {}
         for index in range(0, key.size):
             self._shuffle_index_to_key_index[index] = index
-        if algorithm == self.ALGORITHM_RANDOM:
-            local_random = random.Random(seed)
-            local_random.shuffle(self._shuffle_index_to_key_index, local_random.random)
+        if algorithm == self.SHUFFLE_RANDOM:
+            random.shuffle(self._shuffle_index_to_key_index, Shuffle._random.random)
 
     def __repr__(self):
         """
@@ -64,6 +61,19 @@ class Shuffle:
         for i in range(self.size):
             string += str(self.get_bit(i))
         return string
+
+    @staticmethod
+    def set_random_seed(seed):
+        """
+        Set the seed for the isolated random number generated that is used only in the shuffle
+        module and nowhere else. The application can set the seed to a specific value to make
+        experimental results reproducable.
+
+        Args:
+            seed (int): The seed value for the random number generator which is isolated to the
+                shuffle module.
+        """
+        Shuffle._random = random.Random(seed)
 
     @property
     def size(self):

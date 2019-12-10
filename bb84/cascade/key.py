@@ -76,7 +76,7 @@ class Key:
         """
         Get the value of the key bit at a given index.
 
-        Params:
+        Args:
             index (int): The index of the bit. Index must be in range [0, key.size).
 
         Returns:
@@ -94,7 +94,7 @@ class Key:
         """
         Set the value of the key bit at a given index.
 
-        Params:
+        Args:
             index (int): The index of the bit. Index must be in range [0, key.size).
             value (int): The new value of the bit. Must be 0 or 1.
         """
@@ -112,7 +112,7 @@ class Key:
         """
         Flip the value of the key bit at a given index (0 to 1, and vice versa).
 
-        Params:
+        Args:
             index (int): The index of the bit. Index must be in range [0, key.size).
         """
 
@@ -134,7 +134,7 @@ class Key:
             A new Key instance, which is a copy of this key, with noise applied if asked for.
         """
 
-        # Validate parameters.
+        # Validate arguments.
         assert isinstance(error_count, int)
         assert 0 <= error_count <= self._size
 
@@ -164,7 +164,7 @@ class Key:
             The number of bits that are different between this key and the other key.
         """
 
-        # Validate parameters.
+        # Validate arguments.
         # pylint:disable=protected-access
         assert isinstance(other_key, Key)
         assert self._size == other_key._size

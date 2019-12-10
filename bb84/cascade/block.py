@@ -11,17 +11,17 @@ class Block:
         """
         Create a block, which is a contiguous subset of bits in a potentially shuffled key.
 
-        Params:
+        Args:
             shuffle (Shuffle): the shuffled key from which to create the block. The shuffle must
-            not be empty.
+                not be empty.
             start_index (int): The shuffle index, inclusive, at which the block starts. Must be in
-            range [0, shuffle.size).
+                range [0, shuffle.size).
             end_index (int): The shuffle index, exclusive, at which the block end. Must be in range
-            [0, shuffle.size]. The range must encompass at least 1 bit, i.e.
-            end_index > start_index.
+                [0, shuffle.size]. The range must encompass at least 1 bit, i.e.
+                end_index > start_index.
         """
 
-        # Validate parameters.
+        # Validate arguments.
         assert isinstance(shuffle, Shuffle)
         assert shuffle.size > 0
         assert isinstance(start_index, int)
@@ -57,7 +57,7 @@ class Block:
         """
         Create a list of blocks of a given size that cover a given shuffled key.
 
-        Params:
+        Args:
             shuffle (Shuffle): The shuffled key to be covered by the blocks.
             block_size (int): The size of each block. Each block in the list, except for the last
             one, will be exactly this size. The last block may be smaller.
@@ -66,7 +66,7 @@ class Block:
             A list of blocks that cover the shuffled key.
         """
 
-        # Validate parameters.
+        # Validate arguments.
         assert isinstance(block_size, int)
         assert block_size > 0
         assert isinstance(shuffle, Shuffle)
@@ -140,7 +140,7 @@ class Block:
             (left_child_block, right_child_block)
         """
 
-        # Validate parameters.
+        # Validate arguments.
         assert self._end_index - self._start_index > 1
         assert not self._has_been_split
 
@@ -157,25 +157,23 @@ class Block:
         sub-blocks and comparing the current parity of each of those sub-blocks with the coorect
         parity of the same sub-block.
 
-        Params:
-
+        Args:
             ask_correct_parity_function: A function which takes a block as a parameter and returns
-            the correct parity for the block. In other words, we assume that the block contains some
-            errors due to noise and/or due to an eavesdropper, and we want the know the parity of
-            the block without the errors. In real life this involves asking the party who sent us
-            the block; in simulation we can get it more easily because we ourselves introduced the
-            errors on purpose.
+                the correct parity for the block. In other words, we assume that the block contains
+                some errors due to noise and/or due to an eavesdropper, and we want the know the
+                parity of the block without the errors. In real life this involves asking the party
+                who sent us the block; in simulation we can get it more easily because we ourselves
+                introduced the errors on purpose.
 
-        Side effects:
-
-            @@@TODO
+        TODO:
+            * Implement and document and test Cascase
 
         Returns:
 
             True if a single error was corrected, False otherwise.
         """
 
-        # Validate parameters.
+        # Validate arguments.
         assert callable(ask_correct_parity_function)
 
         # We only attempt to correct a bit error if there is an odd number of errors, i.e. if
@@ -233,7 +231,7 @@ class Block:
         """
         Get a list of block that contain a given key index.
 
-        Params:
+        Args:
             key_index (int): The key index that we are looking for.
 
         Returns:

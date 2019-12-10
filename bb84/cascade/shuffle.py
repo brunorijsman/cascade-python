@@ -10,7 +10,7 @@ class Shuffle:
         """
         Create a shuffle, i.e. shuffle the bits of a key according to some algorithm.
 
-        Params:
+        Args:
             key (Key): The key to be shuffled. The key itself is not modified in any way; all the
                 bookkeeping to keep track of the shuffling is in the created Shuffle object.
             algorirthm (int): The algorithm used to shuffle the key:
@@ -21,7 +21,7 @@ class Shuffle:
                 shuffle order. This is intended to allow experiments to be reproduced exactly.
         """
 
-        # Validate parameters.
+        # Validate arguments.
         assert isinstance(key, Key)
         assert algorithm in [self.ALGORITHM_NONE, self.ALGORITHM_RANDOM]
         assert seed is None or isinstance(seed, int)
@@ -79,14 +79,14 @@ class Shuffle:
         """
         Get the key bit value for the given shuffle index.
 
-        Params:
+        Args:
             index (int): The shuffle index of the bit. Index must be in range [0, shuffle.size).
 
         Returns:
             The value (0 or 1) of the key bit at the given shuffle index.
         """
 
-        # Validate parameters.
+        # Validate arguments.
         assert isinstance(index, int)
         assert index in self._shuffle_index_to_key_index
 
@@ -98,12 +98,12 @@ class Shuffle:
         """
         Set the key bit value for the given shuffle index.
 
-        Params:
+        Args:
             index (int): The shuffle index of the bit. Index must be in range [0, shuffle.size).
             value (int): The new value of the bit. Must be 0 or 1.
         """
 
-        # Validate parameters.
+        # Validate arguments.
         assert isinstance(index, int)
         assert index in self._shuffle_index_to_key_index
         assert isinstance(value, int)
@@ -117,7 +117,7 @@ class Shuffle:
         """
         Flip the value of the shuffle bit at a given shuffle index (0 to 1, and vice versa).
 
-        Params:
+        Args:
             index (int): The shuffle index of the bit. Index must be in range [0, shuffle.size).
         """
 
@@ -133,7 +133,7 @@ class Shuffle:
         """
         Get the key index that a given shuffle index is mapped to.
 
-        Params:
+        Args:
             shuffle_index (int): The shuffle index of the bit. Index must be in range
                 [0, shuffle.size).
 
@@ -141,7 +141,7 @@ class Shuffle:
             The key index.
         """
 
-        # Validate parameters.
+        # Validate arguments.
         assert isinstance(shuffle_index, int)
         assert shuffle_index in self._shuffle_index_to_key_index
 

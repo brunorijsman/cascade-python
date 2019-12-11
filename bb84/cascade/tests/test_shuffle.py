@@ -6,8 +6,6 @@ def test_create_shuffle_invalid_args():
     with pytest.raises(AssertionError):
         Shuffle(-1, Shuffle.SHUFFLE_NONE)
     with pytest.raises(AssertionError):
-        Shuffle(0, Shuffle.SHUFFLE_NONE)
-    with pytest.raises(AssertionError):
         Shuffle("hello", Shuffle.SHUFFLE_NONE)
     with pytest.raises(AssertionError):
         Shuffle(32, "hello")
@@ -17,6 +15,14 @@ def test_create_shuffle_invalid_args():
 def test_create_shuffle_none():
     Key.set_random_seed(1111)
     Shuffle.set_random_seed(1112)
+
+    # Empty shuffle.
+    key = Key()
+    assert key.__str__() == ""
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_NONE)
+    assert shuffle.__str__() == ""
+
+    # Non-empty shuffle.
     key = Key.create_random_key(8)
     assert key.__str__() == "00101100"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_NONE)
@@ -27,6 +33,14 @@ def test_create_shuffle_none():
 def test_create_shuffle_random():
     Key.set_random_seed(1111)
     Shuffle.set_random_seed(1112)
+
+    # Empty shuffle.
+    key = Key()
+    assert key.__str__() == ""
+    shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__str__() == ""
+
+    # Non-empty shuffle.
     key = Key.create_random_key(16)
     assert key.__str__() == "0010110001010010"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)

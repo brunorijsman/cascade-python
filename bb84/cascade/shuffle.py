@@ -22,7 +22,7 @@ class Shuffle:
 
         Args:
             size (int): The size of the shuffle, i.e. the number of bits in the keys that this
-                shuffle will be applied to.
+                shuffle will be applied to. Must be >= 0 (i.e. empty shuffles are allowed).
             algorirthm (int): The algoritm for generating the shuffle pattern:
                 SHUFFLE_NONE: Do not shuffle the key (keep the key bits in the original order).
                 SHUFFLE_RANDOM: Randomly shuffle the key.
@@ -30,7 +30,7 @@ class Shuffle:
 
         # Validate arguments.
         assert isinstance(size, int)
-        assert size > 0
+        assert size >= 0
         assert algorithm in [self.SHUFFLE_NONE, self.SHUFFLE_RANDOM]
 
         # Create a mapping from "shuffle indexes" to "key indexes".

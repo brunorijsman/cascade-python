@@ -1,4 +1,5 @@
 from bb84.cascade.key import Key
+from bb84.cascade.session import Session
 from bb84.cascade.shuffle import Shuffle
 
 class Block:
@@ -8,11 +9,12 @@ class Block:
 
     _key_index_to_blocks = {}
 
-    def __init__(self, key, shuffle, start_index, end_index):
+    def __init__(self, session, key, shuffle, start_index, end_index):
         """
-        Create a block, which is a contiguous subset of bits in a potentially shuffled key.
+        Create a block, which is a contiguous subset of bits in a shuffled key.
 
         Args:
+            session (Session): The Cascade session in whose context this block is created.
             key (Key): The key for which to create one single block that covers a subset of the key.
             shuffle (Shuffle): The shuffle to apply to the key before creating the block.
             start_index (int): The shuffle index, inclusive, at which the block starts. Must be in
@@ -23,6 +25,7 @@ class Block:
         """
 
         # Validate arguments.
+        assert isinstance(session, Session)
         assert isinstance(key, Key)
         assert isinstance(shuffle, Shuffle)
         assert shuffle.size == key.size
@@ -33,6 +36,7 @@ class Block:
         assert end_index > start_index
 
         # Store block attributes.
+        self._session = session
         self._key = key
         self._shuffle = shuffle
         self._start_index = start_index
@@ -48,20 +52,16 @@ class Block:
         # We don't yet know the correct parity for this block.
         self._correct_parity = None
 
-        # Update key bit to block map.
-        for shuffle_index in range(self._start_index, self._end_index):
-            key_index = self._shuffle.get_key_index(shuffle_index)
-            if key_index in Block._key_index_to_blocks:
-                Block._key_index_to_blocks[key_index].append(self)
-            else:
-                Block._key_index_to_blocks[key_index] = [self]
+        # Register this block in the session.
+        self._session.register_block(self)
 
     @staticmethod
-    def create_covering_blocks(key, shuffle, block_size):
+    def create_covering_blocks(session, key, shuffle, block_size):
         """
         Create a list of blocks of a given size that cover a given shuffled key.
 
         Args:
+            session (Session): The Cascade session in whose context this block is created.
             key (Key): The key for which to create a list of block that collectively cover the
                 entire key.
             shuffle (Shuffle): The shuffle to apply to the key before creating the blocks.
@@ -73,6 +73,7 @@ class Block:
         """
 
         # Validate arguments.
+        assert isinstance(session, Session)
         assert isinstance(key, Key)
         assert isinstance(shuffle, Shuffle)
         assert shuffle.size == key.size
@@ -86,7 +87,7 @@ class Block:
         while remaining_bits > 0:
             actual_block_size = min(block_size, remaining_bits)
             end_index = start_index + actual_block_size
-            block = Block(key, shuffle, start_index, end_index)
+            block = Block(session, key, shuffle, start_index, end_index)
             blocks.append(block)
             start_index += actual_block_size
             remaining_bits -= actual_block_size
@@ -129,6 +130,22 @@ class Block:
         return self._end_index - self._start_index
 
     @property
+    def key_indexes(self):
+        """
+        Get a list of key indexes for this block.
+
+        Returns:
+            The key indexes for this block (the ordering of the list is undefined; in particular
+            don't assume that the key indexes are in increasing order.)
+        """
+        # TODO: @@@ Add unit test
+        key_indexes = []
+        for shuffle_index in range(self._start_index, self._end_index):
+            key_index = self._shuffle.get_key_index(shuffle_index)
+            key_indexes.append(key_index)
+        return key_indexes
+
+    @property
     def current_parity(self):
         """
         Get the current parity of the block.
@@ -157,7 +174,8 @@ class Block:
 
         # Create the left sub-block.
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
-        self._left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index)
+        self._left_sub_block = Block(self._session, self._key, self._shuffle, self._start_index,
+                                     middle_index)
         return self._left_sub_block
 
     def get_right_sub_block(self):
@@ -179,7 +197,8 @@ class Block:
 
         # Create the right sub-block.
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
-        self._right_sub_block = Block(self._key, self._shuffle, middle_index, self._end_index)
+        self._right_sub_block = Block(self._session, self._key, self._shuffle, middle_index,
+                                      self._end_index)
         return self._right_sub_block
 
     def correct_one_bit(self, ask_correct_parity_function):
@@ -233,7 +252,7 @@ class Block:
 
             # Flip the parity of all blocks that contain flipped key bit (including this block).
             flipped_key_index = self._shuffle.get_key_index(flipped_shuffle_index)
-            for block in Block._key_index_to_blocks[flipped_key_index]:
+            for block in self._session.get_blocks_containing_key_index(flipped_key_index):
                 block.flip_parity()
 
             # We fixed an error. Return the shuffle index of the corrected bit.
@@ -275,26 +294,3 @@ class Block:
         # TODO: Add stand-alone unit test case
         # TODO: Cascade priority queue (do this in flip_parity)
         self._current_parity = 1 - self._current_parity
-
-    @staticmethod
-    def clear_history():
-        """
-        Clear all history about previously created blocks:
-         * The key index to blocks map, which is used to find cascading blocks.
-        """
-        Block._key_index_to_blocks = {}
-
-    @staticmethod
-    def get_blocks_containing_key_index(key_index):
-        """
-        Get a list of block that contain a given key index.
-
-        Args:
-            key_index (int): The key index that we are looking for.
-
-        Returns:
-            The list of block that contain a given key index.
-        """
-        assert isinstance(key_index, int)
-        assert key_index >= 0
-        return Block._key_index_to_blocks.get(key_index, [])

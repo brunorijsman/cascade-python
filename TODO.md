@@ -52,6 +52,4 @@
 
    * Code coverage on codecov should also include bb84 module itself.
 
-   * Put the block history in a context to allow for multiple concurrent Cascade sessions.
-
    * Move cascade module one directory up (make it a peer module of bb84)

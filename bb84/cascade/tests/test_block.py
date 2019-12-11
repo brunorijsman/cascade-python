@@ -327,4 +327,35 @@ def test_correct_one_bit():
                         #         0123456789012345
     assert rx_block.current_parity == 1
 
+    # The list of blocks containing key index #8 = shuffled key index #11 should contain every block
+    # that we recursed into, as shown in the above diagram.
+    # pylint:disable=bad-whitespace
+    blocks = Block.get_blocks_containing_key_index(8)
+    assert len(blocks) == 5
+    assert blocks[0].__str__() == "1111100111011001"
+    assert blocks[1].__str__() ==         "11011001"
+    assert blocks[2].__str__() ==         "1101"
+    assert blocks[3].__str__() ==           "01"
+    assert blocks[4].__str__() ==            "1"
+                             # Corrected bit: ^
+
+    # Check that all parities were updated when the first error was corrected.
+    assert blocks[0].current_parity == 1
+    assert blocks[1].current_parity == 1
+    assert blocks[2].current_parity == 1
+    assert blocks[3].current_parity == 1
+    assert blocks[4].current_parity == 1
+
+    # The list of blocks containing key index #0 = shuffled key index #2 should contain the
+    # following blocks:
+    #  * The top block 1111100111011001 because it contains shuffled key index #2
+    #  * The left half of the top block 11111001 because the recursion created that block to
+    #    determine whether or not we should recurse down the left half (we ended up not doing so).
+    #  * No other blocks because we ended up recursing down the right half of the top block, and
+    #    none of those recursed blocks contain shuffled key index #2.
+    blocks = Block.get_blocks_containing_key_index(2)
+    assert len(blocks) == 2
+    assert blocks[0].__str__() == "1111100111011001"
+    assert blocks[1].__str__() == "11111001"
+
     # TODO verify prority queue of blocks.

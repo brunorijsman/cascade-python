@@ -42,8 +42,11 @@ class Block:
         self._left_sub_block = None
         self._right_sub_block = None
 
-        # Calculate the current parity of this block.
+        # Calculate the current parity for this block.
         self._current_parity = shuffle.calculate_parity(key, start_index, end_index)
+
+        # We don't yet know the correct parity for this block.
+        self._correct_parity = None
 
         # Update key bit to block map.
         for shuffle_index in range(self._start_index, self._end_index):
@@ -209,13 +212,16 @@ class Block:
         # Validate arguments.
         assert callable(ask_correct_parity_function)
 
+        # Ask and remember the correct parity for this block (unless we already know it).
+        if self._correct_parity is None:
+            self._correct_parity = ask_correct_parity_function(self._start_index, self._end_index)
+
         # We only attempt to correct a bit error if there is an odd number of errors, i.e. if
         # the current parity if different from the correct parity. If the current and correct
         # parity are the same, it doesn't mean there are no errors, it only means there is an even
         # number (potentially zero) number of errors. In that case we don't attempt to correct and
         # instead we "hope" that the error will be caught in another shuffle of the key.
-        correct_parity = ask_correct_parity_function(self._start_index, self._end_index)
-        if self._current_parity == correct_parity:
+        if self._current_parity == self._correct_parity:
             return None
 
         # If this block contains a single bit, we have finished the recursion and found an error.

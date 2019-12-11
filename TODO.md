@@ -40,12 +40,30 @@
 
      * Deterministic shuffle
 
-     * Discard corrected bits?
+     * Discard corrected bits? At the end?
 
-   * Replicate Andre Reis Cascade study to make sure that my implementation is sane
+     * Implement BICONF
+
+     * Did I unwittingly implement Block Reuse without knowing it? Original only uses top-level blocks?
+
+     * Only register error blocks from previous iterations than the block which is being corrected.
+
+     * Support different number of iterations and values for k[i].
+
+   * Finish the Cascade protocol by supporting multiple iterations.
+
+   * Replicate Andre Reis Cascade study to make sure that my implementation is sane.
 
    * Code coverage on codecov should also include bb84 module itself.
 
-   * Move cascade module one directory up (make it a peer module of bb84)
+   * Move cascade module one directory up (make it a peer module of bb84).
 
-   * Move the isolated random number generaters to the Session object
+   * Move the isolated random number generaters to the Session object.
+
+   * Add lots of statistics to the Cascade algorithm
+
+   * Automate running multiple iterations of same scenario
+
+   * Automate running multiple scenarios
+
+   * Use all available cores using multi-threading

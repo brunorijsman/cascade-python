@@ -96,6 +96,25 @@ class Shuffle:
         """
         return self._size
 
+    def get_key_index(self, shuffle_index):
+        """
+        Get the key index that a given shuffle index is mapped to.
+
+        Args:
+            shuffle_index (int): The shuffle index of the bit. Index must be in range
+                [0, shuffle.size).
+
+        Returns:
+            The key index.
+        """
+
+        # Validate arguments.
+        assert isinstance(shuffle_index, int)
+        assert shuffle_index in self._shuffle_index_to_key_index
+
+        # Return the key index.
+        return self._shuffle_index_to_key_index[shuffle_index]
+
     def get_bit(self, key, shuffle_index):
         """
         Get a bit from a shuffled key.
@@ -168,21 +187,33 @@ class Shuffle:
         key_index = self._shuffle_index_to_key_index[shuffle_index]
         key.flip_bit(key_index)
 
-    def get_key_index(self, shuffle_index):
+    def calculate_parity(self, key, shuffle_start_index, shuffle_end_index):
         """
-        Get the key index that a given shuffle index is mapped to.
+        Calculate the parity of a contiguous sub-range of bits in a shuffled key.
 
         Args:
-            shuffle_index (int): The shuffle index of the bit. Index must be in range
-                [0, shuffle.size).
+            key (Key): The key for which to calculate the parity after shuffling it.
+            shuffle_start_index (int): The index of the first bit (inclusive) in the range of
+                bits in the shuffled key over which to calculate the parity.
+            shuffle_end_index (int): The index of the last bit (exclusive) in the range of
+                bits in the shuffled key over which to calculate the parity.
 
         Returns:
-            The key index.
+            The parity of the contiguous sub-range of bits in the shuffled key.
         """
 
         # Validate arguments.
-        assert isinstance(shuffle_index, int)
-        assert shuffle_index in self._shuffle_index_to_key_index
+        assert isinstance(key, Key)
+        assert key.size == self._size
+        assert isinstance(shuffle_start_index, int)
+        assert shuffle_start_index in range(0, key.size)
+        assert isinstance(shuffle_end_index, int)
+        assert shuffle_end_index in range(0, key.size + 1)
 
-        # Return the key index.
-        return self._shuffle_index_to_key_index[shuffle_index]
+        # Calculate the parity.
+        parity = 0
+        for shuffle_index in range(shuffle_start_index, shuffle_end_index):
+            key_index = self._shuffle_index_to_key_index[shuffle_index]
+            if key.get_bit(key_index):
+                parity = 1 - parity
+        return parity

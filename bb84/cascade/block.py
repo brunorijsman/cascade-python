@@ -41,11 +41,8 @@ class Block:
         # To detect attempts to split more than once.
         self._has_been_split = False
 
-        # Calculate the actual parity of this block.
-        self._current_parity = 0
-        for index in range(start_index, end_index):
-            if shuffle.get_bit(key, index) == 1:
-                self._current_parity = 1 - self._current_parity
+        # Calculate the current parity of this block.
+        self._current_parity = shuffle.calculate_parity(key, start_index, end_index)
 
         # Update key bit to block map.
         for shuffle_index in range(self._start_index, self._end_index):
@@ -165,19 +162,24 @@ class Block:
         parity of the same sub-block.
 
         Args:
-            ask_correct_parity_function: A function which takes a block as a parameter and returns
-                the correct parity for the block. In other words, we assume that the block contains
-                some errors due to noise and/or due to an eavesdropper, and we want the know the
-                parity of the block without the errors. In real life this involves asking the party
-                who sent us the block; in simulation we can get it more easily because we ourselves
-                introduced the errors on purpose.
+            ask_correct_parity_function: A function which takes start_shuffle_index (inclusive) and
+                end_shuffle_index (exclusive) as a parameters and returns the correct parity:
 
-        TODO:
-            * Implement and document and test Cascase
+                def ask_correct_parity(start_shuffle_index, end_shuffle_index):
+                    returns correct_parity
+
+                We assume that the block being corrected contains some errors due to noise and/or
+                due to an eavesdropper. In order to locate exactly one bit error and correct it,
+                we want the need the parity of the corresponding error-free (noiseless) block and
+                specific sub-blocks.
+
+                In real life this involves asking the party who sent us the block to give us the
+                correct parity. In simulation scenarios we can get the correct parity more easily
+                because the simulation knows both the sent (noiseless) and received (noisy) keys.
 
         Returns:
 
-            True if a single error was corrected, False otherwise.
+            The shuffle_index of the correct bit, or None if no bit was corrected.
         """
 
         # Validate arguments.
@@ -188,20 +190,24 @@ class Block:
         # parity are the same, it doesn't mean there are no errors, it only means there is an even
         # number (potentially zero) number of errors. In that case we don't attempt to correct and
         # instead we "hope" that the error will be caught in another shuffle of the key.
-        correct_parity = ask_correct_parity_function(self)
+        correct_parity = ask_correct_parity_function(self._start_index, self._end_index)
         if self._current_parity == correct_parity:
-            return False
+            return None
 
         # If this block contains a single bit, we have finished the recursion and found an error.
         if self.size == 1:
 
             # Fix the error by flipping the one and only bit in this block.
-            self._shuffle.flip_bit(self._start_index)
+            flipped_shuffle_index = self._start_index
+            self._shuffle.flip_bit(self._key, flipped_shuffle_index)
 
-            # TODO: Cascade
+            # Flip the parity of all blocks that contain flipped key bit (including this block).
+            flipped_key_index = self._shuffle.get_key_index(flipped_shuffle_index)
+            for block in Block._key_index_to_blocks[flipped_key_index]:
+                block.flip_parity()
 
-            # We fixed an error.
-            return True
+            # We fixed an error. Return the shuffle index of the corrected bit.
+            return flipped_shuffle_index
 
         # Split the block into two sub-blocks. Since the whole block contains an odd number of
         # errors, either the first sub-block contains an odd number of errors and the second
@@ -209,7 +215,15 @@ class Block:
         # the two sub-blocks. Whichever one has the odd number of errors will recurse more deeply
         # until we find a single bit error and fix it.
         (left_sub_block, right_sub_block) = self.split()
-        if left_sub_block.correct_one_bit(ask_correct_parity_function):
+        corrected_shuffle_index = left_sub_block.correct_one_bit(ask_correct_parity_function)
+        if corrected_shuffle_index is None:
+
+            # The left sub-block had an even number of errors. So that means that the right
+            # sub-block must contain an odd number of errors. Recurse deeper into the right
+            # sub-block.
+            corrected_shuffle_index = right_sub_block.correct_one_bit(ask_correct_parity_function)
+
+        else:
 
             # The left sub-block had an odd number of errors. We know for a fact that the right
             # sub-block has an even number of errors, so we don't need to recurse any deeper into
@@ -217,14 +231,19 @@ class Block:
             # to ask_correct_parity_function.
             pass
 
-        else:
+        # Since the entire block had an odd number of errors, we must have corrected one error in
+        # either the left sub-block or the right sub-block.
+        assert corrected_shuffle_index is not None
+        return corrected_shuffle_index
 
-            # The left sub-block had an even number of errors. So that means that the right
-            # sub-block must contain an odd number of errors. Recurse deeper into the right
-            # sub-block.
-            assert right_sub_block.correct_one_bit(ask_correct_parity_function)
-
-        return True
+    def flip_parity(self):
+        """
+        Flip the current parity of this block. This is needed when a single bit in the block is
+        flipped as a result of a single bit error correction.
+        """
+        # TODO: Add stand-alone unit test case
+        # TODO: Cascade priority queue (do this in flip_parity)
+        self._current_parity = 1 - self._current_parity
 
     @staticmethod
     def clear_history():

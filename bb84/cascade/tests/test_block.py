@@ -197,11 +197,9 @@ def test_split():
 
 def test_clear_history():
 
+    Block.clear_history()
     Key.set_random_seed(12345)
     Shuffle.set_random_seed(67890)
-
-    # Forget about blocks that were added in other test cases.
-    Block.clear_history()
 
     # Set key index to block map to known state.
     key = Key.create_random_key(5)
@@ -222,9 +220,9 @@ def test_clear_history():
 
 def test_get_blocks_containing_key_index():
 
+    Block.clear_history()
     Key.set_random_seed(9991)
     Shuffle.set_random_seed(9992)
-    Block.clear_history()
 
     # A block that contains only key bits 1, 3, and 4
     key1 = Key.create_random_key(5)
@@ -267,19 +265,66 @@ def test_get_blocks_containing_key_index():
 
 def test_correct_one_bit():
 
+    Block.clear_history()
     Key.set_random_seed(12345)
     Shuffle.set_random_seed(67890)
-    Block.clear_history()
 
-    # Prepare the original (sent) key
-    original_key = Key.create_random_key(16)
-    assert original_key.__repr__() == "Key: 1011011010110010"
+    # Create the original (sent) key.
+    tx_key = Key.create_random_key(16)
+    assert tx_key.__repr__() == "Key: 1011011010110010"
 
-    # Prepare the noisy (received) key, which is the same as the original key except with 3 errors
-    noisy_key = original_key.copy(3)
-    assert original_key.__repr__() == "Key: 1011011010110010"
-    assert noisy_key.__repr__() == "Key: 1011011001110110"
+    # Create the noisy (received) key, which has 3 errors relative to the original key.
+    rx_key = tx_key.copy(3)
+    assert tx_key.__repr__() == "Key: 1011011010110010"
+    assert rx_key.__repr__() == "Key: 1011011001110110"
+                            # Errors:         ^^   ^
+                            #                   111111
+                            #         0123456789012345
 
-    # TODO: Continue here; must have a way to share shuffle between Alice and Bob
+    # Create a random shuffling.
+    shuffle = Shuffle(rx_key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == ("Shuffle: 0->5 1->13 2->0 3->9 4->14 5->4 6->15 7->2 8->10 "
+                                  "9->6 10->12 11->8 12->11 13->7 14->1 15->3")
 
-    # TODO verify prority queue of blocks
+    # Create a block that covers the entire shuffled noisy key.
+    # The block has errors at the following shuffle indexes: 1, 3, and 11
+    rx_blocks = Block.create_covering_blocks(rx_key, shuffle, rx_key.size)
+    assert len(rx_blocks) == 1
+    rx_block = rx_blocks[0]
+    assert rx_block.__repr__() == ("Block: 0->5=1 1->13=1 2->0=1 3->9=1 4->14=1 5->4=0 6->15=0 "
+                                   "7->2=1 8->10=1 9->6=1 10->12=0 11->8=0 12->11=1 13->7=0 "
+                                   "14->1=0 15->3=1")
+    assert rx_block.__str__() == "1111100111001001"
+                        # Errors:  ^ ^       ^
+                        #                   111111
+                        #         0123456789012345
+    assert rx_block.current_parity == 0
+
+    # Function which returns the correct parity for a range of shuffled bits.
+    ask_correct_parity_function = (
+        lambda start_index, end_index: shuffle.calculate_parity(tx_key, start_index, end_index)
+    )
+
+    # Correct the first bit. The recursion should go as follows:
+    #
+    #  v v          v
+    # 11111001 | 11001001         Even | Odd => Recurse right
+    #
+    #              v
+    #           1100 | 1001       Odd | Even => Recurse left
+    #
+    #                v
+    #          11 | 00            Even | Odd => Recurse right
+    #
+    #                 v
+    #             0 | 0           Event | Odd => Recurse right => Corrects shuffled inde 11
+    #
+    corrected_shuffle_index = rx_block.correct_one_bit(ask_correct_parity_function)
+    assert corrected_shuffle_index == 11
+    assert rx_block.__str__() == "1111100111011001"
+                        # Errors:  ^ ^
+                        #                   111111
+                        #         0123456789012345
+    assert rx_block.current_parity == 1
+
+    # TODO verify prority queue of blocks.

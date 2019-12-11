@@ -38,8 +38,9 @@ class Block:
         self._start_index = start_index
         self._end_index = end_index
 
-        # To detect attempts to split more than once.
-        self._has_been_split = False
+        # Keey track of left and right sub-block to avoid creating them more then once.
+        self._left_sub_block = None
+        self._right_sub_block = None
 
         # Calculate the current parity of this block.
         self._current_parity = shuffle.calculate_parity(key, start_index, end_index)
@@ -134,26 +135,49 @@ class Block:
         """
         return self._current_parity
 
-    def split(self):
+    def get_left_sub_block(self):
         """
-        Split this block into two sub-blocks of equal size (plus or minus one). If the block has
-        an odd size, the left sub-block will be one bit larger than th right sub-block.
-        This block must be at least 2 bits in size and must not have been split before.
+        Return the left sub-block of this block. If the block has an odd size, the left sub-block
+        will be one bit larger than the right sub-block. If the size of this block is less than 2
+        then it is not allowed to ask for any sub-block.
 
         Returns:
-            (left_child_block, right_child_block)
+            The left sub-block.
         """
 
         # Validate arguments.
         assert self._end_index - self._start_index > 1
-        assert not self._has_been_split
 
-        # Split the block down the middle.
-        self._has_been_split = True
+        # If we already created the left sub-block, return it.
+        if self._left_sub_block:
+            return self._left_sub_block
+
+        # Create the left sub-block.
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
-        left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index)
-        right_sub_block = Block(self._key, self._shuffle, middle_index, self._end_index)
-        return (left_sub_block, right_sub_block)
+        self._left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index)
+        return self._left_sub_block
+
+    def get_right_sub_block(self):
+        """
+        Return the right sub-block of this block. If the block has an odd size, the left sub-block
+        will be one bit larger than the right sub-block. If the size of this block is less than 2
+        then it is not allowed to ask for any sub-block.
+
+        Returns:
+            The right sub-block.
+        """
+
+        # Validate arguments.
+        assert self._end_index - self._start_index > 1
+
+        # If we already created the right sub-block, return it.
+        if self._right_sub_block:
+            return self._right_sub_block
+
+        # Create the right sub-block.
+        middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
+        self._right_sub_block = Block(self._key, self._shuffle, middle_index, self._end_index)
+        return self._right_sub_block
 
     def correct_one_bit(self, ask_correct_parity_function):
         """
@@ -214,13 +238,14 @@ class Block:
         # sub-block contains an even number of errors, or vice versa. Recursively check each of
         # the two sub-blocks. Whichever one has the odd number of errors will recurse more deeply
         # until we find a single bit error and fix it.
-        (left_sub_block, right_sub_block) = self.split()
+        left_sub_block = self.get_left_sub_block()
         corrected_shuffle_index = left_sub_block.correct_one_bit(ask_correct_parity_function)
         if corrected_shuffle_index is None:
 
             # The left sub-block had an even number of errors. So that means that the right
             # sub-block must contain an odd number of errors. Recurse deeper into the right
             # sub-block.
+            right_sub_block = self.get_right_sub_block()
             corrected_shuffle_index = right_sub_block.correct_one_bit(ask_correct_parity_function)
 
         else:

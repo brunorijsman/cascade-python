@@ -149,7 +149,8 @@ def test_current_parity():
     assert block.current_parity == 1
 
     # Split block into sub-blocks.
-    (left_sub_block, right_sub_block) = block.split()
+    left_sub_block = block.get_left_sub_block()
+    right_sub_block = block.get_right_sub_block()
 
     # Even parity sub-block.
     assert left_sub_block.__str__() == "110101"
@@ -159,12 +160,12 @@ def test_current_parity():
     assert right_sub_block.__str__() == "100110"
     assert right_sub_block.current_parity == 1
 
-def test_split():
+def test_get_sub_blocks():
 
     Key.set_random_seed(7771)
     Shuffle.set_random_seed(7772)
 
-    # Split block with even number of bits into sub-blocks.
+    # Prepare a 10-bit block.
     key = Key.create_random_key(10)
     assert key.__str__() == "0100110001"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
@@ -173,27 +174,40 @@ def test_split():
     assert len(blocks) == 1
     block = blocks[0]
     assert block.__str__() == "0001001101"
-    (left_sub_block, right_sub_block) = block.split()
+
+    # Get the left sub-block.
+    left_sub_block = block.get_left_sub_block()
     assert left_sub_block.__str__() == "00010"
+
+    # Get the left sub-block again (under the hood, a different code path is used for the 2nd get.)
+    left_sub_block = block.get_left_sub_block()
+    assert left_sub_block.__str__() == "00010"
+
+    # Get the right sub-block.
+    right_sub_block = block.get_right_sub_block()
+    assert right_sub_block.__str__() == "01101"
+
+    # Get the sight sub-block again (under the hood, a different code path is used for the 2nd get.)
+    right_sub_block = block.get_right_sub_block()
     assert right_sub_block.__str__() == "01101"
 
     # Split right sub-block with odd number of bits into sub-sub-blocks.
-    (left_sub_sub_block, right_sub_sub_block) = right_sub_block.split()
+    left_sub_sub_block = right_sub_block.get_left_sub_block()
+    right_sub_sub_block = right_sub_block.get_right_sub_block()
     assert left_sub_sub_block.__str__() == "011"
     assert right_sub_sub_block.__str__() == "01"
 
     # Split left sub-sub-block with odd number of bits into sub-sub-sub-blocks.
-    (left_sub_sub_sub_block, right_sub_sub_sub_block) = left_sub_sub_block.split()
+    left_sub_sub_sub_block = left_sub_sub_block.get_left_sub_block()
+    right_sub_sub_sub_block = left_sub_sub_block.get_right_sub_block()
     assert left_sub_sub_sub_block.__str__() == "01"
     assert right_sub_sub_sub_block.__str__() == "1"
 
-    # A block that was already split is not allowed to be split again.
-    with pytest.raises(AssertionError):
-        block.split()
-
     # Not allowed to split a block of size 1.
     with pytest.raises(AssertionError):
-        right_sub_sub_sub_block.split()
+        right_sub_sub_sub_block.get_left_sub_block()
+    with pytest.raises(AssertionError):
+        right_sub_sub_sub_block.get_right_sub_block()
 
 def test_clear_history():
 
@@ -253,7 +267,8 @@ def test_get_blocks_containing_key_index():
     assert Block.get_blocks_containing_key_index(5) == []
 
     # Create sub-blocks for block2
-    (left_sub_block, right_sub_block) = block2.split()
+    left_sub_block = block2.get_left_sub_block()
+    right_sub_block = block2.get_right_sub_block()
     assert left_sub_block.__repr__() == ("Block: 3->2=1 4->0=0")
     assert right_sub_block.__repr__() == ("Block: 5->3=0")
     assert Block.get_blocks_containing_key_index(0) == [block2, left_sub_block]
@@ -361,10 +376,9 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
 
     # Check the list of blocks containing key index #3 = shuffled key index #15.
     blocks = Block.get_blocks_containing_key_index(3)
-    assert len(blocks) == 3
+    assert len(blocks) == 2
     assert blocks[0].__str__() == "1111100111011001"
     assert blocks[1].__str__() ==         "11011001"
-    assert blocks[2].__str__() ==             "1001"
                               # Shuffle index 15: ^
 
     # TODO verify prority queue of blocks. Note: not doing cascade in this test case.

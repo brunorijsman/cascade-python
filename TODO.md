@@ -34,8 +34,6 @@
 
  * Progress on Cascade implementation (information reconciliation):
 
-   * Each key bit keeps track of which Blocks it is used in
-
    * Implement basic Binary algorithm
 
    * Implement basic Cascade algorithm
@@ -53,8 +51,6 @@
    * Restructure controlled seeding of random function (will affect test cases).
 
    * Code coverage on codecov should also include bb84 module itself.
-
-   * Indent Google docstrings with more than one parameter.
 
    * Put the block history in a context to allow for multiple concurrent Cascade sessions.
 

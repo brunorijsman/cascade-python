@@ -344,6 +344,10 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
                         #         0123456789012345
     assert rx_block.current_parity == 1
 
+    # Since we are not doing multiple iterations in this test cases, the queue or error blocks
+    # should be empty.
+    assert session.get_registered_error_blocks() == []
+
     # Since we have fixed one error, the top block will have an even number of errors for sure.
     assert shuffle.calculate_parity(tx_key, 0, tx_key.size) == rx_block.current_parity
 

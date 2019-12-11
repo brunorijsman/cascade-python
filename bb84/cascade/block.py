@@ -201,6 +201,21 @@ class Block:
                                       self._end_index)
         return self._right_sub_block
 
+    def has_odd_number_of_errors(self):
+        """
+        Does this block have an odd number of errors?
+
+        Returns:
+            True if the block has an odd number of errors, False if not (i.e. if it has an even
+            number of errors or if we don't know the number of errors.)
+        """
+        # TODO: Add test case
+        if self._correct_parity is None:
+            # We don't know the correct parity, so we don't know whether there are an odd or even
+            # number of errors.
+            return False
+        return self._current_parity != self._correct_parity
+
     def correct_one_bit(self, ask_correct_parity_function):
         """
         Try to correct a single bit error in this block by recursively dividing the block into
@@ -240,7 +255,7 @@ class Block:
         # parity are the same, it doesn't mean there are no errors, it only means there is an even
         # number (potentially zero) number of errors. In that case we don't attempt to correct and
         # instead we "hope" that the error will be caught in another shuffle of the key.
-        if self._current_parity == self._correct_parity:
+        if not self.has_odd_number_of_errors():
             return None
 
         # If this block contains a single bit, we have finished the recursion and found an error.
@@ -250,12 +265,23 @@ class Block:
             flipped_shuffle_index = self._start_index
             self._shuffle.flip_bit(self._key, flipped_shuffle_index)
 
-            # Flip the parity of all blocks that contain flipped key bit (including this block).
+            # For every block that covers the key bit that was corrected...
             flipped_key_index = self._shuffle.get_key_index(flipped_shuffle_index)
             for block in self._session.get_blocks_containing_key_index(flipped_key_index):
+
+                # Flip the parity of that block.
                 block.flip_parity()
 
-            # We fixed an error. Return the shuffle index of the corrected bit.
+                # Perform the "Cascade effect" that is at the heart of the Cascade algorithm:
+                # If the block now has an odd number of errors, register it as an error block so we
+                # can go and correct it later on. The blocks from this iteration don't end up being
+                # registered here - since we corrected an odd error they always have an even number
+                # of errors at this point in the loop. Instead, it's blocks from previous iterations
+                # in the Cascade algorithm that end up being registered here.
+                if block.has_odd_number_of_errors():
+                    self._session.register_error_block(block)
+
+            # We corrected one error. Return the shuffle index of the corrected bit.
             return flipped_shuffle_index
 
         # Split the block into two sub-blocks. Since the whole block contains an odd number of

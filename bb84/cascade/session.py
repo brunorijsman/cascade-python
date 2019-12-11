@@ -1,5 +1,6 @@
 import heapq
 # Can't do "from bb84.cascade.block import Block" because of circular import
+# pylint:disable=cyclic-import
 import bb84.cascade.block
 
 class Session:

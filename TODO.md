@@ -34,11 +34,7 @@
 
  * Progress on Cascade implementation (information reconciliation):
 
-   * Implement basic Binary algorithm
-
    * Implement basic Cascade algorithm
-
-   * De-couple shuffle from key (lots of ripple effects)
 
    * Implement Cascade variations
 
@@ -48,8 +44,8 @@
 
    * Replicate Andre Reis Cascade study to make sure that my implementation is sane
 
-   * Restructure controlled seeding of random function (will affect test cases).
-
    * Code coverage on codecov should also include bb84 module itself.
 
    * Move cascade module one directory up (make it a peer module of bb84)
+
+   * Move the isolated random number generaters to the Session object

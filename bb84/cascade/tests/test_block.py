@@ -234,6 +234,68 @@ def test_get_sub_blocks():
     with pytest.raises(AssertionError):
         right_sub_sub_sub_block.get_right_sub_block()
 
+def test_error_parity():
+
+    Key.set_random_seed(8881)
+    Shuffle.set_random_seed(8882)
+    session = Session()
+
+    # Create the original (sent) key.
+    tx_key = Key.create_random_key(16)
+    assert tx_key.__repr__() == "Key: 1011111100101110"
+
+    # Create the noisy (received) key, which has 3 errors relative to the original key.
+    rx_key = tx_key.copy(3)
+    assert tx_key.__repr__() == "Key: 1011111100101110"
+    assert rx_key.__repr__() == "Key: 1111111110101100"
+                            # Errors:  ^      ^     ^
+                            #                   111111
+                            #         0123456789012345
+
+    # Create a random shuffling.
+    shuffle = Shuffle(rx_key.size, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == ("Shuffle: 0->8 1->10 2->3 3->6 4->7 5->2 6->4 7->0 8->5 9->1 "
+                                  "10->11 11->13 12->9 13->14 14->12 15->15")
+
+    # Create a block that covers the entire shuffled noisy key.
+    # The block has errors at the following shuffle indexes: 0, 10, and 13
+    rx_blocks = Block.create_covering_blocks(session, rx_key, shuffle, rx_key.size)
+    assert len(rx_blocks) == 1
+    rx_block = rx_blocks[0]
+    assert rx_block.__repr__() == ("Block: 0->8=1 1->10=1 2->3=1 3->6=1 4->7=1 5->2=1 6->4=1 "
+                                   "7->0=1 8->5=1 9->1=1 10->11=0 11->13=1 12->9=0 13->14=0 "
+                                   "14->12=1 15->15=0")
+    assert rx_block.__str__() == "1111111111010010"
+                        # Errors: ^         ^  ^
+                        #                   111111
+                        #         0123456789012345
+    assert rx_block.current_parity == 0
+
+    # Function which returns the correct parity for a range of shuffled bits.
+    ask_correct_parity_function = (
+        lambda start_index, end_index: shuffle.calculate_parity(tx_key, start_index, end_index)
+    )
+
+    # At this point, we have not yet corrected any error in the block.
+    assert rx_block.error_parity == Block.ERRORS_UNKNOWN
+
+    # Correct one error.
+    corrected_shuffle_index = rx_block.correct_one_bit(ask_correct_parity_function)
+    assert corrected_shuffle_index == 0
+    assert rx_block.__str__() == "0111111111010010"
+                        # Errors:           ^  ^
+                        #                   111111
+                        #         0123456789012345
+
+    # At this point, we should have an even numbers in the block.
+    assert rx_block.error_parity == Block.ERRORS_EVEN
+
+    # Flip the parity of the block. This would not happen in real life, because it causes the stored
+    # parity to become inconsistent with the actual bits in the block. But we do it here anyway to
+    # allows us to test odd error parity.
+    rx_block.flip_parity()
+    assert rx_block.error_parity == Block.ERRORS_ODD
+
 def test_get_blocks_containing_key_index():
 
     Key.set_random_seed(9991)

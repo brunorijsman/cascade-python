@@ -7,7 +7,12 @@ class Block:
     A block is a contiguous subset of bits in a potentially shuffled key.
     """
 
-    _key_index_to_blocks = {}
+    ERRORS_ODD = 0
+    """The block contains an even number of errors."""
+    ERRORS_EVEN = 1
+    """The block contains an odd number of errors."""
+    ERRORS_UNKNOWN = 3
+    """We don't know whether the block contains an even or an odd number of errors."""
 
     def __init__(self, session, key, shuffle, start_index, end_index):
         """
@@ -201,20 +206,23 @@ class Block:
                                       self._end_index)
         return self._right_sub_block
 
-    def has_odd_number_of_errors(self):
+    @property
+    def error_parity(self):
         """
-        Does this block have an odd number of errors?
+        Does this block have an odd or an even number of errors?
 
         Returns:
-            True if the block has an odd number of errors, False if not (i.e. if it has an even
-            number of errors or if we don't know the number of errors.)
+            ERRORS_ODD: The block contains an odd number of errors.
+            ERRORS_EVEN: The block contains an even number of errors.
+            ERRORS_UNKNOWN: We don't yet know whether the block contains an odd or even number of
+                errors because we have not yet asked what the parity of the original key (witout
+                noise) is.
         """
-        # TODO: Add test case
         if self._correct_parity is None:
-            # We don't know the correct parity, so we don't know whether there are an odd or even
-            # number of errors.
-            return False
-        return self._current_parity != self._correct_parity
+            return Block.ERRORS_UNKNOWN
+        if self._current_parity == self._correct_parity:
+            return Block.ERRORS_EVEN
+        return Block.ERRORS_ODD
 
     def correct_one_bit(self, ask_correct_parity_function):
         """
@@ -255,7 +263,7 @@ class Block:
         # parity are the same, it doesn't mean there are no errors, it only means there is an even
         # number (potentially zero) number of errors. In that case we don't attempt to correct and
         # instead we "hope" that the error will be caught in another shuffle of the key.
-        if not self.has_odd_number_of_errors():
+        if self.error_parity != Block.ERRORS_ODD:
             return None
 
         # If this block contains a single bit, we have finished the recursion and found an error.
@@ -278,7 +286,7 @@ class Block:
                 # registered here - since we corrected an odd error they always have an even number
                 # of errors at this point in the loop. Instead, it's blocks from previous iterations
                 # in the Cascade algorithm that end up being registered here.
-                if block.has_odd_number_of_errors():
+                if block.error_parity == Block.ERRORS_ODD:
                     self._session.register_error_block(block)
 
             # We corrected one error. Return the shuffle index of the corrected bit.

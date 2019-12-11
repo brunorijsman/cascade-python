@@ -18,7 +18,7 @@ extensions = [
     'sphinx.ext.todo',
 ]
 
-templates_path = ['_templates']
+templates_path = []
 exclude_patterns = []
 
 html_theme = 'sphinx_rtd_theme'

@@ -1,4 +1,6 @@
 import heapq
+# Can't do "from bb84.cascade.block import Block" because of circular import
+import bb84.cascade.block
 
 class Session:
     """
@@ -29,8 +31,8 @@ class Session:
             function ever before.
         """
 
-        # Cannot validate isinstance(block, Block) because that would cause a circular import
-        # dependency.
+        # Validate args.
+        assert isinstance(block, bb84.cascade.block.Block)
 
         # For every key bit covered by the block, append the block to the list of blocks that depend
         # on that partical key bit.
@@ -64,12 +66,15 @@ class Session:
             block (Block): The block to be registered as an error block. It is legal to register
             the same block multiple times using this function.
         """
+        # Validate args.
+        assert isinstance(block, bb84.cascade.block.Block)
+
         # Push the error block onto the heap. It is pushed as a tuple (block.size, block) to allow
         # us to correct the error blocks in order of shortest blocks first.
         # TODO test case
         heapq.heappush(self._error_blocks, (block.size, block))
 
-    def correct_registered_error_blocks(self, block):
+    def correct_registered_error_blocks(self):
         """
         For each registered error blocks, attempt to correct a single error in the block. The blocks
         are processed in order of shortest block first.
@@ -93,7 +98,7 @@ class Session:
             # queue when its parity flips. Those fixes would be much more expensive than what we do
             # here: we simply ignore blocks on the queue that have an even number of errors at the
             # time that they are popped from the priority queue.
-            if block.has_odd_number_of_errors():
+            if block.error_parity == bb84.cascade.block.Block.ERRORS_ODD:
                 assert block.correct_one_bit() is not None
 
     def get_registered_error_blocks(self):

@@ -263,7 +263,7 @@ def test_get_blocks_containing_key_index():
     assert Block.get_blocks_containing_key_index(4) == [block1]
     assert Block.get_blocks_containing_key_index(5) == []
 
-def test_correct_one_bit():
+def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
 
     Block.clear_history()
     Key.set_random_seed(12345)
@@ -305,7 +305,7 @@ def test_correct_one_bit():
         lambda start_index, end_index: shuffle.calculate_parity(tx_key, start_index, end_index)
     )
 
-    # Correct the first bit. The recursion should go as follows:
+    # Correct the first bit error. The recursion should go as follows:
     #
     #  v v          v
     # 11111001 | 11001001         Even | Odd => Recurse right
@@ -317,7 +317,7 @@ def test_correct_one_bit():
     #          11 | 00            Even | Odd => Recurse right
     #
     #                 v
-    #             0 | 0           Event | Odd => Recurse right => Corrects shuffled inde 11
+    #             0 | 0           Even | Odd => Recurse right => Corrects shuffled inde 11
     #
     corrected_shuffle_index = rx_block.correct_one_bit(ask_correct_parity_function)
     assert corrected_shuffle_index == 11
@@ -337,7 +337,7 @@ def test_correct_one_bit():
     assert blocks[2].__str__() ==         "1101"
     assert blocks[3].__str__() ==           "01"
     assert blocks[4].__str__() ==            "1"
-                             # Corrected bit: ^
+           # Corrected bit, shuffle index 11: ^
 
     # Check that all parities were updated when the first error was corrected.
     assert blocks[0].current_parity == 1
@@ -357,5 +357,29 @@ def test_correct_one_bit():
     assert len(blocks) == 2
     assert blocks[0].__str__() == "1111100111011001"
     assert blocks[1].__str__() == "11111001"
+                  # Shuffle index 2: ^
 
-    # TODO verify prority queue of blocks.
+    # Check the list of blocks containing key index #3 = shuffled key index #15.
+    blocks = Block.get_blocks_containing_key_index(3)
+    assert len(blocks) == 3
+    assert blocks[0].__str__() == "1111100111011001"
+    assert blocks[1].__str__() ==         "11011001"
+    assert blocks[2].__str__() ==             "1001"
+                              # Shuffle index 15: ^
+
+    # TODO verify prority queue of blocks. Note: not doing cascade in this test case.
+
+    # Attempt to correct the second bit error (spoiler: it is not going to work for this shuffle).
+    # The recursion should go as follows:
+    #
+    #  v v
+    # 11111001 | 11001001         Even | Even => Recurse right
+    #
+    #           1101 | 1001       Even | Even => Recurse right
+    #
+    #                 10 | 01     Even | Even => Recurse right
+    #
+    #                     0 | 1   Even | Even => Recurse right => Did not find an error to correct
+    #
+    corrected_shuffle_index = rx_block.correct_one_bit(ask_correct_parity_function)
+    assert corrected_shuffle_index is None

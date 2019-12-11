@@ -342,58 +342,8 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
                         #         0123456789012345
     assert rx_block.current_parity == 1
 
-    # The list of blocks containing key index #8 = shuffled key index #11 should contain every block
-    # that we recursed into, as shown in the above diagram.
-    # pylint:disable=bad-whitespace
-    blocks = Block.get_blocks_containing_key_index(8)
-    assert len(blocks) == 5
-    assert blocks[0].__str__() == "1111100111011001"
-    assert blocks[1].__str__() ==         "11011001"
-    assert blocks[2].__str__() ==         "1101"
-    assert blocks[3].__str__() ==           "01"
-    assert blocks[4].__str__() ==            "1"
-           # Corrected bit, shuffle index 11: ^
+    # Since we have fixed one error, the top block will have an even number of errors for sure.
+    assert shuffle.calculate_parity(tx_key, 0, tx_key.size) == rx_block.current_parity
 
-    # Check that all parities were updated when the first error was corrected.
-    assert blocks[0].current_parity == 1
-    assert blocks[1].current_parity == 1
-    assert blocks[2].current_parity == 1
-    assert blocks[3].current_parity == 1
-    assert blocks[4].current_parity == 1
-
-    # The list of blocks containing key index #0 = shuffled key index #2 should contain the
-    # following blocks:
-    #  * The top block 1111100111011001 because it contains shuffled key index #2
-    #  * The left half of the top block 11111001 because the recursion created that block to
-    #    determine whether or not we should recurse down the left half (we ended up not doing so).
-    #  * No other blocks because we ended up recursing down the right half of the top block, and
-    #    none of those recursed blocks contain shuffled key index #2.
-    blocks = Block.get_blocks_containing_key_index(2)
-    assert len(blocks) == 2
-    assert blocks[0].__str__() == "1111100111011001"
-    assert blocks[1].__str__() == "11111001"
-                  # Shuffle index 2: ^
-
-    # Check the list of blocks containing key index #3 = shuffled key index #15.
-    blocks = Block.get_blocks_containing_key_index(3)
-    assert len(blocks) == 2
-    assert blocks[0].__str__() == "1111100111011001"
-    assert blocks[1].__str__() ==         "11011001"
-                              # Shuffle index 15: ^
-
-    # TODO verify prority queue of blocks. Note: not doing cascade in this test case.
-
-    # Attempt to correct the second bit error (spoiler: it is not going to work for this shuffle).
-    # The recursion should go as follows:
-    #
-    #  v v
-    # 11111001 | 11001001         Even | Even => Recurse right
-    #
-    #           1101 | 1001       Even | Even => Recurse right
-    #
-    #                 10 | 01     Even | Even => Recurse right
-    #
-    #                     0 | 1   Even | Even => Recurse right => Did not find an error to correct
-    #
-    corrected_shuffle_index = rx_block.correct_one_bit(ask_correct_parity_function)
-    assert corrected_shuffle_index is None
+    # Hence, attempting to fix another error on the top block will fail for sure.
+    assert rx_block.correct_one_bit(ask_correct_parity_function) is None

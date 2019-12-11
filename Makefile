@@ -22,6 +22,8 @@ docs:
 clean:
 	rm -f .coverage*
 	rm -rf __pycache__
+	rm -rf htmlcov
+	rm -rf .pytest_cache
 	rm -rf bb84/__pycache__
 	rm -rf bb84/tests/__pycache__
 	rm -rf bb84/cascade/__pycache__

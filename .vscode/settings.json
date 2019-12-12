@@ -4,6 +4,7 @@
         "biconf",
         "kwargs",
         "pylint",
+        "pytest",
         "recurse"
     ]
 }

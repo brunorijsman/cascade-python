@@ -396,7 +396,7 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
     #          11 | 00            Even | Odd => Recurse right
     #
     #                 v
-    #             0 | 0           Even | Odd => Recurse right => Corrects shuffled inde 11
+    #             0 | 0           Even | Odd => Recurse right => Corrects shuffled key index 11
     #
     corrected_shuffle_index = rx_block.correct_one_bit(ask_correct_parity_function)
     assert corrected_shuffle_index == 11

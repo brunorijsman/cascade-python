@@ -5,6 +5,8 @@ Welcome to BB84's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   shuffle.rst
+
 Indices and tables
 ==================
 

@@ -2,9 +2,16 @@
     "python.pythonPath": "env/bin/python3.7",
     "cSpell.words": [
         "biconf",
+        "codecov",
         "kwargs",
         "pylint",
         "pytest",
-        "recurse"
+        "qron",
+        "qubit",
+        "qubits",
+        "recurse",
+        "reis",
+        "simula",
+        "unshuffled"
     ]
 }

@@ -3,14 +3,68 @@ from bb84.cascade.key import Key
 
 class Shuffle:
 
-    _random = random.Random()
+    # A random number generator that is used to randomly generate a seed value for another random
+    # number generator that is actually used to randomly shuffle the bits in a key.
+    _shuffle_seed_random_generator = random.Random()
 
-    SHUFFLE_NONE = 0
+    SHUFFLE_KEEP_SAME = 0
     """Do not shuffle the bits in the key."""
     SHUFFLE_RANDOM = 1
     """Randomly shuffle the bits in the key."""
 
-    def __init__(self, size, algorithm):
+    _MAX_KEY_SIZE = 1_000_000_000
+    _MAX_ALGORITHM = 100
+    _MAX_SHUFFLE_SEED = 1_000_000_000_000
+
+    @staticmethod
+    def set_random_seed(seed):
+        """
+        Set the seed for _shuffle_seed_random_generator, which is used to generate random seeds for
+        the _shuffle_seed_random_generator, which in turn generates the random key bit permutation.
+
+        Args:
+            seed (int): The seed value for the _shuffle_seed_random_generator.
+
+        Notes:
+            This function is intended to be used only by unit tests to make running unit tests
+            deterministic.
+        """
+        Shuffle._shuffle_seed_random_generator = random.Random(seed)
+
+    @staticmethod
+    def _encode_identifier(size, algorithm, shuffle_seed):
+
+        # Validate arguments.
+        assert isinstance(size, int)
+        assert size < Shuffle._MAX_KEY_SIZE
+        assert isinstance(algorithm, int)
+        assert algorithm < Shuffle._MAX_ALGORITHM
+        assert isinstance(shuffle_seed, int)
+        assert shuffle_seed < Shuffle._MAX_SHUFFLE_SEED
+
+        # Encode the identifier.
+        identifier = shuffle_seed
+        identifier *= Shuffle._MAX_ALGORITHM
+        identifier += algorithm
+        identifier *= Shuffle._MAX_KEY_SIZE
+        identifier += size
+        return identifier
+
+    @staticmethod
+    def _decode_identifier(identifier):
+
+        # Validate arguments.
+        assert isinstance(identifier, int)
+
+        # Decode the identifier.
+        size = identifier % Shuffle._MAX_KEY_SIZE
+        identifier //= Shuffle._MAX_KEY_SIZE
+        algorithm = identifier % Shuffle._MAX_ALGORITHM
+        identifier //= Shuffle._MAX_ALGORITHM
+        shuffle_seed = identifier
+        return (size, algorithm, shuffle_seed)
+
+    def __init__(self, size, algorithm, shuffle_seed=None):
         """
         Create a shuffle. A shuffle represents a permutation of the bits in a key. The shuffle
         can be random or deterministic depending on the shuffle algorithm. A Shuffle object is
@@ -23,15 +77,19 @@ class Shuffle:
         Args:
             size (int): The size of the shuffle, i.e. the number of bits in the keys that this
                 shuffle will be applied to. Must be >= 0 (i.e. empty shuffles are allowed).
-            algorirthm (int): The algoritm for generating the shuffle pattern:
-                SHUFFLE_NONE: Do not shuffle the key (keep the key bits in the original order).
+            algorithm (int): The algorithm for generating the shuffle pattern:
+                SHUFFLE_KEEP_SAME: Do not shuffle the key (keep the key bits in the original order).
                 SHUFFLE_RANDOM: Randomly shuffle the key.
+            shuffle_seed (None or int): The seed value for the isolated shuffle random number
+                generator that is used to generate the shuffling permutation. If shuffle_seed is
+                None, then a random shuffle_seed value will be generated.
         """
 
         # Validate arguments.
         assert isinstance(size, int)
         assert size >= 0
-        assert algorithm in [self.SHUFFLE_NONE, self.SHUFFLE_RANDOM]
+        assert algorithm in [self.SHUFFLE_KEEP_SAME, self.SHUFFLE_RANDOM]
+        assert shuffle_seed is None or isinstance(shuffle_seed, int)
 
         # Create a mapping from "shuffle indexes" to "key indexes".
         self._size = size
@@ -39,7 +97,25 @@ class Shuffle:
         for shuffle_index in range(0, size):
             self._shuffle_index_to_key_index[shuffle_index] = shuffle_index
         if algorithm == self.SHUFFLE_RANDOM:
-            random.shuffle(self._shuffle_index_to_key_index, Shuffle._random.random)
+            if shuffle_seed is None:
+                shuffle_seed = \
+                    Shuffle._shuffle_seed_random_generator.randint(1, Shuffle._MAX_SHUFFLE_SEED - 1)
+            shuffle_random_generator = random.Random(shuffle_seed)
+            random.shuffle(self._shuffle_index_to_key_index, shuffle_random_generator.random)
+        else:
+            shuffle_seed = 0
+        self._identifier = Shuffle._encode_identifier(size, algorithm, shuffle_seed)
+
+    @staticmethod
+    def create_shuffle_from_identifier(identifier):
+        """
+        Create a shuffle object from a shuffle identifier.
+
+        Args:
+            identifier (int): The shuffle identifier.
+        """
+        (size, algorithm, shuffle_seed) = Shuffle._decode_identifier(identifier)
+        return Shuffle(size, algorithm, shuffle_seed)
 
     def __repr__(self):
         """
@@ -73,19 +149,6 @@ class Shuffle:
             string += f"{shuffle_index}->{key_index}"
         return string
 
-    @staticmethod
-    def set_random_seed(seed):
-        """
-        Set the seed for the isolated random number generated that is used only in the shuffle
-        module and nowhere else. The application can set the seed to a specific value to make
-        experimental results reproducable.
-
-        Args:
-            seed (int): The seed value for the random number generator which is isolated to the
-                shuffle module.
-        """
-        Shuffle._random = random.Random(seed)
-
     @property
     def size(self):
         """
@@ -95,6 +158,16 @@ class Shuffle:
             The size of the shuffle in bits.
         """
         return self._size
+
+    @property
+    def identifier(self):
+        """
+        Get the shuffle identifier.
+
+        Returns:
+            The shuffle identifier.
+        """
+        return self._identifier
 
     def get_key_index(self, shuffle_index):
         """

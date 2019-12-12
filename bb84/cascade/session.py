@@ -1,7 +1,10 @@
 import heapq
-# Can't do "from bb84.cascade.block import Block" because of circular import
+# Can't do "from bb84.cascade.block import Block" because of circular import, so just to an
+# "import bb84.cascade.block" instead.
 # pylint:disable=cyclic-import
 import bb84.cascade.block
+from bb84.cascade.parameters import Parameters, ORIGINAL_PARAMETERS
+from bb84.cascade.shuffle import Shuffle
 
 class Session:
     """
@@ -10,10 +13,20 @@ class Session:
     information reconciliation sessions to happen concurrently and still keep their state separate.
     """
 
-    def __init__(self):
+    def __init__(self, parameters=ORIGINAL_PARAMETERS):
         """
         Create a Cascade session.
+
+        Args:
+            parameters (Parameters): The parameters that describe the variation of the Cascade
+                algorithm.
         """
+
+        # Validate arguments.
+        assert isinstance(parameters, Parameters)
+
+        # Store the parameters.
+        self._parameters = parameters
 
         # Map key indexes to blocks.
         self._key_index_to_blocks = {}
@@ -75,7 +88,7 @@ class Session:
         # TODO test case
         heapq.heappush(self._error_blocks, (block.size, block))
 
-    def correct_registered_error_blocks(self):
+    def correct_registered_error_blocks(self, ask_correct_parity_function):
         """
         For each registered error blocks, attempt to correct a single error in the block. The blocks
         are processed in order of shortest block first.
@@ -100,7 +113,7 @@ class Session:
             # here: we simply ignore blocks on the queue that have an even number of errors at the
             # time that they are popped from the priority queue.
             if block.error_parity == bb84.cascade.block.Block.ERRORS_ODD:
-                assert block.correct_one_bit() is not None
+                assert block.correct_one_bit(ask_correct_parity_function) is not None
 
     def get_registered_error_blocks(self):
         """
@@ -115,19 +128,58 @@ class Session:
             error_blocks_as_list.append(error_block)
         return error_blocks_as_list
 
-    def correct_key(self, key, _estimated_quantum_bit_error_rate, _parameters):
+    def correct_key(self, key, estimated_quantum_bit_error_rate, ask_correct_parity_function):
         """
         Run the Cascade algorithm to correct the provided key.
 
         Args:
-            key (Key): The key to be corrected.
+            key (Key): The key to be corrected. This key is modified into the corrected key as a
+            result fo calling this function. (It is also returned.)
+
             estimated_quantum_bit_error_rate: The estimated quantum bit error rate.
-            parameters (Parameters): The parameters that describe the variation of the Cascade
-                algorithm.
+
+            ask_correct_parity_function: A function which takes start_shuffle_index (inclusive) and
+                end_shuffle_index (exclusive) as a parameters and returns the correct parity:
+
+                def ask_correct_parity(shuffle_identifier, start_shuffle_index, end_shuffle_index):
+                    returns correct_parity
 
         Returns:
             The corrected key. There is still a small but non-zero chance that the corrected key
             still contains errors.
         """
-        # TODO: pylint:disable=no-self-use
+
+        # Do as many Cascade iterations (aka Cascade passes) as demanded by this particular
+        # variation of the Cascade algorithm.
+        for iteration in range(1, self._parameters.nr_iterations+1):
+
+            # Determine the block size to be used for this iteration, using the rules for this
+            # particular variation of the Cascade algorithm.
+            block_size = self._parameters.block_size_function(estimated_quantum_bit_error_rate,
+                                                              iteration)
+
+            # In the first iteration, we don't shuffle the key. In all subsequent iterations we
+            # shuffle the key, using a different random shuffling in each iteration.
+            if iteration == 1:
+                shuffle = Shuffle(key.size, Shuffle.SHUFFLE_KEEP_SAME)
+            else:
+                shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
+
+            # Split the shuffled key into blocks, using the block size that we chose.
+            blocks = bb84.cascade.block.Block.create_covering_blocks(self, key, shuffle,
+                                                                     block_size)
+
+            # Visit each block.
+            for block in blocks:
+
+                # Potentially correct one error in the block. This is a no-operation if the block
+                # happens to have an even (potentially zero) number of errors.
+                _corrected_shuffle_index = block.correct_one_bit(ask_correct_parity_function)
+
+                # Cascade effect: if we fixed an error, then one bit flipped, and one or more blocks
+                # from previous iterations could now have an odd number of errors. Re-visit those
+                # blocks and correct one error in them.
+                self.correct_registered_error_blocks(ask_correct_parity_function)
+
+        # Return the probably, but not surely, corrected key.
         return key

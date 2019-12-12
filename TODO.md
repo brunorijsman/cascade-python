@@ -58,7 +58,7 @@
 
    * Move cascade module one directory up (make it a peer module of bb84).
 
-   * Move the isolated random number generaters to the Session object.
+   * Move the isolated random number generators to the Session object.
 
    * Add lots of statistics to the Cascade algorithm
 
@@ -67,3 +67,7 @@
    * Automate running multiple scenarios
 
    * Use all available cores using multi-threading
+
+   * Move ask_correct_parity_function to Session constructor
+
+   * Add statistics

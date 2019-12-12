@@ -74,7 +74,9 @@ def original_block_size_function(estimated_quantum_bit_error_rate, iteration):
     """
     if estimated_quantum_bit_error_rate < 0.001:
         estimated_quantum_bit_error_rate = 0.001
-    return math.ceil((0.73 / estimated_quantum_bit_error_rate) * (2 ** (iteration - 1)))
+    if iteration == 1:
+        return math.ceil(0.73 / estimated_quantum_bit_error_rate)
+    return 2 * original_block_size_function(estimated_quantum_bit_error_rate, iteration - 1)
 
 ORIGINAL_PARAMETERS = Parameters(nr_iterations=4,
                                  block_size_function=original_block_size_function,

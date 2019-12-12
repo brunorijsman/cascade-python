@@ -1,5 +1,5 @@
+import bb84.cascade.session
 from bb84.cascade.key import Key
-from bb84.cascade.session import Session
 from bb84.cascade.shuffle import Shuffle
 
 class Block:
@@ -30,7 +30,7 @@ class Block:
         """
 
         # Validate arguments.
-        assert isinstance(session, Session)
+        assert isinstance(session, bb84.cascade.session.Session)
         assert isinstance(key, Key)
         assert isinstance(shuffle, Shuffle)
         assert shuffle.size == key.size
@@ -78,7 +78,7 @@ class Block:
         """
 
         # Validate arguments.
-        assert isinstance(session, Session)
+        assert isinstance(session, bb84.cascade.session.Session)
         assert isinstance(key, Key)
         assert isinstance(shuffle, Shuffle)
         assert shuffle.size == key.size
@@ -123,6 +123,19 @@ class Block:
         for shuffle_index in range(self._start_index, self._end_index):
             string += str(self._shuffle.get_bit(self._key, shuffle_index))
         return string
+
+    def __lt__(self, other):
+        # TODO: Add unit test code
+        """
+        Is this block "less than" the other block? This is needed to insert the blocks in a priority
+        queue; for equal block sizes the priority queue want to order by increasing block size. We
+        don't care about the order of blocks within a given block size, so we simply order based on
+        the id().
+
+        Returns:
+            True if self < other, False otherwise.
+        """
+        return id(self) < id(other)
 
     @property
     def size(self):
@@ -234,7 +247,7 @@ class Block:
             ask_correct_parity_function: A function which takes start_shuffle_index (inclusive) and
                 end_shuffle_index (exclusive) as a parameters and returns the correct parity:
 
-                def ask_correct_parity(start_shuffle_index, end_shuffle_index):
+                def ask_correct_parity(shuffle_identifier, start_shuffle_index, end_shuffle_index):
                     returns correct_parity
 
                 We assume that the block being corrected contains some errors due to noise and/or
@@ -256,7 +269,8 @@ class Block:
 
         # Ask and remember the correct parity for this block (unless we already know it).
         if self._correct_parity is None:
-            self._correct_parity = ask_correct_parity_function(self._start_index, self._end_index)
+            self._correct_parity = ask_correct_parity_function(self._shuffle.identifier,
+                                                               self._start_index, self._end_index)
 
         # We only attempt to correct a bit error if there is an odd number of errors, i.e. if
         # the current parity if different from the correct parity. If the current and correct

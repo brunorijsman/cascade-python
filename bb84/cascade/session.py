@@ -45,6 +45,10 @@ class Session:
             function ever before.
         """
 
+        ###@@@ CONTINUE HERE
+        # TODO: If sub_block_reuse == False, then only register top-level blocks.
+        # TODO: This may involve having a top_level boolean in the block.
+
         # Validate args.
         assert isinstance(block, bb84.cascade.block.Block)
 

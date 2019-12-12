@@ -71,3 +71,14 @@
    * Move ask_correct_parity_function to Session constructor
 
    * Add statistics
+
+   * Why key size 10,000 is taking so long?
+     - Look at statistics
+     - Profile code
+     - Is sub-block reuse to blame?
+
+   * Option to only put top-level blocks in map (no sub-block re-use)
+
+   * Put parent reference back?
+     - More efficient walking?
+

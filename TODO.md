@@ -76,6 +76,7 @@
      - Look at statistics
      - Profile code
      - Is sub-block reuse to blame?
+     - Is the absence of caching in the test code to blame?
 
    * Option to only put top-level blocks in map (no sub-block re-use)
 

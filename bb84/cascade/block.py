@@ -47,7 +47,7 @@ class Block:
         self._start_index = start_index
         self._end_index = end_index
 
-        # Keey track of left and right sub-block to avoid creating them more then once.
+        # Keep track of left and right sub-block to avoid creating them more then once.
         self._left_sub_block = None
         self._right_sub_block = None
 
@@ -212,11 +212,11 @@ class Block:
         Does this block have an odd or an even number of errors?
 
         Returns:
-            ERRORS_ODD: The block contains an odd number of errors.
-            ERRORS_EVEN: The block contains an even number of errors.
-            ERRORS_UNKNOWN: We don't yet know whether the block contains an odd or even number of
-                errors because we have not yet asked what the parity of the original key (witout
-                noise) is.
+            * ERRORS_ODD = The block contains an odd number of errors.
+            * ERRORS_EVEN = The block contains an even number of errors.
+            * ERRORS_UNKNOWN = We don't yet know whether the block contains an odd or even number of
+              errors because we have not yet asked what the parity of the original key (witout
+              noise) is.
         """
         if self._correct_parity is None:
             return Block.ERRORS_UNKNOWN
@@ -311,7 +311,7 @@ class Block:
 
             # The left sub-block had an odd number of errors. We know for a fact that the right
             # sub-block has an even number of errors, so we don't need to recurse any deeper into
-            # the right sub-block. Not recursing avoid an unnecesary and potentially expensive call
+            # the right sub-block. Not recursing avoid an unnecessary and potentially expensive call
             # to ask_correct_parity_function.
             pass
 

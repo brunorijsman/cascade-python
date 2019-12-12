@@ -15,7 +15,7 @@ class Session:
         Create a Cascade session.
         """
 
-        # Map key indexes to bloks.
+        # Map key indexes to blocks.
         self._key_index_to_blocks = {}
 
         # A collection of error blocks, pending to be corrected later. These are stored as a
@@ -114,3 +114,20 @@ class Session:
         for (_, error_block) in self._error_blocks:
             error_blocks_as_list.append(error_block)
         return error_blocks_as_list
+
+    def correct_key(self, key, _estimated_quantum_bit_error_rate, _parameters):
+        """
+        Run the Cascade algorithm to correct the provided key.
+
+        Args:
+            key (Key): The key to be corrected.
+            estimated_quantum_bit_error_rate: The estimated quantum bit error rate.
+            parameters (Parameters): The parameters that describe the variation of the Cascade
+                algorithm.
+
+        Returns:
+            The corrected key. There is still a small but non-zero chance that the corrected key
+            still contains errors.
+        """
+        # TODO: pylint:disable=no-self-use
+        return key

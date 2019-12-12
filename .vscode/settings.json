@@ -1,6 +1,9 @@
 {
     "python.pythonPath": "env/bin/python3.7",
     "cSpell.words": [
-        "kwargs"
+        "biconf",
+        "kwargs",
+        "pylint",
+        "recurse"
     ]
 }

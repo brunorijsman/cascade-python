@@ -43,7 +43,7 @@ class Parameters:
         self.nr_iterations = nr_iterations
         self.block_size_function = block_size_function
         self.biconf = biconf                                    # TODO: Not yet supported
-        self.sub_block_reuse = sub_block_reuse                  # TODO: We currently always do this
+        self.sub_block_reuse = sub_block_reuse
         self.block_parity_inference = block_parity_inference    # TODO: Not yet supported
 
     def __repr__(self):

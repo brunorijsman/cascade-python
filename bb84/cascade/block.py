@@ -162,7 +162,7 @@ class Block:
             The key indexes for this block (the ordering of the list is undefined; in particular
             don't assume that the key indexes are in increasing order.)
         """
-        # TODO: @@@ Add unit test
+        # TODO: Add unit test
         key_indexes = []
         for shuffle_index in range(self._start_index, self._end_index):
             key_index = self._shuffle.get_key_index(shuffle_index)
@@ -178,6 +178,18 @@ class Block:
             The current parity (0 or 1) of the block.
         """
         return self._current_parity
+
+    @property
+    def is_top_block(self):
+        # TODO: Add unit test
+        """
+        Is this block a top-level block?
+
+        Returns:
+            True if the block was created by splitting a shuffled key into blocks. False if the
+            block was created by splitting a block into sub-blocks.
+        """
+        return self._parent_block is None
 
     def get_left_sub_block(self):
         """

@@ -45,10 +45,6 @@ class Session:
             function ever before.
         """
 
-        ###@@@ CONTINUE HERE
-        # TODO: If sub_block_reuse == False, then only register top-level blocks.
-        # TODO: This may involve having a top_level boolean in the block.
-
         # Validate args.
         assert isinstance(block, bb84.cascade.block.Block)
 
@@ -84,12 +80,18 @@ class Session:
             block (Block): The block to be registered as an error block. It is legal to register
             the same block multiple times using this function.
         """
+        # TODO add unit test
+
         # Validate args.
         assert isinstance(block, bb84.cascade.block.Block)
 
+        # If sub_block_reuse is disabled, then only register top-level blocks for cascading.
+        if not self._parameters.sub_block_reuse:
+            if not block.is_top_block:
+                return
+
         # Push the error block onto the heap. It is pushed as a tuple (block.size, block) to allow
         # us to correct the error blocks in order of shortest blocks first.
-        # TODO test case
         heapq.heappush(self._error_blocks, (block.size, block))
 
     def correct_registered_error_blocks(self, ask_correct_parity_function):

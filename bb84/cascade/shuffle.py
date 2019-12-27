@@ -7,6 +7,9 @@ class Shuffle:
     # number generator that is actually used to randomly shuffle the bits in a key.
     _shuffle_seed_random_generator = random.Random()
 
+    # A cache of shuffles, indexed by shuffle identifier.
+    _identifier_to_shuffle = {}
+
     SHUFFLE_KEEP_SAME = 0
     """Do not shuffle the bits in the key."""
     SHUFFLE_RANDOM = 1
@@ -111,11 +114,23 @@ class Shuffle:
         """
         Create a shuffle object from a shuffle identifier.
 
+        Alice and Bob need to agree on how to shuffle the bits in each pass. Bob could send complete
+        shuffle objects to Alice, but that would be expensive because shuffle objects are large.
+        Instead, Bob sends a short shuffle identifier from Alice from which Alice can reconstruct
+        the shuffle object. Re-creating a shuffle object from a shuffle object is a relatively
+        expensive operation, so Alice maintains a shuffle identifier to shuffle object cache. The
+        cache hit ratio will be very high because Bob only uses a very small set of unique shuffle
+        identifiers (one identifier per Cascade pass).
+
         Args:
             identifier (int): The shuffle identifier.
         """
+        if identifier in Shuffle._identifier_to_shuffle:
+            return Shuffle._identifier_to_shuffle[identifier]
         (size, algorithm, shuffle_seed) = Shuffle._decode_identifier(identifier)
-        return Shuffle(size, algorithm, shuffle_seed)
+        shuffle = Shuffle(size, algorithm, shuffle_seed)
+        Shuffle._identifier_to_shuffle[identifier] = shuffle
+        return shuffle
 
     def __repr__(self):
         """

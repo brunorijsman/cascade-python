@@ -22,11 +22,19 @@ coverage-open:
 docs:
 	sphinx-build -a docs/source docs/build
 
-docs-open:
+docs-open: docs
 	open docs/build/index.html
+
+profile:
+	PYTHONPATH=$(pwd) python -m cProfile -o profile.out bb84/cascade/tests/test_session.py
+	python -m gprof2dot -f pstats profile.out | dot -Tpng -o profile.png
+
+profile-open: profile
+	open profile.png
 
 clean:
 	rm -f .coverage*
+	rm -f profile.out profile.png
 	rm -rf __pycache__
 	rm -rf htmlcov
 	rm -rf .pytest_cache
@@ -39,4 +47,5 @@ clean:
 	rm -rf docs/source/_modules
 	rm -rf docs/build/*
 
-.PHONY: pre-commit install lint test test-cascade coverage-open docs docs-open clean
+.PHONY: pre-commit install lint test test-cascade coverage-open docs docs-open \
+profile profile-open clean

@@ -18,6 +18,7 @@ doc8==0.8.0
 docutils==0.15.2
 entrypoints==0.3
 flake8==3.7.9
+gprof2dot==2019.11.30
 hyperlink==19.0.0
 idna==2.8
 imagesize==1.1.0

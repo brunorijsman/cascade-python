@@ -72,14 +72,6 @@
 
    * Add statistics
 
-   * Why key size 10,000 is taking so long?
-     - Look at statistics
-     - Profile code
-     - Is sub-block reuse to blame?
-     - Is the absence of caching in the test code to blame?
+   * Further optimize code based on profiling results
 
    * Option to only put top-level blocks in map (no sub-block re-use)
-
-   * Put parent reference back?
-     - More efficient walking?
-

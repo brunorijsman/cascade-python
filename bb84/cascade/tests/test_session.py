@@ -36,11 +36,8 @@ def correct_key(parameters, seed, key_size, bit_error_rate, expected_bit_errors=
 def test_correct_key_default_parameters():
     for key_size in [32, 64, 100, 1000, 10000]:
         for bit_error_rate in [0.00, 0.01, 0.1, 0.2]:
-            print(f"key_size={key_size} bit_error_rate={bit_error_rate}")
             correct_key(ORIGINAL_PARAMETERS, 1111, key_size, bit_error_rate, 0)
 
-# TODO: Temporary, for profiling only
+# For profiling
 if __name__ == "__main__":
-    print("Start")
     correct_key(ORIGINAL_PARAMETERS, 1111, 10000, 0.01, 0)
-    print("Done")

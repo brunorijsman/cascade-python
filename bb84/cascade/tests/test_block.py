@@ -12,34 +12,36 @@ def test_create_validate_args():
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     # Validate session argument.
     with pytest.raises(AssertionError):
-        Block("not-a-session", key, shuffle, 0, 1)
+        Block("not-a-session", key, shuffle, 0, 1, None)
     # Validate key argument.
     with pytest.raises(AssertionError):
-        Block(session, "not-a-key", shuffle, 0, 1)
+        Block(session, "not-a-key", shuffle, 0, 1, None)
     # Validate shuffle argument.
     with pytest.raises(AssertionError):
-        Block(session, key, "not-a-shuffle", 0, 1)
+        Block(session, key, "not-a-shuffle", 0, 1, None)
     # Validate start_shuffle_index argument.
     with pytest.raises(AssertionError):
-        Block(session, key, shuffle, -1, 1)
+        Block(session, key, shuffle, -1, 1, None)
     with pytest.raises(AssertionError):
-        Block(session, key, shuffle, 8, 1)
+        Block(session, key, shuffle, 8, 1, None)
     with pytest.raises(AssertionError):
-        Block(session, key, shuffle, "not-an-int", 1)
+        Block(session, key, shuffle, "not-an-int", 1, None)
     # Validate end_shuffle_index argument.
     with pytest.raises(AssertionError):
-        Block(session, key, shuffle, 3, -1)
+        Block(session, key, shuffle, 3, -1, None)
     with pytest.raises(AssertionError):
-        Block(session, key, shuffle, 3, 9)
+        Block(session, key, shuffle, 3, 9, None)
     with pytest.raises(AssertionError):
-        Block(session, key, shuffle, 3, 2)
+        Block(session, key, shuffle, 3, 2, None)
     with pytest.raises(AssertionError):
-        Block(session, key, shuffle, 3, "not-an-int")
+        Block(session, key, shuffle, 3, "not-an-int", None)
+    with pytest.raises(AssertionError):
+        Block(session, key, shuffle, 3, 5, "not-none-and-not-a-block")
     # Empty key.
     key = Key()
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     with pytest.raises(AssertionError):
-        Block(session, key, shuffle, 2, 2)
+        Block(session, key, shuffle, 2, 2, None)
 
 def test_create_block():
 
@@ -52,17 +54,17 @@ def test_create_block():
     assert key.__repr__() == "Key: 10111010"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__repr__() == "Shuffle: 0->0 1->1 2->6 3->4 4->3 5->2 6->5 7->7"
-    block = Block(session, key, shuffle, 3, 6)
+    block = Block(session, key, shuffle, 3, 6, None)
     assert block.__repr__() == "Block: 3->4=1 4->3=1 5->2=1"
-    block = Block(session, key, shuffle, 0, 8)
+    block = Block(session, key, shuffle, 0, 8, None)
     assert block.__repr__() == "Block: 0->0=1 1->1=0 2->6=1 3->4=1 4->3=1 5->2=1 6->5=0 7->7=0"
 
     # Block covers part of the shuffle.
-    block = Block(session, key, shuffle, 1, 3)
+    block = Block(session, key, shuffle, 1, 3, None)
     assert block.__repr__() == "Block: 1->1=0 2->6=1"
 
     # Single bit block.
-    block = Block(session, key, shuffle, 2, 3)
+    block = Block(session, key, shuffle, 2, 3, None)
     assert block.__repr__() == "Block: 2->6=1"
 
 def test_create_covering_blocks():
@@ -307,7 +309,7 @@ def test_get_blocks_containing_key_index():
     assert key1.__repr__() == "Key: 00011"
     shuffle1 = Shuffle(key1.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle1.__repr__() == ("Shuffle: 0->2 1->4 2->0 3->1 4->3")
-    block1 = Block(session, key1, shuffle1, 0, 3)
+    block1 = Block(session, key1, shuffle1, 0, 3, None)
     assert block1.__repr__() == ("Block: 0->2=0 1->4=1 2->0=0")
     assert session.get_blocks_containing_key_index(0) == [block1]  # Because of 2->0
     assert session.get_blocks_containing_key_index(1) == []
@@ -321,7 +323,7 @@ def test_get_blocks_containing_key_index():
     assert key2.__repr__() == "Key: 001001"
     shuffle2 = Shuffle(key2.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle2.__repr__() == ("Shuffle: 0->4 1->0 2->2 3->1 4->5 5->3")
-    block2 = Block(session, key2, shuffle2, 2, 6)
+    block2 = Block(session, key2, shuffle2, 2, 6, None)
     assert block2.__repr__() == ("Block: 2->2=1 3->1=0 4->5=1 5->3=0")
     assert session.get_blocks_containing_key_index(0) == [block1]
     assert session.get_blocks_containing_key_index(1) == [block2]

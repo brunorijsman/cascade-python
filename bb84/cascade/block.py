@@ -14,7 +14,7 @@ class Block:
     ERRORS_UNKNOWN = 3
     """We don't know whether the block contains an even or an odd number of errors."""
 
-    def __init__(self, session, key, shuffle, start_index, end_index):
+    def __init__(self, session, key, shuffle, start_index, end_index, parent_block):
         """
         Create a block, which is a contiguous subset of bits in a shuffled key.
 
@@ -27,6 +27,8 @@ class Block:
             end_index (int): The shuffle index, exclusive, at which the block end. Must be in range
                 [0, shuffle.size]. The range must encompass at least 1 bit, i.e.
                 end_index > start_index.
+            parent_block (Block): The parent block. None if there is no parent, i.e. if this is a
+                top-level block.
         """
 
         # Validate arguments.
@@ -39,6 +41,7 @@ class Block:
         assert isinstance(end_index, int)
         assert 0 <= end_index <= shuffle.size
         assert end_index > start_index
+        assert parent_block is None or isinstance(parent_block, Block)
 
         # Store block attributes.
         self._session = session
@@ -46,6 +49,9 @@ class Block:
         self._shuffle = shuffle
         self._start_index = start_index
         self._end_index = end_index
+
+        # Keep track of parent block. None if there is no parent, i.e. if this is a top-level block.
+        self._parent_block = parent_block
 
         # Keep track of left and right sub-block to avoid creating them more then once.
         self._left_sub_block = None
@@ -92,7 +98,7 @@ class Block:
         while remaining_bits > 0:
             actual_block_size = min(block_size, remaining_bits)
             end_index = start_index + actual_block_size
-            block = Block(session, key, shuffle, start_index, end_index)
+            block = Block(session, key, shuffle, start_index, end_index, None)
             blocks.append(block)
             start_index += actual_block_size
             remaining_bits -= actual_block_size
@@ -193,7 +199,7 @@ class Block:
         # Create the left sub-block.
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
         self._left_sub_block = Block(self._session, self._key, self._shuffle, self._start_index,
-                                     middle_index)
+                                     middle_index, self)
         return self._left_sub_block
 
     def get_right_sub_block(self):
@@ -216,7 +222,7 @@ class Block:
         # Create the right sub-block.
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
         self._right_sub_block = Block(self._session, self._key, self._shuffle, middle_index,
-                                      self._end_index)
+                                      self._end_index, self)
         return self._right_sub_block
 
     @property

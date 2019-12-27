@@ -2,6 +2,9 @@ import random
 from bb84.cascade.key import Key
 
 class Shuffle:
+    """
+    A shuffling (i.e. re-ordering) of the bits in a key.
+    """
 
     # A random number generator that is used to randomly generate a seed value for another random
     # number generator that is actually used to randomly shuffle the bits in a key.

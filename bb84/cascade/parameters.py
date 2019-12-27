@@ -1,6 +1,9 @@
 import math
 
 class Parameters:
+    """
+    A set of parameters that determine which variation of the Cascade protocol is used.
+    """
 
     def __init__(self, nr_iterations, block_size_function, biconf, sub_block_reuse,
                  block_parity_inference):

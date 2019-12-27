@@ -2,7 +2,9 @@ import copy
 import random
 
 class Key:
-
+    """
+    A key that is used to symmetrically encrypt and decrypt messages.
+    """
     _random = random.Random()
 
     def __init__(self):

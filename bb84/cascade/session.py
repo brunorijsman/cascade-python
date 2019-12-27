@@ -5,6 +5,7 @@ import heapq
 import bb84.cascade.block
 from bb84.cascade.parameters import Parameters, ORIGINAL_PARAMETERS
 from bb84.cascade.shuffle import Shuffle
+from bb84.cascade.stats import Stats
 
 class Session:
     """
@@ -151,9 +152,18 @@ class Session:
                     returns correct_parity
 
         Returns:
-            The corrected key. There is still a small but non-zero chance that the corrected key
-            still contains errors.
+
+            (corrected_key, stats)
+
+            where:
+
+            corrected_key (Key): The corrected key. There is still a small but non-zero chance that
+                the corrected key still contains errors.
+
+            stats (Stats): The statistics for this Cascade run.
         """
+
+        stats = Stats()
 
         # Do as many Cascade iterations (aka Cascade passes) as demanded by this particular
         # variation of the Cascade algorithm.
@@ -187,5 +197,5 @@ class Session:
                 # blocks and correct one error in them.
                 self.correct_registered_error_blocks(ask_correct_parity_function)
 
-        # Return the probably, but not surely, corrected key.
-        return key
+        # Return the probably, but not surely, corrected key and the stats.
+        return (key, stats)

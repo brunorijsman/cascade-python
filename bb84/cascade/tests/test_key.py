@@ -140,14 +140,31 @@ def test_copy_without_noise():
     assert key.__str__() == "1110011000011110100111010001100011100000010011010101110100000010"
     assert key_copy.__str__() == "1010011000011110100111010001100011100000010011010101110100000010"
 
-def test_copy_with_noise():
+def test_copy_parameter_checks():
+    key = Key.create_random_key(6)
+    with pytest.raises(AssertionError):
+        key.copy(error_count=-1)
+    with pytest.raises(AssertionError):
+        key.copy(error_count=7)
+    with pytest.raises(AssertionError):
+        key.copy(error_count="not-none-and-not-an-int")
+    with pytest.raises(AssertionError):
+        key.copy(error_rate=-0.1)
+    with pytest.raises(AssertionError):
+        key.copy(error_rate=1.1)
+    with pytest.raises(AssertionError):
+        key.copy(error_rate="not-none-and-not-a-float")
+    with pytest.raises(AssertionError):
+        key.copy(error_count=2, error_rate=0.1)
+
+def test_copy_with_error_count_noise():
 
     Key.set_random_seed(5678)
 
     # Copy a non-empty key with noise
     key = Key.create_random_key(6)
     assert key.__str__() == "001101"
-    key_copy = key.copy(3)
+    key_copy = key.copy(error_count=3)
     assert key.__str__() == "001101"
     assert key_copy.__str__() == "011011"
 
@@ -158,15 +175,29 @@ def test_copy_with_noise():
     assert key_copy.__str__() == "001011"
 
     # Extreme case, flip all bits.
-    key_copy = key.copy(6)
+    key_copy = key.copy(error_count=6)
     assert key_copy.__str__() == "110010"
 
-    # Test parameter checks.
-    with pytest.raises(AssertionError):
-        key.copy(65)
-    with pytest.raises(AssertionError):
-        key = Key()
-        key_copy = key.copy(3)
+def test_copy_with_error_rate_noise():
+
+    Key.set_random_seed(5678)
+
+    # Copy a non-empty key with noise
+    key = Key.create_random_key(6)
+    assert key.__str__() == "001101"
+    key_copy = key.copy(error_rate=0.5)
+    assert key.__str__() == "001101"
+    assert key_copy.__str__() == "011100"
+
+    # Make sure that each key has an independent copy of the bits; i.e. that changing a bit in the
+    # original key does not affect the copied key, or vice versa.
+    key_copy.flip_bit(1)
+    assert key.__str__() == "001101"
+    assert key_copy.__str__() == "001100"
+
+    # Extreme case, flip probability 1.0.
+    key_copy = key.copy(error_rate=1.0)
+    assert key_copy.__str__() == "110010"
 
 def test_difference():
     # Normal case.

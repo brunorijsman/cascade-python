@@ -64,7 +64,7 @@ class Key:
         """
         Set the seed for the isolated random number generated that is used only in the key
         module and nowhere else. The application can set the seed to a specific value to make
-        experimental results reproducable.
+        experimental results reproduceable.
 
         Args:
             seed (int): The seed value for the random number generator which is isolated to the
@@ -133,20 +133,32 @@ class Key:
         # Flip the bit value.
         self._bits[index] = 1 - self._bits[index]
 
-    def copy(self, error_count=0):
+    def copy(self, error_count=None, error_rate=None):
         """
         Copy a key and optionally apply noise.
 
         Args:
-            error_count (int): The exact number of bits that are flipped in the copy of the key.
+            error_count (None or int): If None, ignore. If an int, the exact number of bits that
+                are flipped in the copy of the key.
+            error_rate (None or float): If None, ignore. If a float, the probability that each
+                individual bit is flipped in the copy of they.
+
+            If error_count and error_rate are both None, then no bit flip errors are introduced in
+            the copy. Error_count and error_rate cannot both be non-None.
 
         Returns:
             A new Key instance, which is a copy of this key, with noise applied if asked for.
         """
 
         # Validate arguments.
-        assert isinstance(error_count, int)
-        assert 0 <= error_count <= self._size
+        if error_count is not None:
+            assert isinstance(error_count, int)
+            assert 0 <= error_count <= self._size
+            assert error_rate is None
+        if error_rate is not None:
+            assert isinstance(error_rate, float)
+            assert 0.0 <= error_rate <= 1.0
+            assert error_count is None
 
         # Create a new key which is a copy of this one.
         # pylint:disable=protected-access
@@ -154,10 +166,17 @@ class Key:
         key._size = self._size
         key._bits = copy.deepcopy(self._bits)
 
-        # Apply noise.
-        bits_to_flip = Key._random.sample(self._bits.keys(), error_count)
-        for index in bits_to_flip:
-            key._bits[index] = 1 - key._bits[index]
+        # First option for applying noise: flip the exact number of requested bits.
+        if error_count is not None:
+            bits_to_flip = Key._random.sample(self._bits.keys(), error_count)
+            for index in bits_to_flip:
+                key._bits[index] = 1 - key._bits[index]
+
+        # Second option for applying noise:
+        if error_rate is not None:
+            for index in self._bits.keys():
+                if Key._random.random() <= error_rate:
+                    key._bits[index] = 1 - key._bits[index]
 
         return key
 

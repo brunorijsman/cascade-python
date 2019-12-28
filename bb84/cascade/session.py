@@ -32,6 +32,9 @@ class Session:
         # Map key indexes to blocks.
         self._key_index_to_blocks = {}
 
+        # Block for keeping track of statistics.
+        self.stats = Stats()
+
         # A collection of error blocks, pending to be corrected later. These are stored as a
         # priority queue with items (block.size, block) so that we can correct the pending blocks
         # in order of shortest block first.
@@ -152,18 +155,9 @@ class Session:
                     returns correct_parity
 
         Returns:
-
-            (corrected_key, stats)
-
-            where:
-
-            corrected_key (Key): The corrected key. There is still a small but non-zero chance that
-                the corrected key still contains errors.
-
-            stats (Stats): The statistics for this Cascade run.
+            The corrected key. There is still a small but non-zero chance that the corrected key
+            still contains errors.
         """
-
-        stats = Stats()
 
         # Do as many Cascade iterations (aka Cascade passes) as demanded by this particular
         # variation of the Cascade algorithm.
@@ -197,5 +191,5 @@ class Session:
                 # blocks and correct one error in them.
                 self.correct_registered_error_blocks(ask_correct_parity_function)
 
-        # Return the probably, but not surely, corrected key and the stats.
-        return (key, stats)
+        # Return the probably, but not surely, corrected key.
+        return key

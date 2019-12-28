@@ -75,3 +75,5 @@
    * Further optimize code based on profiling results
 
    * Option to only put top-level blocks in map (no sub-block re-use)
+
+   * Move key_size, error_count, error_rate, etc. to parameters?

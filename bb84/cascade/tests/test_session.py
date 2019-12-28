@@ -20,8 +20,7 @@ def correct_key(parameters, seed, key_size, bit_error_rate, expected_bit_errors=
     nr_bit_errors = math.ceil(bit_error_rate * tx_key.size)
     rx_key = tx_key.copy(nr_bit_errors)
 
-    # Function that performs Alice's job of providing the correct parity for a block. We don't
-    # cache the shuffle_identifiers.
+    # Function that performs Alice's job of providing the correct parity for a block.
     ask_correct_parity_function = lambda shuffle_identifier, start_index, end_index: \
         Shuffle.create_shuffle_from_identifier(shuffle_identifier).calculate_parity(
             tx_key, start_index, end_index)
@@ -39,5 +38,6 @@ def test_correct_key_default_parameters():
             correct_key(ORIGINAL_PARAMETERS, 1111, key_size, bit_error_rate, 0)
 
 # For profiling
+# TODO: Move this to a separate profile.py and include in coverage test
 if __name__ == "__main__":
     correct_key(ORIGINAL_PARAMETERS, 1111, 10000, 0.01, 0)

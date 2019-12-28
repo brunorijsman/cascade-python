@@ -8,3 +8,5 @@ class Stats:
         Create a new statistics context with all counters initialized to zero.
         """
         self.channel_uses = 0
+        self.bit_errors = 0
+        self.frame_errors = 0

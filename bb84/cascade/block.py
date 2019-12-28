@@ -289,6 +289,7 @@ class Block:
         if self._correct_parity is None:
             self._correct_parity = ask_correct_parity_function(self._shuffle.identifier,
                                                                self._start_index, self._end_index)
+            self._session.stats.channel_uses += 1
 
         # We only attempt to correct a bit error if there is an odd number of errors, i.e. if
         # the current parity if different from the correct parity. If the current and correct

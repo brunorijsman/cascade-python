@@ -1,4 +1,5 @@
 import json
+import random
 
 from bb84.cascade.key import Key
 from bb84.cascade.mock_classical_channel import MockClassicalChannel
@@ -9,6 +10,9 @@ from bb84.cascade.shuffle import Shuffle
 REPETITIONS = 5
 
 def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
+
+    if seed is None:
+        seed = random.randint(1, 1_000_000_000_000)
 
     print(f"Experiment")
     print(f" parameters={json.dumps(parameters, default=lambda o: o.__dict__)}")
@@ -40,16 +44,15 @@ def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
 
     print(f" stats={json.dumps(reconciliation.stats.__dict__)}")
 
-def run_experiment_series_increasing_ber(parameters, key_size):
+def run_experiment_series_increasing_error_rate(parameters, key_size):
     bit_error_rate = 0.00
     while bit_error_rate <= 0.12:
-        seed = 1234   # TODO
-        run_one_key_correction(parameters, seed, key_size, bit_error_rate)
-        bit_error_rate += 0.01
+        run_one_key_correction(parameters, None, key_size, bit_error_rate)
+        bit_error_rate += 0.001
 
 def run_all_experiments():
     key_size = 10_000   # TODO
-    run_experiment_series_increasing_ber(ORIGINAL_PARAMETERS, key_size)
+    run_experiment_series_increasing_error_rate(ORIGINAL_PARAMETERS, key_size)
 
 if __name__ == "__main__":
     run_all_experiments()

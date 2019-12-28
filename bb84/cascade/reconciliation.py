@@ -159,45 +159,49 @@ class Reconciliation:
 
         # Do as many Cascade iterations (aka Cascade passes) as demanded by this particular
         # variation of the Cascade algorithm.
-        for iteration in range(1, self._parameters.nr_iterations+1):
-
-            # Determine the block size to be used for this iteration, using the rules for this
-            # particular variation of the Cascade algorithm.
-            block_size = self._parameters.block_size_function(
-                self._estimated_quantum_bit_error_rate, iteration)
-
-            # In the first iteration, we don't shuffle the key. In all subsequent iterations we
-            # shuffle the key, using a different random shuffling in each iteration.
-            if iteration == 1:
-                shuffle = Shuffle(self._key.get_size(), Shuffle.SHUFFLE_KEEP_SAME)
-            else:
-                shuffle = Shuffle(self._key.get_size(), Shuffle.SHUFFLE_RANDOM)
-
-            # Split the shuffled key into blocks, using the block size that we chose.
-            blocks = Block.create_covering_blocks(self._key, shuffle, block_size)
-
-            # Register all blocks in the key index to block map (we need to do this before we start
-            # correcting any bit errors)
-            for block in blocks:
-                self._register_block_key_indexes(block)
-
-            # Visit each block.
-            for block in blocks:
-
-                # Potentially correct one error in the block. This is a no-operation if the block
-                # happens to have an even (potentially zero) number of errors.
-                _corrected_shuffle_index = self._correct_one_bit_in_block(block)
-
-                # Cascade effect: if we fixed an error, then one bit flipped, and one or more blocks
-                # from previous iterations could now have an odd number of errors. Re-visit those
-                # blocks and correct one error in them.
-                self._correct_registered_error_blocks()
+        for iteration_nr in range(1, self._parameters.nr_iterations+1):
+            self._reconcile_iteration(iteration_nr)
 
         # Inform Alice that we have finished the reconciliation.
         self._classical_channel.end_reconciliation()
 
         # Return the probably, but not surely, corrected key.
         return self._key
+
+    def _reconcile_iteration(self, iteration_nr):
+
+        # Determine the block size to be used for this iteration, using the rules for this
+        # particular variation of the Cascade algorithm.
+        block_size = self._parameters.block_size_function(self._estimated_quantum_bit_error_rate,
+                                                          iteration_nr)
+
+        # In the first iteration, we don't shuffle the key. In all subsequent iterations we
+        # shuffle the key, using a different random shuffling in each iteration.
+        if iteration_nr == 1:
+            shuffle = Shuffle(self._key.get_size(), Shuffle.SHUFFLE_KEEP_SAME)
+        else:
+            shuffle = Shuffle(self._key.get_size(), Shuffle.SHUFFLE_RANDOM)
+
+        # Split the shuffled key into blocks, using the block size that we chose.
+        blocks = Block.create_covering_blocks(self._key, shuffle, block_size)
+
+        # Register all blocks in the key index to block map (we need to do this before we start
+        # correcting any bit errors)
+        for block in blocks:
+            self._register_block_key_indexes(block)
+
+        # Visit each block.
+        for block in blocks:
+
+            # Potentially correct one error in the block. This is a no-operation if the block
+            # happens to have an even (potentially zero) number of errors.
+            _corrected_shuffle_index = self._correct_one_bit_in_block(block)
+
+            # Cascade effect: if we fixed an error, then one bit flipped, and one or more blocks
+            # from previous iterations could now have an odd number of errors. Re-visit those
+            # blocks and correct one error in them.
+            self._correct_registered_error_blocks()
+
 
     def _correct_one_bit_in_block(self, block):
         """
@@ -211,7 +215,6 @@ class Reconciliation:
         Returns:
             The shuffle_index of the correct bit, or None if no bit was corrected.
         """
-
 
         # If we don't already know the correct parity for this block, ask Alice what it is.
         if block.get_correct_parity() is None:

@@ -9,17 +9,17 @@ def test_create_validate_args():
 
 def test_create_empty_key():
     key = Key()
-    assert key.size == 0
+    assert key.get_size() == 0
 
 def test_create_random_key():
     Key.set_random_seed(111)
     key = Key.create_random_key(32)
-    assert key.size == 32
+    assert key.get_size() == 32
     assert key.get_bit(0) in [0, 1]
     assert key.get_bit(7) in [0, 1]
     assert key.get_bit(31) in [0, 1]
     key = Key.create_random_key(16)
-    assert key.size == 16
+    assert key.get_size() == 16
     assert key.__str__() == "1000111110000110"
 
 def test_repr():
@@ -55,9 +55,9 @@ def test_set_random_seed():
 
 def test_size():
     key = Key()
-    assert key.size == 0
+    assert key.get_size() == 0
     key = Key.create_random_key(7)
-    assert key.size == 7
+    assert key.get_size() == 7
 
 def test_get_bit():
     Key.set_random_seed(1234)

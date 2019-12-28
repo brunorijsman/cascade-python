@@ -11,19 +11,19 @@ def run_eve_absent_scenario(key_size, block_size, window_size):
 
     (alice, bob) = run_nodes(key_size, block_size, window_size)
 
-    alice_key = alice.key_str()
-    print(f"Alice key: {alice_key}")
-    assert len(alice_key) == key_size
-    for c in alice_key:
+    correct_key = alice.key_str()
+    print(f"Alice key: {correct_key}")
+    assert len(correct_key) == key_size
+    for c in correct_key:
         assert c in ['0', '1']
 
-    bob_key = bob.key_str()
-    print(f"Bob key: {bob_key}")
-    assert len(bob_key) == key_size
-    for c in alice_key:
+    noisy_key = bob.key_str()
+    print(f"Bob key: {noisy_key}")
+    assert len(noisy_key) == key_size
+    for c in correct_key:
         assert c in ['0', '1']
 
-    assert alice_key == bob_key
+    assert correct_key == noisy_key
 
 def test_key_16_block_4_window_2():
     run_eve_absent_scenario(key_size=16, block_size=4, window_size=2)

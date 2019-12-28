@@ -1,7 +1,10 @@
 import json
 
-from bb84.cascade.session import Session, ORIGINAL_PARAMETERS
 from bb84.cascade.key import Key
+from bb84.cascade.mock_classical_channel import MockClassicalChannel
+from bb84.cascade.parameters import ORIGINAL_PARAMETERS
+from bb84.cascade.reconciliation import Reconciliation
+from bb84.cascade.shuffle import Shuffle
 
 REPETITIONS = 5
 
@@ -13,25 +16,29 @@ def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
     print(f" key_size={key_size}")
     print(f" bit_error_rate={bit_error_rate}")
 
-    # Create a mock session.
-    (session, tx_key) = Session.create_mock_session_and_key(key_size, seed, seed+1)
+    Key.set_random_seed(seed)
+    Shuffle.set_random_seed(seed+1)
 
     # Create a random original (sent) key without errors.
-    tx_key = Key.create_random_key(key_size)
+    correct_key = Key.create_random_key(key_size)
 
     # Create the corresponding noisy (received) key with some random errors.
-    rx_key = tx_key.copy(error_rate=bit_error_rate)
+    noisy_key = correct_key.copy(error_rate=bit_error_rate)
 
-    # Attempt to correct the noisy key by running the Cascade algorithm.
-    session.correct_key(rx_key, bit_error_rate)
+    # Create a mock reconciliation.
+    mock_classical_channel = MockClassicalChannel(correct_key)
+    reconciliation = Reconciliation(parameters, mock_classical_channel, noisy_key, bit_error_rate)
+
+    # Do the reconciliation.
+    reconciliated_key = reconciliation.reconcile()
 
     # Update statistics for bit errors and frame errors
-    bit_errors = tx_key.difference(rx_key)
-    session.stats.bit_errors += bit_errors
+    bit_errors = correct_key.difference(reconciliated_key)
+    reconciliation.stats.bit_errors += bit_errors
     if bit_errors > 0:
-        session.stats.frame_errors += 1
+        reconciliation.stats.frame_errors += 1
 
-    print(f" stats={json.dumps(session.stats.__dict__)}")
+    print(f" stats={json.dumps(reconciliation.stats.__dict__)}")
 
 def run_experiment_series_increasing_ber(parameters, key_size):
     bit_error_rate = 0.00

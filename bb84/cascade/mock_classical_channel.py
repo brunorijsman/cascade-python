@@ -10,9 +10,9 @@ class MockClassicalChannel(ClassicalChannel):
 
     # TODO: Add unit test
 
-    def __init__(self, alice_key):
-        assert isinstance(alice_key, Key)
-        self._alice_key = alice_key
+    def __init__(self, correct_key):
+        assert isinstance(correct_key, Key)
+        self._correct_key = correct_key
         self._id_to_shuffle = {}
         self._reconciliation_started = False
 
@@ -50,7 +50,7 @@ class MockClassicalChannel(ClassicalChannel):
                 self._id_to_shuffle[shuffle_identifier] = shuffle
 
             # Compute the parity.
-            parity = shuffle.calculate_parity(self._alice_key, shuffle_start_index,
+            parity = shuffle.calculate_parity(self._correct_key, shuffle_start_index,
                                               shuffle_end_index)
             parities.append(parity)
 

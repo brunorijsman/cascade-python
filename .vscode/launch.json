@@ -5,12 +5,13 @@
     "version": "0.2.0",
     "configurations": [
 
+
         {
-            "name": "Block test",
+            "name": "Reconciliation test",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/env/bin/pytest",
-            "args": ["-v", "-s", "-x", "bb84/cascade/tests/test_block.py"] 
+            "args": ["-v", "-s", "-x", "bb84/cascade/tests/test_reconciliation.py"] 
         },        
     ]
 }

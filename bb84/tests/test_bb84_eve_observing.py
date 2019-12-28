@@ -11,31 +11,31 @@ def run_eve_observing_scenario(key_size, block_size, window_size):
 
     (alice, bob, eve) = run_nodes(key_size, block_size, window_size, True, 50)
 
-    alice_key = alice.key_str()
-    print(f"Alice key: {alice_key}")
-    assert len(alice_key) == key_size
-    for c in alice_key:
+    correct_key = alice.key_str()
+    print(f"Alice key: {correct_key}")
+    assert len(correct_key) == key_size
+    for c in correct_key:
         assert c in ['0', '1']
 
-    bob_key = bob.key_str()
-    print(f"Bob key: {bob_key}")
-    assert len(bob_key) == key_size
-    for c in alice_key:
+    noisy_key = bob.key_str()
+    print(f"Bob key: {noisy_key}")
+    assert len(noisy_key) == key_size
+    for c in correct_key:
         assert c in ['0', '1']
 
     eve_key = eve.key_str()
     print(f"Eve key: {eve_key}")
     assert len(eve_key) == key_size
-    for c in alice_key:
+    for c in correct_key:
         assert c in ['0', '1', '.', '?']
 
     for i in range(key_size):
         if eve_key[i] == '.':
             # Eve did not observe, so Alice and Bob must have same key bit
-            assert alice_key[i] == bob_key[i]
+            assert correct_key[i] == noisy_key[i]
         elif eve_key[i] in ['0', '1']:
             # Eve guessed the correct basis, so Alice and Bob must have same key bit
-            assert alice_key[i] == bob_key[i]
+            assert correct_key[i] == noisy_key[i]
         else:
             # Eve guessed the wrong basis, so Alice and Bob may or may not have the same bit
             pass

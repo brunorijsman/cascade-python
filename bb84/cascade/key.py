@@ -74,8 +74,7 @@ class Key:
         """
         Key._random = random.Random(seed)
 
-    @property
-    def size(self):
+    def get_size(self):
         """
         Get the size of the key in bits.
 

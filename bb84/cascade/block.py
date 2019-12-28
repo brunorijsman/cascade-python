@@ -1,4 +1,3 @@
-import bb84.cascade.session
 from bb84.cascade.key import Key
 from bb84.cascade.shuffle import Shuffle
 
@@ -14,37 +13,34 @@ class Block:
     ERRORS_UNKNOWN = 3
     """We don't know whether the block contains an even or an odd number of errors."""
 
-    def __init__(self, session, key, shuffle, start_index, end_index, parent_block):
+    def __init__(self, key, shuffle, start_index, end_index, parent_block):
         """
         Create a block, which is a contiguous subset of bits in a shuffled key.
 
         Args:
-            session (Session): The Cascade session in whose context this block is created.
             key (Key): The key for which to create one single block that covers a subset of the key.
             shuffle (Shuffle): The shuffle to apply to the key before creating the block.
             start_index (int): The shuffle index, inclusive, at which the block starts. Must be in
-                range [0, shuffle.size).
+                range [0, shuffle._size).
             end_index (int): The shuffle index, exclusive, at which the block end. Must be in range
-                [0, shuffle.size]. The range must encompass at least 1 bit, i.e.
+                [0, shuffle._size]. The range must encompass at least 1 bit, i.e.
                 end_index > start_index.
             parent_block (Block): The parent block. None if there is no parent, i.e. if this is a
                 top-level block.
         """
 
         # Validate arguments.
-        assert isinstance(session, bb84.cascade.session.Session)
         assert isinstance(key, Key)
         assert isinstance(shuffle, Shuffle)
-        assert shuffle.size == key.size
+        assert shuffle.get_size() == key.get_size()
         assert isinstance(start_index, int)
-        assert 0 <= start_index < shuffle.size
+        assert 0 <= start_index < shuffle.get_size()
         assert isinstance(end_index, int)
-        assert 0 <= end_index <= shuffle.size
+        assert 0 <= end_index <= shuffle.get_size()
         assert end_index > start_index
         assert parent_block is None or isinstance(parent_block, Block)
 
         # Store block attributes.
-        self._session = session
         self._key = key
         self._shuffle = shuffle
         self._start_index = start_index
@@ -63,16 +59,12 @@ class Block:
         # We don't yet know the correct parity for this block.
         self._correct_parity = None
 
-        # Register this block in the session.
-        self._session.register_block(self)
-
     @staticmethod
-    def create_covering_blocks(session, key, shuffle, block_size):
+    def create_covering_blocks(key, shuffle, block_size):
         """
         Create a list of blocks of a given size that cover a given shuffled key.
 
         Args:
-            session (Session): The Cascade session in whose context this block is created.
             key (Key): The key for which to create a list of block that collectively cover the
                 entire key.
             shuffle (Shuffle): The shuffle to apply to the key before creating the blocks.
@@ -84,21 +76,20 @@ class Block:
         """
 
         # Validate arguments.
-        assert isinstance(session, bb84.cascade.session.Session)
         assert isinstance(key, Key)
         assert isinstance(shuffle, Shuffle)
-        assert shuffle.size == key.size
+        assert shuffle.get_size() == key.get_size()
         assert isinstance(block_size, int)
         assert block_size > 0
 
         # Generate the blocks.
         blocks = []
-        remaining_bits = shuffle.size
+        remaining_bits = shuffle.get_size()
         start_index = 0
         while remaining_bits > 0:
             actual_block_size = min(block_size, remaining_bits)
             end_index = start_index + actual_block_size
-            block = Block(session, key, shuffle, start_index, end_index, None)
+            block = Block(key, shuffle, start_index, end_index, None)
             blocks.append(block)
             start_index += actual_block_size
             remaining_bits -= actual_block_size
@@ -143,8 +134,20 @@ class Block:
         """
         return id(self) < id(other)
 
-    @property
-    def size(self):
+    def get_start_index(self):
+        return self._start_index
+
+    def get_shuffle_range(self):
+        """
+        Get the shuffle for this block.
+
+        Returns:
+            The shuffle range for this block, which is the following tuple:
+            (shuffle_identifier, shuffle_start_index, shuffle_end_index)
+        """
+        return (self._shuffle.get_identifier(), self._start_index, self._end_index)
+
+    def get_size(self):
         """
         Get the size of the block in bits.
 
@@ -153,8 +156,7 @@ class Block:
         """
         return self._end_index - self._start_index
 
-    @property
-    def key_indexes(self):
+    def get_key_indexes(self):
         """
         Get a list of key indexes for this block.
 
@@ -169,8 +171,7 @@ class Block:
             key_indexes.append(key_index)
         return key_indexes
 
-    @property
-    def current_parity(self):
+    def get_current_parity(self):
         """
         Get the current parity of the block.
 
@@ -179,7 +180,26 @@ class Block:
         """
         return self._current_parity
 
-    @property
+    def get_correct_parity(self):
+        """
+        Get the correct parity of the block, if we know it.
+
+        Returns:
+            The current parity (0 or 1) of the block, or None if we don't know it.
+        """
+        return self._correct_parity
+
+    def set_correct_parity(self, correct_parity):
+        """
+        Set the correct parity of the block.
+
+        Params:
+            correct_parity (int): The current parity (0 or 1).
+        """
+        assert isinstance(correct_parity, int)
+        assert correct_parity in [0, 1]
+        self._correct_parity = correct_parity
+
     def is_top_block(self):
         # TODO: Add unit test
         """
@@ -193,52 +213,46 @@ class Block:
 
     def get_left_sub_block(self):
         """
-        Return the left sub-block of this block. If the block has an odd size, the left sub-block
-        will be one bit larger than the right sub-block. If the size of this block is less than 2
-        then it is not allowed to ask for any sub-block.
+        Return the left sub-block of this block, if it has one.
 
         Returns:
-            The left sub-block.
+            The left sub-block, or None if there is no left sub-block.
         """
+        return self._left_sub_block
 
-        # Validate arguments.
+    def create_left_sub_block(self):
         assert self._end_index - self._start_index > 1
-
-        # If we already created the left sub-block, return it.
-        if self._left_sub_block:
-            return self._left_sub_block
-
-        # Create the left sub-block.
+        assert self._left_sub_block is None
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
-        self._left_sub_block = Block(self._session, self._key, self._shuffle, self._start_index,
-                                     middle_index, self)
+        self._left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index,
+                                     self)
         return self._left_sub_block
 
     def get_right_sub_block(self):
         """
-        Return the right sub-block of this block. If the block has an odd size, the left sub-block
+        Return the right sub-block of this block, if it has one.
+
+        Returns:
+            The right sub-block, or None if there is no right sub-block.
+        """
+        return self._right_sub_block
+
+    def create_right_sub_block(self):
+        """
+        Create the right sub-block of this block. If the block has an odd size, the left sub-block
         will be one bit larger than the right sub-block. If the size of this block is less than 2
         then it is not allowed to ask for any sub-block.
 
         Returns:
             The right sub-block.
         """
-
-        # Validate arguments.
         assert self._end_index - self._start_index > 1
-
-        # If we already created the right sub-block, return it.
-        if self._right_sub_block:
-            return self._right_sub_block
-
-        # Create the right sub-block.
+        assert self._right_sub_block is None
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
-        self._right_sub_block = Block(self._session, self._key, self._shuffle, middle_index,
-                                      self._end_index, self)
+        self._right_sub_block = Block(self._key, self._shuffle, middle_index, self._end_index, self)
         return self._right_sub_block
 
-    @property
-    def error_parity(self):
+    def get_error_parity(self):
         """
         Does this block have an odd or an even number of errors?
 
@@ -255,84 +269,11 @@ class Block:
             return Block.ERRORS_EVEN
         return Block.ERRORS_ODD
 
-    def correct_one_bit(self):
-        """
-        Try to correct a single bit error in this block by recursively dividing the block into
-        sub-blocks and comparing the current parity of each of those sub-blocks with the coorect
-        parity of the same sub-block.
+    def get_key_index(self, shuffle_index):
+        return self._shuffle.get_key_index(shuffle_index)
 
-        Returns:
-            The shuffle_index of the correct bit, or None if no bit was corrected.
-        """
-
-        # Ask and remember the correct parity for this block (unless we already know it).
-        if self._correct_parity is None:
-            # pylint:disable=protected-access
-            # TODO: This will get cleaned up after we parallelize (i.e. gather multiple parity
-            # questions into one message).
-            shuffle_ranges = [(self._shuffle.identifier, self._start_index, self._end_index)]
-            self._correct_parity = self._session._classical_channel.ask_parities(shuffle_ranges)[0]
-
-        # We only attempt to correct a bit error if there is an odd number of errors, i.e. if
-        # the current parity if different from the correct parity. If the current and correct
-        # parity are the same, it doesn't mean there are no errors, it only means there is an even
-        # number (potentially zero) number of errors. In that case we don't attempt to correct and
-        # instead we "hope" that the error will be caught in another shuffle of the key.
-        if self.error_parity != Block.ERRORS_ODD:
-            return None
-
-        # If this block contains a single bit, we have finished the recursion and found an error.
-        if self.size == 1:
-
-            # Fix the error by flipping the one and only bit in this block.
-            flipped_shuffle_index = self._start_index
-            self._shuffle.flip_bit(self._key, flipped_shuffle_index)
-
-            # For every block that covers the key bit that was corrected...
-            flipped_key_index = self._shuffle.get_key_index(flipped_shuffle_index)
-            for block in self._session.get_blocks_containing_key_index(flipped_key_index):
-
-                # Flip the parity of that block.
-                block.flip_parity()
-
-                # Perform the "Cascade effect" that is at the heart of the Cascade algorithm:
-                # If the block now has an odd number of errors, register it as an error block so we
-                # can go and correct it later on. The blocks from this iteration don't end up being
-                # registered here - since we corrected an odd error they always have an even number
-                # of errors at this point in the loop. Instead, it's blocks from previous iterations
-                # in the Cascade algorithm that end up being registered here.
-                if block.error_parity == Block.ERRORS_ODD:
-                    self._session.register_error_block(block)
-
-            # We corrected one error. Return the shuffle index of the corrected bit.
-            return flipped_shuffle_index
-
-        # Split the block into two sub-blocks. Since the whole block contains an odd number of
-        # errors, either the first sub-block contains an odd number of errors and the second
-        # sub-block contains an even number of errors, or vice versa. Recursively check each of
-        # the two sub-blocks. Whichever one has the odd number of errors will recurse more deeply
-        # until we find a single bit error and fix it.
-        left_sub_block = self.get_left_sub_block()
-        corrected_shuffle_index = left_sub_block.correct_one_bit()
-        if corrected_shuffle_index is None:
-
-            # The left sub-block had an even number of errors. So that means that the right
-            # sub-block must contain an odd number of errors. Recurse deeper into the right
-            # sub-block.
-            right_sub_block = self.get_right_sub_block()
-            corrected_shuffle_index = right_sub_block.correct_one_bit()
-
-        else:
-
-            # The left sub-block had an odd number of errors. We know for a fact that the right
-            # sub-block has an even number of errors, so we don't need to recurse any deeper into
-            # the right sub-block.
-            pass
-
-        # Since the entire block had an odd number of errors, we must have corrected one error in
-        # either the left sub-block or the right sub-block.
-        assert corrected_shuffle_index is not None
-        return corrected_shuffle_index
+    def flip_bit(self, flipped_shuffle_index):
+        self._shuffle.flip_bit(self._key, flipped_shuffle_index)
 
     def flip_parity(self):
         """

@@ -151,15 +151,14 @@ class Shuffle:
             '0->3 1->1 2->2 3->0 4->4 5->5'
         """
         string = ""
-        for shuffle_index in range(self.size):
+        for shuffle_index in range(self._size):
             key_index = self._shuffle_index_to_key_index[shuffle_index]
             if string:
                 string += " "
             string += f"{shuffle_index}->{key_index}"
         return string
 
-    @property
-    def size(self):
+    def get_size(self):
         """
         Get the size of the shuffle in bits.
 
@@ -168,8 +167,7 @@ class Shuffle:
         """
         return self._size
 
-    @property
-    def identifier(self):
+    def get_identifier(self):
         """
         Get the shuffle identifier.
 
@@ -184,7 +182,7 @@ class Shuffle:
 
         Args:
             shuffle_index (int): The shuffle index of the bit. Index must be in range
-                [0, shuffle.size).
+                [0, shuffle._size).
 
         Returns:
             The key index.
@@ -214,7 +212,7 @@ class Shuffle:
 
         # Validate arguments.
         assert isinstance(key, Key)
-        assert key.size == self._size
+        assert key.get_size() == self._size
         assert isinstance(shuffle_index, int)
         assert shuffle_index in self._shuffle_index_to_key_index
 
@@ -237,7 +235,7 @@ class Shuffle:
 
         # Validate arguments.
         assert isinstance(key, Key)
-        assert key.size == self._size
+        assert key.get_size() == self._size
         assert isinstance(shuffle_index, int)
         assert shuffle_index in self._shuffle_index_to_key_index
         assert isinstance(value, int)
@@ -261,7 +259,7 @@ class Shuffle:
 
         # Validate arguments.
         assert isinstance(key, Key)
-        assert key.size == self._size
+        assert key.get_size() == self._size
         assert isinstance(shuffle_index, int)
         assert shuffle_index in self._shuffle_index_to_key_index
 
@@ -286,11 +284,11 @@ class Shuffle:
 
         # Validate arguments.
         assert isinstance(key, Key)
-        assert key.size == self._size
+        assert key.get_size() == self._size
         assert isinstance(shuffle_start_index, int)
-        assert shuffle_start_index in range(0, key.size)
+        assert shuffle_start_index in range(0, key.get_size())
         assert isinstance(shuffle_end_index, int)
-        assert shuffle_end_index in range(0, key.size + 1)
+        assert shuffle_end_index in range(0, key.get_size() + 1)
 
         # Calculate the parity.
         parity = 0

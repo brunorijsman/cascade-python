@@ -93,17 +93,16 @@ class Reconciliation:
         assert key_index >= 0
         return self._key_index_to_blocks.get(key_index, [])
 
-    def _register_error_block(self, block):
+    def _register_pending_error_block(self, block):
         """
-        Register a block as having an odd number of errors. The blocks that are registered as error
-        blocks can later be corrected by calling correct_registered_error_blocks.
+        Register a block as needing an attempted error correct. Either because we know for a fact
+        that it has an odd number of errors. Or because we don't yet know its correct parity, so
+        it might turn out to have an odd number of errors.
 
         Args:
             block (Block): The block to be registered as an error block. It is legal to register
             the same block multiple times using this function.
         """
-        # TODO add unit test
-
         # Validate args.
         assert isinstance(block, Block)
 
@@ -117,7 +116,7 @@ class Reconciliation:
         # us to correct the error blocks in order of shortest blocks first.
         heapq.heappush(self._error_blocks, (block.get_size(), block))
 
-    def _have_more_error_blocks(self):
+    def _have_pending_error_blocks(self):
         """
         Are there any more blocks pending that potentially have an odd number of errors?
 
@@ -126,7 +125,7 @@ class Reconciliation:
         """
         return self._error_blocks != []
 
-    def _correct_registered_error_blocks(self):
+    def _correct_pending_error_blocks(self):
         """
         For each registered error blocks, attempt to correct a single error in the block. The blocks
         are processed in order of shortest block first.
@@ -185,11 +184,11 @@ class Reconciliation:
 
             # Add the block to the list of blocks that potentially contains an odd number of errors
             # and hence could potentially have one bit corrected.
-            self._register_error_block(block)
+            self._register_pending_error_block(block)
 
         # While there are more blocks that can potentially be corrected, try to do so.
-        while self._have_more_error_blocks():
-            self._correct_registered_error_blocks()
+        while self._have_pending_error_blocks():
+            self._correct_pending_error_blocks()
 
     def _correct_one_bit_in_block(self, block):
         """
@@ -261,7 +260,7 @@ class Reconciliation:
                 # of errors at this point in the loop. Instead, it's blocks from previous iterations
                 # in the Cascade algorithm that end up being registered here.
                 if affected_block.get_error_parity() == Block.ERRORS_ODD:
-                    self._register_error_block(affected_block)
+                    self._register_pending_error_block(affected_block)
 
             # We corrected one error. Return the shuffle index of the corrected bit.
             return flipped_shuffle_index

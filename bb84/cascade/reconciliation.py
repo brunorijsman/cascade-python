@@ -117,6 +117,15 @@ class Reconciliation:
         # us to correct the error blocks in order of shortest blocks first.
         heapq.heappush(self._error_blocks, (block.get_size(), block))
 
+    def _have_more_error_blocks(self):
+        """
+        Are there any more blocks pending that potentially have an odd number of errors?
+
+        Returns:
+            True if there are any pending error blocks, False if not.
+        """
+        return self._error_blocks != []
+
     def _correct_registered_error_blocks(self):
         """
         For each registered error blocks, attempt to correct a single error in the block. The blocks
@@ -125,24 +134,7 @@ class Reconciliation:
         # Process each error block, in order of shortest block first.
         while self._error_blocks:
             (_, block) = heapq.heappop(self._error_blocks)
-            # We only attempt to correct one error if the block contains an odd number of error.
-            # Although we only call register_error_block for blocks with an odd number of errors,
-            # it is perfectly possible for the block to have an even number of errors by the time
-            # we get the this point for a number of reasons:
-            # (1) The block could be registered as an error block multiple time. In that case the
-            #     blocks ends up in the queue twice. When the first queue entry is corrected the
-            #     block turns from an odd number of errors to an even number of errors. Thus, when
-            #     the second entry on the queue is processed it will have an even number of errors.
-            # (2) After a super-block has been registered as an error block (odd number of errors)
-            #     an error in some sub-block is corrected. This causes the parity of the super-block
-            #     to flip, and hence the number of errors to chang from odd to even.
-            # We don't attempt to fix (1) by checking whether the block is already in the priority
-            # queue, and we don't attempt to fix (2) by removing the super-block from the priority
-            # queue when its parity flips. Those fixes would be much more expensive than what we do
-            # here: we simply ignore blocks on the queue that have an even number of errors at the
-            # time that they are popped from the priority queue.
-            if block.get_error_parity() == Block.ERRORS_ODD:
-                assert self._correct_one_bit_in_block(block) is not None
+            self._correct_one_bit_in_block(block)
 
     def reconcile(self):
         """
@@ -185,23 +177,19 @@ class Reconciliation:
         # Split the shuffled key into blocks, using the block size that we chose.
         blocks = Block.create_covering_blocks(self._key, shuffle, block_size)
 
-        # Register all blocks in the key index to block map (we need to do this before we start
-        # correcting any bit errors)
+        # For each covering block...
         for block in blocks:
+
+            # Update the key index to block map.
             self._register_block_key_indexes(block)
 
-        # Visit each block.
-        for block in blocks:
+            # Add the block to the list of blocks that potentially contains an odd number of errors
+            # and hence could potentially have one bit corrected.
+            self._register_error_block(block)
 
-            # Potentially correct one error in the block. This is a no-operation if the block
-            # happens to have an even (potentially zero) number of errors.
-            _corrected_shuffle_index = self._correct_one_bit_in_block(block)
-
-            # Cascade effect: if we fixed an error, then one bit flipped, and one or more blocks
-            # from previous iterations could now have an odd number of errors. Re-visit those
-            # blocks and correct one error in them.
+        # While there are more blocks that can potentially be corrected, try to do so.
+        while self._have_more_error_blocks():
             self._correct_registered_error_blocks()
-
 
     def _correct_one_bit_in_block(self, block):
         """
@@ -230,6 +218,25 @@ class Reconciliation:
         # parity are the same, it doesn't mean there are no errors, it only means there is an even
         # number (potentially zero) number of errors. In that case we don't attempt to correct and
         # instead we "hope" that the error will be caught in another shuffle of the key.
+        #
+        # TODO: Fold in this comment
+        # We only attempt to correct one error if the block contains an odd number of error.
+        # Although we only call register_error_block for blocks with an odd number of errors,
+        # it is perfectly possible for the block to have an even number of errors by the time
+        # we get the this point for a number of reasons:
+        # (1) The block could be registered as an error block multiple time. In that case the
+        #     blocks ends up in the queue twice. When the first queue entry is corrected the
+        #     block turns from an odd number of errors to an even number of errors. Thus, when
+        #     the second entry on the queue is processed it will have an even number of errors.
+        # (2) After a super-block has been registered as an error block (odd number of errors)
+        #     an error in some sub-block is corrected. This causes the parity of the super-block
+        #     to flip, and hence the number of errors to chang from odd to even.
+        # We don't attempt to fix (1) by checking whether the block is already in the priority
+        # queue, and we don't attempt to fix (2) by removing the super-block from the priority
+        # queue when its parity flips. Those fixes would be much more expensive than what we do
+        # here: we simply ignore blocks on the queue that have an even number of errors at the
+        # time that they are popped from the priority queue.
+ 
         if block.get_error_parity() != Block.ERRORS_ODD:
             return None
 

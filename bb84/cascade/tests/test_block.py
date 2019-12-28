@@ -5,10 +5,7 @@ from bb84.cascade.session import Session
 from bb84.cascade.shuffle import Shuffle
 
 def test_create_validate_args():
-    Key.set_random_seed(1111)
-    Shuffle.set_random_seed(1112)
-    session = Session()
-    key = Key.create_random_key(8)
+    (session, key) = Session.create_mock_session_and_key(8, 1111, 1112)
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     # Validate session argument.
     with pytest.raises(AssertionError):
@@ -44,13 +41,9 @@ def test_create_validate_args():
         Block(session, key, shuffle, 2, 2, None)
 
 def test_create_block():
-
-    Key.set_random_seed(2221)
-    Shuffle.set_random_seed(2222)
-    session = Session()
+    (session, key) = Session.create_mock_session_and_key(8, 2221, 2222)
 
     # Block covers entire shuffle.
-    key = Key.create_random_key(8)
     assert key.__repr__() == "Key: 10111010"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__repr__() == "Shuffle: 0->0 1->1 2->6 3->4 4->3 5->2 6->5 7->7"
@@ -69,12 +62,8 @@ def test_create_block():
 
 def test_create_covering_blocks():
 
-    Key.set_random_seed(3331)
-    Shuffle.set_random_seed(3332)
-    session = Session()
-
     # Prepare key and shuffle.
-    key = Key.create_random_key(16)
+    (session, key) = Session.create_mock_session_and_key(16, 3331, 3332)
     assert key.__repr__() == "Key: 0011011001100110"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__repr__() == ("Shuffle: 0->4 1->14 2->5 3->15 4->0 5->1 6->7 7->11 "
@@ -97,7 +86,7 @@ def test_create_covering_blocks():
     assert blocks[3].__repr__() == "Block: 12->9=1 13->8=0 14->2=1 15->10=1"
 
     # Single block, partially filled.
-    key = Key.create_random_key(4)
+    (session, key) = Session.create_mock_session_and_key(4)
     assert key.__repr__() == "Key: 1111"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__repr__() == "Shuffle: 0->0 1->1 2->3 3->2"
@@ -111,10 +100,7 @@ def test_create_covering_blocks():
     assert blocks[0].__repr__() == "Block: 0->0=1 1->1=1 2->3=1 3->2=1"
 
 def test_repr():
-    Key.set_random_seed(4441)
-    Shuffle.set_random_seed(4442)
-    session = Session()
-    key = Key.create_random_key(4)
+    (session, key) = Session.create_mock_session_and_key(4, 4441, 4442)
     assert key.__repr__() == "Key: 1111"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__repr__() == "Shuffle: 0->3 1->2 2->1 3->0"
@@ -123,10 +109,7 @@ def test_repr():
     assert blocks[0].__repr__() == "Block: 0->3=1 1->2=1 2->1=1 3->0=1"
 
 def test_str():
-    Key.set_random_seed(55511)
-    Shuffle.set_random_seed(55522)
-    session = Session()
-    key = Key.create_random_key(4)
+    (session, key) = Session.create_mock_session_and_key(4, 55511, 55522)
     assert key.__str__() == "1010"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__str__() == "0->1 1->2 2->3 3->0"
@@ -135,10 +118,7 @@ def test_str():
     assert blocks[0].__str__() == "0101"
 
 def test_size():
-    Key.set_random_seed(5551)
-    Shuffle.set_random_seed(5552)
-    session = Session()
-    key = Key.create_random_key(65)
+    (session, key) = Session.create_mock_session_and_key(65, 5551, 5552)
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     blocks = Block.create_covering_blocks(session, key, shuffle, 30)
     assert len(blocks) == 3
@@ -148,12 +128,8 @@ def test_size():
 
 def test_current_parity():
 
-    Key.set_random_seed(6661)
-    Shuffle.set_random_seed(6662)
-    session = Session()
-
     # Even parity block.
-    key = Key.create_random_key(10)
+    (session, key) = Session.create_mock_session_and_key(10, 6661, 6662)
     assert key.__str__() == "0111101111"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__str__() == "0->1 1->6 2->7 3->8 4->4 5->2 6->0 7->9 8->3 9->5"
@@ -164,7 +140,7 @@ def test_current_parity():
     assert block.current_parity == 0
 
     # Odd parity block.
-    key = Key.create_random_key(12)
+    (session, key) = Session.create_mock_session_and_key(12)
     assert key.__str__() == "010100111101"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__str__() == "0->7 1->9 2->11 3->2 4->8 5->1 6->6 7->5 8->0 9->10 10->3 11->4"
@@ -188,12 +164,8 @@ def test_current_parity():
 
 def test_get_sub_blocks():
 
-    Key.set_random_seed(7771)
-    Shuffle.set_random_seed(7772)
-    session = Session()
-
     # Prepare a 10-bit block.
-    key = Key.create_random_key(10)
+    (session, key) = Session.create_mock_session_and_key(10, 7771, 7772)
     assert key.__str__() == "0100110001"
     shuffle = Shuffle(key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__str__() == "0->9 1->5 2->1 3->7 4->4 5->3 6->8 7->6 8->2 9->0"
@@ -238,12 +210,8 @@ def test_get_sub_blocks():
 
 def test_error_parity():
 
-    Key.set_random_seed(8881)
-    Shuffle.set_random_seed(8882)
-    session = Session()
-
     # Create the original (sent) key.
-    tx_key = Key.create_random_key(16)
+    (session, tx_key) = Session.create_mock_session_and_key(16, 8881, 8882)
     assert tx_key.__repr__() == "Key: 1011111100101110"
 
     # Create the noisy (received) key, which has 3 errors relative to the original key.
@@ -258,6 +226,7 @@ def test_error_parity():
     shuffle = Shuffle(rx_key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__repr__() == ("Shuffle: 0->8 1->12 2->6 3->7 4->4 5->10 6->11 7->2 8->1 9->9 "
                                   "10->15 11->0 12->13 13->3 14->5 15->14")
+    session.classical_channel.start_reconciliation()
 
     # Create a block that covers the entire shuffled noisy key.
     # The block has errors at the following shuffle indexes: 2->6 8->1 14->5
@@ -273,15 +242,11 @@ def test_error_parity():
                         #         0123456789012345
     assert rx_block.current_parity == 0
 
-    # Function which returns the correct parity for a range of shuffled bits.
-    ask_correct_parity_function = lambda _shuffle_identifier, start_index, end_index: \
-        shuffle.calculate_parity(tx_key, start_index, end_index)
-
     # At this point, we have not yet corrected any error in the block.
     assert rx_block.error_parity == Block.ERRORS_UNKNOWN
 
     # Correct one error.
-    corrected_shuffle_index = rx_block.correct_one_bit(ask_correct_parity_function)
+    corrected_shuffle_index = rx_block.correct_one_bit()
     assert corrected_shuffle_index == 0
     assert rx_block.__str__() == "0111110110011110"   # 11 ones -> odd parity
                         # Errors:      ^^             # 2 errors -> even number of errors
@@ -300,12 +265,8 @@ def test_error_parity():
 
 def test_get_blocks_containing_key_index():
 
-    Key.set_random_seed(9991)
-    Shuffle.set_random_seed(9992)
-    session = Session()
-
     # A block that contains only key bits 0, 2, and 4
-    key1 = Key.create_random_key(5)
+    (session, key1) = Session.create_mock_session_and_key(5, 9991, 9992)
     assert key1.__repr__() == "Key: 00011"
     shuffle1 = Shuffle(key1.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle1.__repr__() == ("Shuffle: 0->2 1->4 2->0 3->1 4->3")
@@ -319,17 +280,17 @@ def test_get_blocks_containing_key_index():
     assert session.get_blocks_containing_key_index(5) == []
 
     # A block that contains only key bits 1, 2, 3, and 5
-    key2 = Key.create_random_key(6)
+    (session, key2) = Session.create_mock_session_and_key(6)
     assert key2.__repr__() == "Key: 001001"
     shuffle2 = Shuffle(key2.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle2.__repr__() == ("Shuffle: 0->4 1->0 2->2 3->1 4->5 5->3")
     block2 = Block(session, key2, shuffle2, 2, 6, None)
     assert block2.__repr__() == ("Block: 2->2=1 3->1=0 4->5=1 5->3=0")
-    assert session.get_blocks_containing_key_index(0) == [block1]
+    assert session.get_blocks_containing_key_index(0) == []
     assert session.get_blocks_containing_key_index(1) == [block2]
-    assert session.get_blocks_containing_key_index(2) == [block1, block2]
+    assert session.get_blocks_containing_key_index(2) == [block2]
     assert session.get_blocks_containing_key_index(3) == [block2]
-    assert session.get_blocks_containing_key_index(4) == [block1]
+    assert session.get_blocks_containing_key_index(4) == []
     assert session.get_blocks_containing_key_index(5) == [block2]
 
     # Create sub-blocks for block2
@@ -337,21 +298,17 @@ def test_get_blocks_containing_key_index():
     right_sub_block = block2.get_right_sub_block()
     assert left_sub_block.__repr__() == ("Block: 2->2=1 3->1=0")
     assert right_sub_block.__repr__() == ("Block: 4->5=1 5->3=0")
-    assert session.get_blocks_containing_key_index(0) == [block1]
+    assert session.get_blocks_containing_key_index(0) == []
     assert session.get_blocks_containing_key_index(1) == [block2, left_sub_block]
-    assert session.get_blocks_containing_key_index(2) == [block1, block2, left_sub_block]
+    assert session.get_blocks_containing_key_index(2) == [block2, left_sub_block]
     assert session.get_blocks_containing_key_index(3) == [block2, right_sub_block]
-    assert session.get_blocks_containing_key_index(4) == [block1]
+    assert session.get_blocks_containing_key_index(4) == []
     assert session.get_blocks_containing_key_index(5) == [block2, right_sub_block]
 
 def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
 
-    Key.set_random_seed(12345)
-    Shuffle.set_random_seed(67890)
-    session = Session()
-
     # Create the original (sent) key.
-    tx_key = Key.create_random_key(16)
+    (session, tx_key) = Session.create_mock_session_and_key(16, 12345, 67890)
     assert tx_key.__repr__() == "Key: 1011011010110010"
 
     # Create the noisy (received) key, which has 3 errors relative to the original key.
@@ -366,6 +323,7 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
     shuffle = Shuffle(rx_key.size, Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__repr__() == ("Shuffle: 0->7 1->13 2->6 3->14 4->12 5->5 6->1 7->15 8->11 "
                                   "9->10 10->4 11->0 12->3 13->8 14->9 15->2")
+    session.classical_channel.start_reconciliation()
 
     # Create a block that covers the entire shuffled noisy key.
     # The block has errors at the following shuffle indexes: 1, 3, and 11
@@ -382,10 +340,6 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
                         #         0123456789012345
     assert rx_block.current_parity == 0
 
-    # Function which returns the correct parity for a range of shuffled bits.
-    ask_correct_parity_function = lambda _shuffle_identifier, start_index, end_index: \
-        shuffle.calculate_parity(tx_key, start_index, end_index)
-
     # Correct the first bit error. The recursion should go as follows:
     #
     #     v             vv
@@ -400,7 +354,7 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
     #     v
     # 0 | 1                         Even | Odd => Recurse right => Corrects shuffled key index 1
     #
-    corrected_shuffle_index = rx_block.correct_one_bit(ask_correct_parity_function)
+    corrected_shuffle_index = rx_block.correct_one_bit()
     assert corrected_shuffle_index == 1
     assert rx_block.__str__() == "0011010011011011"
                         # Errors:              ^^
@@ -416,4 +370,4 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
     assert shuffle.calculate_parity(tx_key, 0, tx_key.size) == rx_block.current_parity
 
     # Hence, attempting to fix another error on the top block will fail for sure.
-    assert rx_block.correct_one_bit(ask_correct_parity_function) is None
+    assert rx_block.correct_one_bit() is None

@@ -77,3 +77,7 @@
    * Option to only put top-level blocks in map (no sub-block re-use)
 
    * Move key_size, error_count, error_rate, etc. to parameters?
+
+   * Reserved shuffle ID zero = no shuffling?
+
+   * Try to avoid that a Block object has a reference to a Session object

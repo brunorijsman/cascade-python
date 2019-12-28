@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "env/bin/python3.7",
+    "python.pythonPath": "env/bin/python",
     "cSpell.words": [
         "biconf",
         "codecov",
@@ -15,5 +15,7 @@
         "reis",
         "simula",
         "unshuffled"
-    ]
+    ],
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }

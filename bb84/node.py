@@ -83,7 +83,7 @@ class Node:
         for _ in range(self._window_size):
             bit = random.randint(0, 1)
             tx_basis = random_basis()
-            bit_state = BitState(bit, tx_basis, None)    ###@@@
+            bit_state = BitState(bit, tx_basis, None)
             bit_state.encode_qubit(self._cqc_connection)
             window.append(bit_state)
             self._cqc_connection.sendQubit(bit_state.qubit, peer_name)

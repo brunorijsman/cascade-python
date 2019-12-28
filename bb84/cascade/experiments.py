@@ -2,7 +2,6 @@ import json
 
 from bb84.cascade.session import Session, ORIGINAL_PARAMETERS
 from bb84.cascade.key import Key
-from bb84.cascade.shuffle import Shuffle
 
 REPETITIONS = 5
 
@@ -14,10 +13,8 @@ def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
     print(f" key_size={key_size}")
     print(f" bit_error_rate={bit_error_rate}")
 
-    Key.set_random_seed(seed)
-    Shuffle.set_random_seed(seed+1)
-
-    session = Session(parameters)
+    # Create a mock session.
+    (session, tx_key) = Session.create_mock_session_and_key(key_size, seed, seed+1)
 
     # Create a random original (sent) key without errors.
     tx_key = Key.create_random_key(key_size)
@@ -25,13 +22,8 @@ def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
     # Create the corresponding noisy (received) key with some random errors.
     rx_key = tx_key.copy(error_rate=bit_error_rate)
 
-    # Function that performs Alice's job of providing the correct parity for a block.
-    ask_correct_parity_function = lambda shuffle_identifier, start_index, end_index: \
-        Shuffle.create_shuffle_from_identifier(shuffle_identifier).calculate_parity(
-            tx_key, start_index, end_index)
-
     # Attempt to correct the noisy key by running the Cascade algorithm.
-    session.correct_key(rx_key, bit_error_rate, ask_correct_parity_function)
+    session.correct_key(rx_key, bit_error_rate)
 
     # Update statistics for bit errors and frame errors
     bit_errors = tx_key.difference(rx_key)

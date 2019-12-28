@@ -133,7 +133,7 @@ class Reconciliation:
         # Process each error block, in order of shortest block first.
         while self._error_blocks:
             (_, block) = heapq.heappop(self._error_blocks)
-            self._correct_one_bit_in_block(block)
+            self._attempt_to_correct_one_bit_in_block(block)
 
     def reconcile(self):
         """
@@ -190,7 +190,7 @@ class Reconciliation:
         while self._have_pending_error_blocks():
             self._correct_pending_error_blocks()
 
-    def _correct_one_bit_in_block(self, block):
+    def _attempt_to_correct_one_bit_in_block(self, block):
         """
         Try to correct a single bit error in a block by recursively dividing the block into
         sub-blocks and comparing the current parity of each of those sub-blocks with the correct
@@ -277,7 +277,7 @@ class Reconciliation:
         if  left_sub_block is None:
             left_sub_block = block.create_left_sub_block()
             self._register_block_key_indexes(left_sub_block)
-        corrected_shuffle_index = self._correct_one_bit_in_block(left_sub_block)
+        corrected_shuffle_index = self._attempt_to_correct_one_bit_in_block(left_sub_block)
         if corrected_shuffle_index is None:
 
             # The left sub-block had an even number of errors. So that means that the right
@@ -287,7 +287,7 @@ class Reconciliation:
             if right_sub_block is None:
                 right_sub_block = block.create_right_sub_block()
                 self._register_block_key_indexes(right_sub_block)
-            corrected_shuffle_index = self._correct_one_bit_in_block(right_sub_block)
+            corrected_shuffle_index = self._attempt_to_correct_one_bit_in_block(right_sub_block)
 
         else:
 

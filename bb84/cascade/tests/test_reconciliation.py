@@ -208,7 +208,7 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
     #     v
     # 0 | 1                         Even | Odd => Recurse right => Corrects shuffled key index 1
     #
-    corrected_shuffle_index = reconciliation._correct_one_bit_in_block(rx_block)
+    corrected_shuffle_index = reconciliation._attempt_to_correct_one_bit_in_block(rx_block)
     assert corrected_shuffle_index == 1
     assert rx_block.__str__() == "0011010011011011"
                         # Errors:              ^^
@@ -225,7 +225,7 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
         rx_block.get_current_parity()
 
     # Hence, attempting to fix another error on the top block will fail for sure.
-    assert reconciliation._correct_one_bit_in_block(rx_block) is None
+    assert reconciliation._attempt_to_correct_one_bit_in_block(rx_block) is None
 
 def run_reconciliation(parameters, seed, key_size, error_rate, expected_bit_errors=0):
     Key.set_random_seed(seed)

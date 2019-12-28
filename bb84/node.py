@@ -257,7 +257,7 @@ class Node:
     def print_report(self, elapsed_time):
         report = Report()
         report.add(f"*** {self._name} ***")
-        report.add(f"Elpased time: {elapsed_time:.1f} secs")
+        report.add(f"Elapsed time: {elapsed_time:.1f} secs")
         report.add(f"Key size: {self._key_size}")
         report.add(f"Key: {self.key_str()}")
         report.add(f"Block size: {self._block_size}")

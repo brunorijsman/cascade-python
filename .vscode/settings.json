@@ -1,9 +1,11 @@
 {
     "python.pythonPath": "env/bin/python",
     "cSpell.words": [
+        "basis",
         "biconf",
         "codecov",
         "cqclib",
+        "hadamard",
         "kwargs",
         "pylint",
         "pytest",

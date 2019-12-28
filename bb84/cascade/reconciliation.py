@@ -11,7 +11,8 @@ class Reconciliation:
     A single information reconciliation exchange between a client (Bob) and a server (Alice).
     """
 
-    def __init__(self, parameters, classical_channel, noisy_key, estimated_quantum_bit_error_rate):
+    def __init__(self, parameters, classical_channel, noisy_key, estimated_quantum_bit_error_rate,
+                 stats=None):
         """
         Create a Cascade reconciliation.
 
@@ -41,8 +42,12 @@ class Reconciliation:
         # Map key indexes to blocks.
         self._key_index_to_blocks = {}
 
-        # Keep track of statistics.
-        self.stats = Stats()
+        # Keep track of statistics. Use the provided stats block, or if none was provided, create
+        # new stats block.
+        if stats is None:
+            self.stats = Stats()
+        else:
+            self.stats = stats
 
         # A set of blocks that are suspected to contain an error, pending to be corrected later.
         # These are stored as a priority queue with items (block.size, block) so that we can correct

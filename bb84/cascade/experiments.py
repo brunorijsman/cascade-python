@@ -6,6 +6,7 @@ from bb84.cascade.mock_classical_channel import MockClassicalChannel
 from bb84.cascade.parameters import ORIGINAL_PARAMETERS
 from bb84.cascade.reconciliation import Reconciliation
 from bb84.cascade.shuffle import Shuffle
+from bb84.cascade.stats import Stats
 
 REPETITIONS = 5
 
@@ -30,8 +31,10 @@ def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
     noisy_key = correct_key.copy(error_rate=bit_error_rate)
 
     # Create a mock reconciliation.
-    mock_classical_channel = MockClassicalChannel(correct_key)
-    reconciliation = Reconciliation(parameters, mock_classical_channel, noisy_key, bit_error_rate)
+    stats = Stats()
+    mock_classical_channel = MockClassicalChannel(correct_key, stats)
+    reconciliation = Reconciliation(parameters, mock_classical_channel, noisy_key, bit_error_rate,
+                                    stats)
 
     # Do the reconciliation.
     reconciliated_key = reconciliation.reconcile()
@@ -42,13 +45,13 @@ def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
     if bit_errors > 0:
         reconciliation.stats.frame_errors += 1
 
-    print(f" stats={json.dumps(reconciliation.stats.__dict__)}")
+    print(f" stats={json.dumps(stats.__dict__)}")
 
 def run_experiment_series_increasing_error_rate(parameters, key_size):
     bit_error_rate = 0.00
     while bit_error_rate <= 0.12:
         run_one_key_correction(parameters, None, key_size, bit_error_rate)
-        bit_error_rate += 0.001
+        bit_error_rate += 0.01
 
 def run_all_experiments():
     key_size = 10_000   # TODO

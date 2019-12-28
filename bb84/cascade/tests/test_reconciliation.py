@@ -218,7 +218,7 @@ def test_correct_one_bit_scenario_three_errors_fix_first_dont_fix_second():
 
     # Since we are not doing multiple iterations in this test cases, the queue or error blocks
     # should be empty.
-    assert reconciliation._error_blocks == []
+    assert reconciliation._pending_error_blocks == []
 
     # Since we have fixed one error, the top block will have an even number of errors for sure.
     assert shuffle.calculate_parity(correct_key, 0, correct_key.get_size()) == \

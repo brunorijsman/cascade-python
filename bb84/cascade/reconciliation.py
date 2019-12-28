@@ -52,7 +52,7 @@ class Reconciliation:
         # A set of blocks that are suspected to contain an error, pending to be corrected later.
         # These are stored as a priority queue with items (block.size, block) so that we can correct
         # the pending blocks in order of shortest block first.
-        self._error_blocks = []
+        self._pending_error_blocks = []
 
     def get_key(self):
         return self._key
@@ -114,7 +114,7 @@ class Reconciliation:
 
         # Push the error block onto the heap. It is pushed as a tuple (block.size, block) to allow
         # us to correct the error blocks in order of shortest blocks first.
-        heapq.heappush(self._error_blocks, (block.get_size(), block))
+        heapq.heappush(self._pending_error_blocks, (block.get_size(), block))
 
     def _have_pending_error_blocks(self):
         """
@@ -123,7 +123,7 @@ class Reconciliation:
         Returns:
             True if there are any pending error blocks, False if not.
         """
-        return self._error_blocks != []
+        return self._pending_error_blocks != []
 
     def _correct_pending_error_blocks(self):
         """
@@ -131,8 +131,8 @@ class Reconciliation:
         are processed in order of shortest block first.
         """
         # Process each error block, in order of shortest block first.
-        while self._error_blocks:
-            (_, block) = heapq.heappop(self._error_blocks)
+        while self._pending_error_blocks:
+            (_, block) = heapq.heappop(self._pending_error_blocks)
             self._attempt_to_correct_one_bit_in_block(block)
 
     def reconcile(self):

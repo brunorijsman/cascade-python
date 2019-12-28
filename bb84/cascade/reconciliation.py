@@ -236,7 +236,7 @@ class Reconciliation:
         # queue when its parity flips. Those fixes would be much more expensive than what we do
         # here: we simply ignore blocks on the queue that have an even number of errors at the
         # time that they are popped from the priority queue.
- 
+
         if block.get_error_parity() != Block.ERRORS_ODD:
             return None
 

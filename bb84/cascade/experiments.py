@@ -54,7 +54,7 @@ def run_experiment_series_increasing_error_rate(parameters, key_size):
         bit_error_rate += 0.01
 
 def run_all_experiments():
-    key_size = 10_000   # TODO
+    key_size = 10_000
     run_experiment_series_increasing_error_rate(ORIGINAL_PARAMETERS, key_size)
 
 if __name__ == "__main__":

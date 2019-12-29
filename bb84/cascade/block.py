@@ -228,6 +228,15 @@ class Block:
                                      self)
         return self._left_sub_block
 
+    def get_parent_block(self):
+        """
+        Return the parent block of this block, if it has one.
+
+        Returns:
+            The parent block, or None if there is no parent block.
+        """
+        return self._parent_block
+
     def get_right_sub_block(self):
         """
         Return the right sub-block of this block, if it has one.

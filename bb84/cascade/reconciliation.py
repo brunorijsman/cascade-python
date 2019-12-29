@@ -11,6 +11,10 @@ class Reconciliation:
     A single information reconciliation exchange between a client (Bob) and a server (Alice).
     """
 
+    _CORRECTION_NO_BIT = 0
+    _CORRECTION_ONE_BIT = 1
+    _CORRECTION_POSTPONED = 2
+
     def __init__(self, parameters, classical_channel, noisy_key, estimated_quantum_bit_error_rate,
                  stats=None):
         """
@@ -52,7 +56,14 @@ class Reconciliation:
         # A set of blocks that are suspected to contain an error, pending to be corrected later.
         # These are stored as a priority queue with items (block.size, block) so that we can correct
         # the pending blocks in order of shortest block first.
-        self._pending_error_blocks = []
+        self._pending_try_correct_blocks = []
+
+        # A set of blocks for which we have to ask Alice for the correct parity. To minimize the
+        # number of message that Bob sends to Alice (i.e. the number of channel uses), we queue up
+        # these pending parity questions until we can make no more progress correcting error. Then
+        # we send a single message to Alice to ask all queued parity questions, and proceed once we
+        # get the answers.
+        self._pending_ask_parity_blocks = []
 
     def get_key(self):
         return self._key
@@ -64,7 +75,7 @@ class Reconciliation:
 
         Args:
             block (Block): The block to be registered. It must not have been registered using this
-            function ever before.
+                function ever before.
         """
 
         # Validate args.
@@ -93,7 +104,7 @@ class Reconciliation:
         assert key_index >= 0
         return self._key_index_to_blocks.get(key_index, [])
 
-    def _register_pending_error_block(self, block):
+    def _register_pending_try_correct_block(self, block, correct_right_sibling):
         """
         Register a block as needing an attempted error correct. Either because we know for a fact
         that it has an odd number of errors. Or because we don't yet know its correct parity, so
@@ -106,34 +117,88 @@ class Reconciliation:
         # Validate args.
         assert isinstance(block, Block)
 
-        # If sub_block_reuse is disabled, then only register top-level blocks for cascading.
-        # TODO: Move this to caller!
-        if not self._parameters.sub_block_reuse:
-            if not block.is_top_block():
-                return
-
         # Push the error block onto the heap. It is pushed as a tuple (block.size, block) to allow
         # us to correct the error blocks in order of shortest blocks first.
-        heapq.heappush(self._pending_error_blocks, (block.get_size(), block))
+        entry = (block, correct_right_sibling)
+        heapq.heappush(self._pending_try_correct_blocks, (block.get_size(), entry))
 
-    def _have_pending_error_blocks(self):
+    def _have_pending_try_correct_blocks(self):
         """
         Are there any more blocks pending that potentially have an odd number of errors?
 
         Returns:
             True if there are any pending error blocks, False if not.
         """
-        return self._pending_error_blocks != []
+        return self._pending_try_correct_blocks != []
 
-    def _correct_pending_error_blocks(self):
+    def _service_pending_try_correct_blocks(self):
         """
         For each registered error blocks, attempt to correct a single error in the block. The blocks
         are processed in order of shortest block first.
         """
         # Process each error block, in order of shortest block first.
-        while self._pending_error_blocks:
-            (_, block) = heapq.heappop(self._pending_error_blocks)
-            self._attempt_to_correct_one_bit_in_block(block)
+        while self._pending_try_correct_blocks:
+            (_, entry) = heapq.heappop(self._pending_try_correct_blocks)
+            (block, correct_right_sibling) = entry
+            self._try_correct_block(block, correct_right_sibling)
+
+    def _register_pending_ask_parity_block(self, block, correct_right_sibling):
+        """
+        Register a block as needing to ask Alice what the correct parity is.
+
+        Args:
+            block (Block): The block to be registered.
+        """
+        # Validate args.
+        assert isinstance(block, Block)
+
+        # Adding an item to the end (not the start!) of a list is an efficient O(1) operation.
+        entry = (block, correct_right_sibling)
+        self._pending_ask_parity_blocks.append(entry)
+
+    def _have_pending_ask_parity_blocks(self):
+        """
+        Are there any more blocks pending as needing to ask Alice what the correct parity is?
+
+        Returns:
+            True if there are any pending error blocks, False if not.
+        """
+        return self._pending_ask_parity_blocks != []
+
+    def _service_pending_ask_parity_blocks(self):
+        """
+        Send a single message to Alice, asking for the parities of all pending "ask parity" blocks.
+        When Alice answers (currently this is a blocking synchronous question) we update the
+        correct parity for the block (0 or 1), the error parity of the block (odd of even), and
+        if the error parity turns out to be odd, we add to the priority queue for pending error
+        blocks that we need to attempt to correct.
+        """
+
+        if not self._pending_ask_parity_blocks:
+            return
+
+        # Prepare the question for Alice, i.e. the list of shuffle ranges over which we want Alice
+        # to compute the correct parity.
+        shuffle_ranges = []
+        for entry in self._pending_ask_parity_blocks:
+            (block, _correct_right_sibling) = entry
+            shuffle_range = block.get_shuffle_range()
+            shuffle_ranges.append(shuffle_range)
+
+        # "Send a message" to Alice to ask her to compute the correct parities for the list that
+        # we prepared. For now, this is a synchronous blocking operations (i.e. we block here
+        # until we get the answer from Alice).
+        correct_parities = self._classical_channel.ask_parities(shuffle_ranges)
+
+        # Process the answer from Alice. IMPORTANT: Alice is required to send the list of parities
+        # in the exact same order as the ranges in the question; this allows us to zip.
+        for (correct_parity, entry) in zip(correct_parities, self._pending_ask_parity_blocks):
+            (block, correct_right_sibling) = entry
+            block.set_correct_parity(correct_parity)
+            self._register_pending_try_correct_block(block, correct_right_sibling)
+
+        # Clear the list of pending questions.
+        self._pending_ask_parity_blocks = []
 
     def reconcile(self):
         """
@@ -176,21 +241,32 @@ class Reconciliation:
         # Split the shuffled key into blocks, using the block size that we chose.
         blocks = Block.create_covering_blocks(self._key, shuffle, block_size)
 
-        # For each covering block...
+        # For each top-level covering block...
         for block in blocks:
 
             # Update the key index to block map.
             self._register_block_key_indexes(block)
 
-            # Add the block to the list of blocks that potentially contains an odd number of errors
-            # and hence could potentially have one bit corrected.
-            self._register_pending_error_block(block)
+            # We won't be able to do anything with the top-level covering blocks until we know what
+            # the correct parity it.
+            self._register_pending_ask_parity_block(block, False)
 
-        # While there are more blocks that can potentially be corrected, try to do so.
-        while self._have_pending_error_blocks():
-            self._correct_pending_error_blocks()
+        # Keep going while there is more work to do.
+        while self._have_pending_try_correct_blocks() or self._have_pending_ask_parity_blocks():
 
-    def _attempt_to_correct_one_bit_in_block(self, block):
+            # Attempt to correct all of blocks that are currently pending as needing a correction
+            # attempt. If we don't know the correct parity of the block, we won't be able to finish
+            # the attempted correction yet. In that case the block will end up on the "pending ask
+            # parity" list.
+            self._service_pending_try_correct_blocks()
+
+            # Now, ask Alice for the correct parity of the blocks that ended up on the "ask parity
+            # list" in the above loop. When we get the answer from Alice, we may discover that the
+            # block as an odd number of errors, in which case we add it back to the "pending error
+            # block" priority queue.
+            self._service_pending_ask_parity_blocks()
+
+    def _try_correct_block(self, block, correct_right_sibling):
         """
         Try to correct a single bit error in a block by recursively dividing the block into
         sub-blocks and comparing the current parity of each of those sub-blocks with the correct
@@ -198,105 +274,81 @@ class Reconciliation:
 
         Params:
             block (Block): The block in which we attempt to correct one bit error.
+            correct_sibbling (bool): If block contains an even number of errors, then try to correct
+                an error in the right sibling instead of this block.
 
         Returns:
-            The shuffle_index of the correct bit, or None if no bit was corrected.
+            True if an error was corrected, False if not.
         """
 
-        # If we don't already know the correct parity for this block, ask Alice what it is.
+        # If we don't know the correct parity of the block, we cannot make progress on this block
+        # until Alice has told us what the correct parity is.
         if block.get_correct_parity() is None:
-            # TODO: This will get cleaned up after we parallelize (i.e. gather multiple parity
-            # questions into one message).
-            shuffle_range = block.get_shuffle_range()
-            shuffle_ranges = [shuffle_range]
-            correct_parity = self._classical_channel.ask_parities(shuffle_ranges)[0]
-            block.set_correct_parity(correct_parity)
+            self._register_pending_ask_parity_block(block, correct_right_sibling)
+            return False
 
-        # We only attempt to correct a bit error if there is an odd number of errors, i.e. if
-        # the current parity if different from the correct parity. If the current and correct
-        # parity are the same, it doesn't mean there are no errors, it only means there is an even
-        # number (potentially zero) number of errors. In that case we don't attempt to correct and
-        # instead we "hope" that the error will be caught in another shuffle of the key.
-        #
-        # TODO: Fold in this comment
-        # We only attempt to correct one error if the block contains an odd number of error.
-        # Although we only call register_error_block for blocks with an odd number of errors,
-        # it is perfectly possible for the block to have an even number of errors by the time
-        # we get the this point for a number of reasons:
-        # (1) The block could be registered as an error block multiple time. In that case the
-        #     blocks ends up in the queue twice. When the first queue entry is corrected the
-        #     block turns from an odd number of errors to an even number of errors. Thus, when
-        #     the second entry on the queue is processed it will have an even number of errors.
-        # (2) After a super-block has been registered as an error block (odd number of errors)
-        #     an error in some sub-block is corrected. This causes the parity of the super-block
-        #     to flip, and hence the number of errors to chang from odd to even.
-        # We don't attempt to fix (1) by checking whether the block is already in the priority
-        # queue, and we don't attempt to fix (2) by removing the super-block from the priority
-        # queue when its parity flips. Those fixes would be much more expensive than what we do
-        # here: we simply ignore blocks on the queue that have an even number of errors at the
-        # time that they are popped from the priority queue.
-
-        if block.get_error_parity() != Block.ERRORS_ODD:
-            return None
+        # If there is an even number of errors in this block, we don't attempt to fix any errors
+        # in this block. But if asked to do so, we will attempt to fix an error in the right
+        # sibling block.
+        error_parity = block.get_error_parity()
+        assert error_parity != Block.ERRORS_UNKNOWN
+        if block.get_error_parity() == Block.ERRORS_EVEN:
+            if correct_right_sibling:
+                return self._try_correct_right_sibling_block(block)
+            return False
 
         # If this block contains a single bit, we have finished the recursion and found an error.
+        # Correct the error by flipping the key bit that corresponds to this block.
         if block.get_size() == 1:
+            self._flip_key_bit_corresponding_to_single_bit_block(block)
+            return True
 
-            # Fix the error by flipping the one and only bit in this block.
-            flipped_shuffle_index = block.get_start_index()
-            block.flip_bit(flipped_shuffle_index)
+        # If we get here, it means that there is an odd number of errors in this block and that
+        # the block is bigger than 1 bit.
 
-            # For every block that covers the key bit that was corrected...
-            flipped_key_index = block.get_key_index(flipped_shuffle_index)
-            for affected_block in self._get_blocks_containing_key_index(flipped_key_index):
-
-                # Flip the parity of that block.
-                affected_block.flip_parity()
-
-                # Perform the "Cascade effect" that is at the heart of the Cascade algorithm:
-                # If the block now has an odd number of errors, register it as an error block so we
-                # can go and correct it later on. The blocks from this iteration don't end up being
-                # registered here - since we corrected an odd error they always have an even number
-                # of errors at this point in the loop. Instead, it's blocks from previous iterations
-                # in the Cascade algorithm that end up being registered here.
-                if affected_block.get_error_parity() == Block.ERRORS_ODD:
-                    self._register_pending_error_block(affected_block)
-
-            # We corrected one error. Return the shuffle index of the corrected bit.
-            return flipped_shuffle_index
-
-        # If we get here, it means that the block was bigger than 1 bit.
-
-        # Split the block into two sub-blocks. Since the whole block contains an odd number of
-        # errors, either the first sub-block contains an odd number of errors and the second
-        # sub-block contains an even number of errors, or vice versa. Recursively check each of
-        # the two sub-blocks. Whichever one has the odd number of errors will recurse more deeply
-        # until we find a single bit error and fix it.
-        # TODO: More granular comments.
+        # Recurse to try to correct an error in the left sub-block first, and if there is no error
+        # there, in the right sub-block alternatively.
         left_sub_block = block.get_left_sub_block()
         if  left_sub_block is None:
             left_sub_block = block.create_left_sub_block()
             self._register_block_key_indexes(left_sub_block)
-        corrected_shuffle_index = self._attempt_to_correct_one_bit_in_block(left_sub_block)
-        if corrected_shuffle_index is None:
+        return self._try_correct_block(left_sub_block, True)
 
-            # The left sub-block had an even number of errors. So that means that the right
-            # sub-block must contain an odd number of errors. Recurse deeper into the right
-            # sub-block.
-            right_sub_block = block.get_right_sub_block()
-            if right_sub_block is None:
-                right_sub_block = block.create_right_sub_block()
-                self._register_block_key_indexes(right_sub_block)
-            corrected_shuffle_index = self._attempt_to_correct_one_bit_in_block(right_sub_block)
+    def _try_correct_right_sibling_block(self, block):
 
-        else:
+        assert not block.is_top_block()
 
-            # The left sub-block had an odd number of errors. We know for a fact that the right
-            # sub-block has an even number of errors, so we don't need to recurse any deeper into
-            # the right sub-block.
-            pass
+        parent_block = block.get_parent_block()
+        right_sibling_block = parent_block.get_right_sub_block()
+        if right_sibling_block is None:
+            right_sibling_block = parent_block.create_right_sub_block()
+            self._register_block_key_indexes(right_sibling_block)
+        return self._try_correct_block(right_sibling_block, False)
 
-        # Since the entire block had an odd number of errors, we must have corrected one error in
-        # either the left sub-block or the right sub-block.
-        assert corrected_shuffle_index is not None
-        return corrected_shuffle_index
+    def _flip_key_bit_corresponding_to_single_bit_block(self, block):
+
+        assert block.get_size() == 1
+        flipped_shuffle_index = block.get_start_index()
+        block.flip_bit(flipped_shuffle_index)
+
+        # For every block that covers the key bit that was corrected...
+        flipped_key_index = block.get_key_index(flipped_shuffle_index)
+
+        for affected_block in self._get_blocks_containing_key_index(flipped_key_index):
+
+            # Flip the parity of that block.
+            affected_block.flip_parity()
+
+            # Perform the "Cascade effect" that is at the heart of the Cascade algorithm:
+            # If the block now has an odd number of errors, register it as an error block so we
+            # can go and correct it later on. The blocks from this iteration don't end up being
+            # registered here - since we corrected an odd error they always have an even number
+            # of errors at this point in the loop. Instead, it's blocks from previous iterations
+            # in the Cascade algorithm that end up being registered here.
+            # TODO: Better comment here
+            if affected_block.get_error_parity() != Block.ERRORS_EVEN:
+
+                # If sub_block_reuse is disabled, then only register top-level blocks for
+                # cascading.
+                if self._parameters.sub_block_reuse or affected_block.is_top_block():
+                    self._register_pending_try_correct_block(affected_block, False)

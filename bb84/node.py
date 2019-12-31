@@ -63,15 +63,15 @@ class Node:
             print(f"RX [{self._name}] ({kind}) {msg}")
         return msg
 
-    def send_parameters(self, peer_name):
+    def send_algorithm(self, peer_name):
         msg = (self._key_size.to_bytes(2, 'big') +
                self._window_size.to_bytes(2, 'big') +
                self._block_size.to_bytes(2, 'big'))
         self.send_msg(peer_name, "paramters", msg)
 
-    def receive_parameters(self):
-        msg = self.recv_msg("parameters")
-        assert len(msg) == 6, "Parameters message must be 6 bytes"
+    def receive_algorithm(self):
+        msg = self.recv_msg("algorithm")
+        assert len(msg) == 6, "Algorithm message must be 6 bytes"
         self._key_size = int.from_bytes(msg[0:2], 'big')
         self._window_size = int.from_bytes(msg[2:4], 'big')
         self._block_size = int.from_bytes(msg[4:6], 'big')

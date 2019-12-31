@@ -1,17 +1,17 @@
 from bb84.cascade.block import Block
 from bb84.cascade.key import Key
 from bb84.cascade.mock_classical_channel import MockClassicalChannel
-from bb84.cascade.parameters import ORIGINAL_PARAMETERS
+from bb84.cascade.algorithm import ORIGINAL_ALGORITHM
 from bb84.cascade.reconciliation import Reconciliation
 from bb84.cascade.shuffle import Shuffle
 
-def create_reconciliation(parameters, seed, key_size, error_rate):
+def create_reconciliation(algorithm, seed, key_size, error_rate):
     Key.set_random_seed(seed)
     Shuffle.set_random_seed(seed+1)
     correct_key = Key.create_random_key(key_size)
     noisy_key = correct_key.copy(error_rate=error_rate)
     mock_classical_channel = MockClassicalChannel(correct_key)
-    reconciliation = Reconciliation(parameters, mock_classical_channel, noisy_key, error_rate)
+    reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate)
     return reconciliation
 
 def test_error_parity():
@@ -76,7 +76,7 @@ def test_error_parity():
 def test_get_blocks_containing_key_index():
 
     # Create a reconciliation object.
-    reconciliation = create_reconciliation(ORIGINAL_PARAMETERS, 9991, 8, 0.1)
+    reconciliation = create_reconciliation(ORIGINAL_ALGORITHM, 9991, 8, 0.1)
 
     # Make sure we have the noisy key that we expect to have based on the seed.
     noisy_key = reconciliation.get_noisy_key()
@@ -159,7 +159,7 @@ def test_get_blocks_containing_key_index():
 #     noisy_key = correct_key.copy(error_count=error_count)
 #     mock_classical_channel = MockClassicalChannel(correct_key)
 #     error_rate = 3.0 / 16.0
-#     reconciliation = Reconciliation(ORIGINAL_PARAMETERS, mock_classical_channel, noisy_key,
+#     reconciliation = Reconciliation(ORIGINAL_ALGORITHM, mock_classical_channel, noisy_key,
 #                                     error_rate)
 
 #     # Create the original (sent) key.
@@ -231,23 +231,23 @@ def test_get_blocks_containing_key_index():
 #     # Hence, attempting to fix another error on the top block will fail for sure.
 #     assert not reconciliation._try_correct_block(rx_block, False)
 
-# def run_reconciliation(parameters, seed, key_size, error_rate, expected_bit_errors=0):
+# def run_reconciliation(algorithm, seed, key_size, error_rate, expected_bit_errors=0):
 #     Key.set_random_seed(seed)
 #     Shuffle.set_random_seed(seed+1)
 #     correct_key = Key.create_random_key(key_size)
 #     noisy_key = correct_key.copy(error_rate=error_rate)
 #     mock_classical_channel = MockClassicalChannel(correct_key)
-#     reconciliation = Reconciliation(parameters, mock_classical_channel, noisy_key, error_rate)
+#     reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate)
 #     reconciled_key = reconciliation.reconcile()
 #     bit_errors = correct_key.difference(reconciled_key)
 #     assert bit_errors == expected_bit_errors
 
-# def test_correct_key_default_parameters():
+# def test_correct_key_default_algorithm():
 #     for key_size in [32, 64, 100, 1000, 10000]:
 #         for bit_error_rate in [0.00, 0.01, 0.1, 0.2]:
-#             run_reconciliation(ORIGINAL_PARAMETERS, 1111, key_size, bit_error_rate, 0)
+#             run_reconciliation(ORIGINAL_ALGORITHM, 1111, key_size, bit_error_rate, 0)
 
 # # For profiling
 # # TODO: Move this to a separate profile.py and include in coverage test
 # if __name__ == "__main__":
-#     run_reconciliation(ORIGINAL_PARAMETERS, 1111, 10000, 0.01, 0)
+#     run_reconciliation(ORIGINAL_ALGORITHM, 1111, 10000, 0.01, 0)

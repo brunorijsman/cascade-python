@@ -29,7 +29,7 @@ class Client(Node):
 
     def agree_key(self):
         start_time = time.perf_counter()
-        self.send_parameters(self._server_name)
+        self.send_algorithm(self._server_name)
         while not self.key_is_complete():
             self.process_block()
         elapsed_time = time.perf_counter() - start_time

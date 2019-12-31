@@ -4,7 +4,7 @@ import time
 from bb84.cascade.block import Block
 from bb84.cascade.classical_channel import ClassicalChannel
 from bb84.cascade.key import Key
-from bb84.cascade.parameters import Parameters
+from bb84.cascade.algorithm import Algorithm
 from bb84.cascade.shuffle import Shuffle
 from bb84.cascade.stats import Stats
 
@@ -13,28 +13,28 @@ class Reconciliation:
     A single information reconciliation exchange between a client (Bob) and a server (Alice).
     """
 
-    def __init__(self, parameters, classical_channel, noisy_key, estimated_quantum_bit_error_rate,
+    def __init__(self, algorithm, classical_channel, noisy_key, estimated_bit_error_rate,
                  stats=None):
         """
         Create a Cascade reconciliation.
 
         Args:
-            parameters (Parameters): The parameters that describe the variation of the Cascade
+            algorithm (Algorithm): The algorithm that describe the algorithm of the Cascade
                 algorithm.
             classical_channel (subclass of ClassicalChannel): The classical channel over which
                 Bob communicates with Alice.
         """
 
         # Validate arguments.
-        assert isinstance(parameters, Parameters)
+        assert isinstance(algorithm, Algorithm)
         assert issubclass(type(classical_channel), ClassicalChannel)
         assert isinstance(noisy_key, Key)
-        assert isinstance(estimated_quantum_bit_error_rate, float)
+        assert isinstance(estimated_bit_error_rate, float)
 
         # Store the arguments.
         self._classical_channel = classical_channel
-        self._parameters = parameters
-        self._estimated_quantum_bit_error_rate = estimated_quantum_bit_error_rate
+        self._algorithm = algorithm
+        self._estimated_bit_error_rate = estimated_bit_error_rate
         self._noisy_key = noisy_key
         self._reconciled_key = None
 
@@ -267,8 +267,8 @@ class Reconciliation:
         self._classical_channel.start_reconciliation()
 
         # Do as many Cascade iterations (aka Cascade passes) as demanded by this particular
-        # variation of the Cascade algorithm.
-        for iteration_nr in range(1, self._parameters.nr_iterations+1):
+        # algorithm of the Cascade algorithm.
+        for iteration_nr in range(1, self._algorithm.nr_iterations+1):
             self._reconcile_iteration(iteration_nr)
 
         # Inform Alice that we have finished the reconciliation.
@@ -284,9 +284,9 @@ class Reconciliation:
     def _reconcile_iteration(self, iteration_nr):
 
         # Determine the block size to be used for this iteration, using the rules for this
-        # particular variation of the Cascade algorithm.
-        block_size = self._parameters.block_size_function(self._estimated_quantum_bit_error_rate,
-                                                          iteration_nr)
+        # particular algorithm of the Cascade algorithm.
+        block_size = self._algorithm.block_size_function(self._estimated_bit_error_rate,
+                                                         iteration_nr)
 
         # In the first iteration, we don't shuffle the key. In all subsequent iterations we
         # shuffle the key, using a different random shuffling in each iteration.
@@ -407,5 +407,5 @@ class Reconciliation:
 
                 # If sub_block_reuse is disabled, then only register top-level blocks for
                 # cascading.
-                if self._parameters.sub_block_reuse or affected_block.is_top_block():
+                if self._algorithm.sub_block_reuse or affected_block.is_top_block():
                     self._schedule_try_correct(affected_block, False)

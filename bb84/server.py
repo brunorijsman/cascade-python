@@ -24,7 +24,7 @@ class Server(Node):
 
     def agree_key(self):
         start_time = time.perf_counter()
-        self.receive_parameters()
+        self.receive_algorithm()
         while not self.key_is_complete():
             self.process_block()
         elapsed_time = time.perf_counter() - start_time

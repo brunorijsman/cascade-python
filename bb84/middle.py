@@ -31,8 +31,8 @@ class Middle(Node):
 
     def pass_through(self):
         start_time = time.perf_counter()
-        self.receive_parameters()
-        self.send_parameters(self._server_name)
+        self.receive_algorithm()
+        self.send_algorithm(self._server_name)
         while not self.key_is_complete():
             self.process_block()
         elapsed_time = time.perf_counter() - start_time

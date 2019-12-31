@@ -1,14 +1,14 @@
 import math
 
-class Parameters:
+class Algorithm:
     """
-    A set of parameters that determine which variation of the Cascade protocol is used.
+    A set of algorithm that determine which algorithm of the Cascade protocol is used.
     """
 
     def __init__(self, nr_iterations, block_size_function, biconf, sub_block_reuse,
                  block_parity_inference):
         """
-        Create a new set of parameters for the Cascade algorithm.
+        Create a new set of algorithm for the Cascade algorithm.
 
         Args:
             nr_iterations (int): The number of Cascade iterations (also known as the number of
@@ -17,9 +17,9 @@ class Parameters:
             block_size_function: A function that returns the block size as a function of the
                 estimated quantum bit error rate and the iteration number:
 
-                def original_block_size_function(estimated_quantum_bit_error_rate, iteration):
+                def original_block_size_function(estimated_bit_error_rate, iteration):
 
-                    # estimated_quantum_bit_error_rate is float >= 0.0, iteration is int >= 1
+                    # estimated_bit_error_rate is float >= 0.0, iteration is int >= 1
 
                     return block_size
 
@@ -42,7 +42,7 @@ class Parameters:
         assert isinstance(sub_block_reuse, bool)
         assert isinstance(block_parity_inference, bool)
 
-        # Set parameters.
+        # Set algorithm.
         self.nr_iterations = nr_iterations
         self.block_size_function = block_size_function
         self.biconf = biconf                                    # TODO: Not yet supported
@@ -51,14 +51,14 @@ class Parameters:
 
     def __repr__(self):
         """
-        Get the unambiguous string representation of the parameters.
+        Get the unambiguous string representation of the algorithm.
 
         Returns:
-            The unambiguous string representation of the parameters.
+            The unambiguous string representation of the algorithm.
         """
         # To make the generated Sphinx documentation look nice.
         return (
-            f"Parameters(\n"
+            f"Algorithm(\n"
             f"  nr_iterations={self.nr_iterations},\n"
             f"  block_size_function={self.block_size_function},\n"
             f"  biconf={self.biconf},\n"
@@ -67,23 +67,23 @@ class Parameters:
             f")"
         )
 
-def original_block_size_function(estimated_quantum_bit_error_rate, iteration):
+def original_block_size_function(estimated_bit_error_rate, iteration):
     """
     The block size according to the original Cascade algorithm:
 
-    iteration 1: block_size = 0.73 / estimated_quantum_bit_error_rate
+    iteration 1: block_size = 0.73 / estimated_bit_error_rate
 
     iteration k: block_size = 2 * block_size for iteration k-1
     """
-    if estimated_quantum_bit_error_rate < 0.00001:
-        estimated_quantum_bit_error_rate = 0.00001
+    if estimated_bit_error_rate < 0.00001:
+        estimated_bit_error_rate = 0.00001
     if iteration == 1:
-        return math.ceil(0.73 / estimated_quantum_bit_error_rate)
-    return 2 * original_block_size_function(estimated_quantum_bit_error_rate, iteration - 1)
+        return math.ceil(0.73 / estimated_bit_error_rate)
+    return 2 * original_block_size_function(estimated_bit_error_rate, iteration - 1)
 
-ORIGINAL_PARAMETERS = Parameters(nr_iterations=4,
-                                 block_size_function=original_block_size_function,
-                                 biconf=False,
-                                 sub_block_reuse=False,
-                                 block_parity_inference=False)
-"""The parameters for the original Cascade protocol."""
+ORIGINAL_ALGORITHM = Algorithm(nr_iterations=4,
+                               block_size_function=original_block_size_function,
+                               biconf=False,
+                               sub_block_reuse=False,
+                               block_parity_inference=False)
+"""The algorithm for the original Cascade protocol."""

@@ -1,83 +1,83 @@
- * Am I using the correct CQC-Python library? https://github.com/SoftwareQuTech/CQC-Python vs https://github.com/SoftwareQuTech/SimulaQron
+# BB84
 
- * Use SimulaQron from GitHub source instead of pip install
+  * Am I using the correct CQC-Python library? https://github.com/SoftwareQuTech/CQC-Python vs https://github.com/SoftwareQuTech/SimulaQron
 
- * File SimulaQron enhancement request: report sender when receiving message
+  * Use SimulaQron from GitHub source instead of pip install
 
- * File SimulaQron enhancement request: wait for any event (qubit or classical message or timeout)
+  * File SimulaQron enhancement request: report sender when receiving message
 
- * File SimulaQron enhancement request: asynchronous model (or is there already a low-level API for this)?
+  * File SimulaQron enhancement request: wait for any event (qubit or classical message or timeout)
 
- * Add authentication and data integrity on classical channel (see http://bit.ly/bb84auth)
+  * File SimulaQron enhancement request: asynchronous model (or is there already a low-level API for this)?
 
- * Add documentation comments (bb84 module; cascade already done)
+  * Add authentication and data integrity on classical channel (see http://bit.ly/bb84auth)
 
- * Add noise estimation
+  * Add documentation comments (bb84 module; cascade already done)
 
- * Add privacy amplification
+  * Add noise estimation
 
- * Keep stats for measured qubits
+  * Add privacy amplification
 
- * Report Alice and Bob key, and differences at end of run
+  * Keep stats for measured qubits
 
- * Handle case that block size is not multiple of window size
+  * Report Alice and Bob key, and differences at end of run
 
- * Rename bb84 block to something else
+  * Handle case that block size is not multiple of window size
 
- * Get rid of report kwargs, instead make report public
+  * Rename bb84 block to something else
 
- * Populate README.md file
+  * Get rid of report kwargs, instead make report public
 
- * Introduce "Evan" who does a full man-in-the-middle attack
+  * Populate README.md file
 
- * Introduce a middle node for modeling normal (non-attack) noise
+  * Introduce "Evan" who does a full man-in-the-middle attack
 
- * Progress on Cascade implementation (information reconciliation):
+  * Introduce a middle node for modeling normal (non-attack) noise
 
-   * Implement basic Cascade algorithm
+  * Code coverage on codecov should also include bb84 module itself.
 
-   * Implement Cascade variations
+# Cascade
 
-     * Deterministic shuffle
+  * Implement Cascade variations
 
-     * Discard corrected bits? At the end?
+    * Deterministic shuffle.
 
-     * Implement BICONF
+    * Discard corrected bits at the end.
 
-     * Did I unwittingly implement Block Reuse without knowing it? Original only uses top-level blocks?
+    * BICONF
 
-     * Only register error blocks from previous iterations than the block which is being corrected.
+    * Different number of iterations and values for k[i].
+    
+    * Full Block Parity Inference (BPI).
 
-     * Support different number of iterations and values for k[i].
+  * Reproduce Andre Reis Cascade thesis results.
 
-   * Finish the Cascade protocol by supporting multiple iterations.
+  * Reproduce "Demystifying the Information Reconciliation Protocol Cascade" paper results.
 
-   * Replicate Andre Reis Cascade study to make sure that my implementation is sane.
+  * Move cascade module into a separate Git repo and make it a dependency for the bb84 repo.
 
-   * Code coverage on codecov should also include bb84 module itself.
+  * Add more statistics to the Cascade algorithm:
 
-   * Move cascade module one directory up (make it a peer module of bb84).
+    * Inferred correct parities.
 
-   * Move the isolated random number generators to the Session object.
+    * Reconciliation run-time.
 
-   * Add lots of statistics to the Cascade algorithm
+  * Store variation name in parameters block.
 
-   * Automate running multiple iterations of same scenario
+  * Move key-size into parameters.
+  
+  * Move error-count and error-rate into parameters.
 
-   * Automate running multiple scenarios
+  * Automate running multiple iterations of same scenario.
 
-   * Use all available cores using multi-threading
+  * Automate running multiple scenarios.
 
-   * Move ask_correct_parity_function to Session constructor
+  * Use all available cores using multi-threading.
 
-   * Add statistics
+  * Further optimize code based on profiling results
 
-   * Further optimize code based on profiling results
+  * Reserved shuffle ID zero = no shuffling?
 
-   * Option to only put top-level blocks in map (no sub-block re-use)
+  * Get test coverage back to 100%.
 
-   * Move key_size, error_count, error_rate, etc. to parameters?
-
-   * Reserved shuffle ID zero = no shuffling?
-
-   * Try to avoid that a Block object has a reference to a Session object
+  * Get documentation back to 100%.

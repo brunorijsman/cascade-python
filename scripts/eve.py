@@ -1,5 +1,5 @@
 import argparse
-from bb84.middle import Middle
+from middle import Middle
 
 def main(observe_percentage, trace, report):
     middle = Middle("Eve", "Alice", "Bob", observe_percentage, trace=trace, report=report)

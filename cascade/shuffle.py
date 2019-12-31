@@ -1,5 +1,5 @@
 import random
-from bb84.cascade.key import Key
+from cascade.key import Key
 
 class Shuffle:
     """

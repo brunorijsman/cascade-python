@@ -1,6 +1,6 @@
 import pytest
-from bb84.cascade.key import Key
-from bb84.cascade.shuffle import Shuffle
+from cascade.key import Key
+from cascade.shuffle import Shuffle
 
 def test_encode_identifier():
     # pylint:disable=protected-access

@@ -1,5 +1,5 @@
 import pytest
-from bb84.cascade.key import Key
+from cascade.key import Key
 
 def test_create_validate_args():
     with pytest.raises(AssertionError):

@@ -1,9 +1,9 @@
-from bb84.cascade.block import Block
-from bb84.cascade.key import Key
-from bb84.cascade.mock_classical_channel import MockClassicalChannel
-from bb84.cascade.algorithm import ORIGINAL_ALGORITHM
-from bb84.cascade.reconciliation import Reconciliation
-from bb84.cascade.shuffle import Shuffle
+from cascade.block import Block
+from cascade.key import Key
+from cascade.mock_classical_channel import MockClassicalChannel
+from cascade.algorithm import ORIGINAL_ALGORITHM
+from cascade.reconciliation import Reconciliation
+from cascade.shuffle import Shuffle
 
 def create_reconciliation(algorithm, seed, key_size, error_rate):
     Key.set_random_seed(seed)

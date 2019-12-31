@@ -1,5 +1,5 @@
 import pytest
-from bb84.cascade.algorithm import *
+from cascade.algorithm import *
 
 def test_create_algorithm():
     # Validate nr_iterations argument.

@@ -1,5 +1,5 @@
-from bb84.cascade.key import Key
-from bb84.cascade.shuffle import Shuffle
+from cascade.key import Key
+from cascade.shuffle import Shuffle
 
 class Block:
     """

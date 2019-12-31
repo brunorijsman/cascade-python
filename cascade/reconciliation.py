@@ -1,12 +1,12 @@
 import copy
 import heapq
 import time
-from bb84.cascade.block import Block
-from bb84.cascade.classical_channel import ClassicalChannel
-from bb84.cascade.key import Key
-from bb84.cascade.algorithm import Algorithm
-from bb84.cascade.shuffle import Shuffle
-from bb84.cascade.stats import Stats
+from cascade.block import Block
+from cascade.classical_channel import ClassicalChannel
+from cascade.key import Key
+from cascade.algorithm import Algorithm
+from cascade.shuffle import Shuffle
+from cascade.stats import Stats
 
 class Reconciliation:
     """

@@ -1,7 +1,7 @@
-from bb84.cascade.classical_channel import ClassicalChannel
-from bb84.cascade.key import Key
-from bb84.cascade.shuffle import Shuffle
-from bb84.cascade.stats import Stats
+from cascade.classical_channel import ClassicalChannel
+from cascade.key import Key
+from cascade.shuffle import Shuffle
+from cascade.stats import Stats
 
 class MockClassicalChannel(ClassicalChannel):
     """

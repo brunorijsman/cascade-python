@@ -1,7 +1,7 @@
 import pytest
-from bb84.cascade.block import Block
-from bb84.cascade.key import Key
-from bb84.cascade.shuffle import Shuffle
+from cascade.block import Block
+from cascade.key import Key
+from cascade.shuffle import Shuffle
 
 def test_create_validate_args():
     Key.set_random_seed(1111)

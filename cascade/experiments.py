@@ -2,12 +2,12 @@ import json
 import random
 import git
 
-from bb84.cascade.key import Key
-from bb84.cascade.mock_classical_channel import MockClassicalChannel
-from bb84.cascade.algorithm import ORIGINAL_ALGORITHM
-from bb84.cascade.reconciliation import Reconciliation
-from bb84.cascade.shuffle import Shuffle
-from bb84.cascade.stats import Stats
+from cascade.key import Key
+from cascade.mock_classical_channel import MockClassicalChannel
+from cascade.algorithm import ORIGINAL_ALGORITHM
+from cascade.reconciliation import Reconciliation
+from cascade.shuffle import Shuffle
+from cascade.stats import Stats
 
 REPETITIONS = 5
 

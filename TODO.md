@@ -57,3 +57,5 @@
 * Prune requirements.txt now that cascade is separated from bb84
 
 * Remove cascade code from bb84 (handle as dependency using pip install)
+
+* Make Spinx only document the public classes (and not the internal classes)

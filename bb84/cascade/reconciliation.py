@@ -54,7 +54,7 @@ class Reconciliation:
 
         # A set of blocks for which we have to ask Alice for the correct parity. To minimize the
         # number of message that Bob sends to Alice (i.e. the number of channel uses), we queue up
-        # these pending parity questions until we can make no more progress correcting error. Then
+        # these pending parity questions until we can make no more progress correcting errors. Then
         # we send a single message to Alice to ask all queued parity questions, and proceed once we
         # get the answers.
         self._pending_ask_correct_parity = []
@@ -101,10 +101,55 @@ class Reconciliation:
         assert key_index >= 0
         return self._key_index_to_blocks.get(key_index, [])
 
+    @staticmethod
+    def _correct_parity_is_known_or_can_be_inferred(block):
+        """
+        Is the correct parity of the block already known? Or can it be inferred based on the correct
+        parity of the parent block and the correct parity of the sibling block?
 
-    def _determine_error_parity_and_schedule_next_step(self, block, correct_right_sibling):
-        ###@@@
-        pass
+        Args:
+            block (Block): The block whose parity we are trying to infer. The correct parity must
+
+        Returns:
+            If the function returns True, the correct parity was known or successfully inferred and
+            is stored in the correct_parity attribute. False otherwise.
+        """
+
+        # Already known?
+        if block.get_correct_parity() is not None:
+            return True
+
+        # Cannot infer if there is no parent block.
+        parent_block = block.get_parent_block()
+        if parent_block is None:
+            return False
+
+        # Cannot infer if there is no sibling block (yet).
+        if parent_block.get_left_sub_block() == block:
+            sibling_block = parent_block.get_right_sub_block()
+        else:
+            assert parent_block.get_right_sub_block() == block
+            sibling_block = parent_block.get_left_sub_block()
+        if sibling_block is None:
+            return False
+
+        # Cannot infer if the correct parity of the parent and sibling block are unknown.
+        correct_parent_parity = parent_block.get_correct_parity()
+        if correct_parent_parity is None:
+            return False
+        assert correct_parent_parity in [0, 1]
+        correct_sibling_parity = sibling_block.get_correct_parity()
+        if correct_sibling_parity is None:
+            return False
+        assert correct_sibling_parity in [0, 1]
+
+        # We have everything we need. Infer the correct parity.
+        if correct_parent_parity == 1:
+            correct_block_parity = 1 - correct_sibling_parity
+        else:
+            correct_block_parity = correct_sibling_parity
+        block.set_correct_parity(correct_block_parity)
+        return True
 
     def _schedule_ask_correct_parity(self, block, correct_right_sibling):
         """
@@ -287,7 +332,7 @@ class Reconciliation:
 
         # If we don't know the correct parity of the block, we cannot make progress on this block
         # until Alice has told us what the correct parity is.
-        if block.get_correct_parity() is None:
+        if not self._correct_parity_is_known_or_can_be_inferred(block):
             self._schedule_ask_correct_parity(block, correct_right_sibling)
             return False
 

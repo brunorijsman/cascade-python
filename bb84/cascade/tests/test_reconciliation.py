@@ -79,7 +79,7 @@ def test_get_blocks_containing_key_index():
     reconciliation = create_reconciliation(ORIGINAL_PARAMETERS, 9991, 8, 0.1)
 
     # Make sure we have the noisy key that we expect to have based on the seed.
-    noisy_key = reconciliation.get_key()
+    noisy_key = reconciliation.get_noisy_key()
     assert noisy_key.__str__() == "01011001"   # Bits 1, 3, 4, and 7 are set
 
     # Choose a shuffling.

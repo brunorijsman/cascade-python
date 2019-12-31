@@ -69,6 +69,6 @@ def test_original_block_size_function():
     assert original_block_size_function(0.1, 1) == 8
     assert original_block_size_function(0.01, 1) == 73
     assert original_block_size_function(0.001, 1) == 730
-    assert original_block_size_function(0.0, 1) == 730
+    assert original_block_size_function(0.0, 1) == 73000
     assert original_block_size_function(0.01, 2) == 146
     assert original_block_size_function(0.01, 3) == 292

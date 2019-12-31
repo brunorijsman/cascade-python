@@ -1,3 +1,4 @@
+import copy
 import heapq
 from bb84.cascade.block import Block
 from bb84.cascade.classical_channel import ClassicalChannel
@@ -10,10 +11,6 @@ class Reconciliation:
     """
     A single information reconciliation exchange between a client (Bob) and a server (Alice).
     """
-
-    _CORRECTION_NO_BIT = 0
-    _CORRECTION_ONE_BIT = 1
-    _CORRECTION_POSTPONED = 2
 
     def __init__(self, parameters, classical_channel, noisy_key, estimated_quantum_bit_error_rate,
                  stats=None):
@@ -37,11 +34,8 @@ class Reconciliation:
         self._classical_channel = classical_channel
         self._parameters = parameters
         self._estimated_quantum_bit_error_rate = estimated_quantum_bit_error_rate
-
-        # At the start, this contains the noisy key. As the Cascade algorithm progresses, this key
-        # is updated ("reconciliated"). At the end of the Cascade algorithm it likely (but not
-        # surely) contains the correct key.
-        self._key = noisy_key
+        self._noisy_key = noisy_key
+        self._reconciled_key = None
 
         # Map key indexes to blocks.
         self._key_index_to_blocks = {}
@@ -56,17 +50,20 @@ class Reconciliation:
         # A set of blocks that are suspected to contain an error, pending to be corrected later.
         # These are stored as a priority queue with items (block.size, block) so that we can correct
         # the pending blocks in order of shortest block first.
-        self._pending_try_correct_blocks = []
+        self._pending_try_correct = []
 
         # A set of blocks for which we have to ask Alice for the correct parity. To minimize the
         # number of message that Bob sends to Alice (i.e. the number of channel uses), we queue up
         # these pending parity questions until we can make no more progress correcting error. Then
         # we send a single message to Alice to ask all queued parity questions, and proceed once we
         # get the answers.
-        self._pending_ask_parity_blocks = []
+        self._pending_ask_correct_parity = []
 
-    def get_key(self):
-        return self._key
+    def get_noisy_key(self):
+        return self._noisy_key
+
+    def get_reconciled_key(self):
+        return self._reconciled_key
 
     def _register_block_key_indexes(self, block):
         """
@@ -104,7 +101,70 @@ class Reconciliation:
         assert key_index >= 0
         return self._key_index_to_blocks.get(key_index, [])
 
-    def _register_pending_try_correct_block(self, block, correct_right_sibling):
+
+    def _determine_error_parity_and_schedule_next_step(self, block, correct_right_sibling):
+        ###@@@
+        pass
+
+    def _schedule_ask_correct_parity(self, block, correct_right_sibling):
+        """
+        Register a block as needing to ask Alice what the correct parity is.
+
+        Args:
+            block (Block): The block to be registered.
+        """
+        # Validate args.
+        assert isinstance(block, Block)
+
+        # Adding an item to the end (not the start!) of a list is an efficient O(1) operation.
+        entry = (block, correct_right_sibling)
+        self._pending_ask_correct_parity.append(entry)
+
+    def _have_pending_ask_correct_parity(self):
+        """
+        Are there any more blocks pending as needing to ask Alice what the correct parity is?
+
+        Returns:
+            True if there are any pending error blocks, False if not.
+        """
+        return self._pending_ask_correct_parity != []
+
+    def _service_pending_ask_correct_parity(self):
+        """
+        Send a single message to Alice, asking for the parities of all pending "ask parity" blocks.
+        When Alice answers (currently this is a blocking synchronous question) we update the
+        correct parity for the block (0 or 1), the error parity of the block (odd of even), and
+        if the error parity turns out to be odd, we add to the priority queue for pending error
+        blocks that we need to attempt to correct.
+        """
+
+        if not self._pending_ask_correct_parity:
+            return
+
+        # Prepare the question for Alice, i.e. the list of shuffle ranges over which we want Alice
+        # to compute the correct parity.
+        shuffle_ranges = []
+        for entry in self._pending_ask_correct_parity:
+            (block, _correct_right_sibling) = entry
+            shuffle_range = block.get_shuffle_range()
+            shuffle_ranges.append(shuffle_range)
+
+        # "Send a message" to Alice to ask her to compute the correct parities for the list that
+        # we prepared. For now, this is a synchronous blocking operations (i.e. we block here
+        # until we get the answer from Alice).
+        correct_parities = self._classical_channel.ask_parities(shuffle_ranges)
+
+        # Process the answer from Alice. IMPORTANT: Alice is required to send the list of parities
+        # in the exact same order as the ranges in the question; this allows us to zip.
+        for (correct_parity, entry) in zip(correct_parities, self._pending_ask_correct_parity):
+            (block, correct_right_sibling) = entry
+            block.set_correct_parity(correct_parity)
+            self._schedule_try_correct(block, correct_right_sibling)
+
+        # Clear the list of pending questions.
+        self._pending_ask_correct_parity = []
+
+    def _schedule_try_correct(self, block, correct_right_sibling):
         """
         Register a block as needing an attempted error correct. Either because we know for a fact
         that it has an odd number of errors. Or because we don't yet know its correct parity, so
@@ -120,85 +180,27 @@ class Reconciliation:
         # Push the error block onto the heap. It is pushed as a tuple (block.size, block) to allow
         # us to correct the error blocks in order of shortest blocks first.
         entry = (block, correct_right_sibling)
-        heapq.heappush(self._pending_try_correct_blocks, (block.get_size(), entry))
+        heapq.heappush(self._pending_try_correct, (block.get_size(), entry))
 
-    def _have_pending_try_correct_blocks(self):
+    def _have_pending_try_correct(self):
         """
         Are there any more blocks pending that potentially have an odd number of errors?
 
         Returns:
             True if there are any pending error blocks, False if not.
         """
-        return self._pending_try_correct_blocks != []
+        return self._pending_try_correct != []
 
-    def _service_pending_try_correct_blocks(self):
+    def _service_pending_try_correct(self):
         """
         For each registered error blocks, attempt to correct a single error in the block. The blocks
         are processed in order of shortest block first.
         """
         # Process each error block, in order of shortest block first.
-        while self._pending_try_correct_blocks:
-            (_, entry) = heapq.heappop(self._pending_try_correct_blocks)
+        while self._pending_try_correct:
+            (_, entry) = heapq.heappop(self._pending_try_correct)
             (block, correct_right_sibling) = entry
-            self._try_correct_block(block, correct_right_sibling)
-
-    def _register_pending_ask_parity_block(self, block, correct_right_sibling):
-        """
-        Register a block as needing to ask Alice what the correct parity is.
-
-        Args:
-            block (Block): The block to be registered.
-        """
-        # Validate args.
-        assert isinstance(block, Block)
-
-        # Adding an item to the end (not the start!) of a list is an efficient O(1) operation.
-        entry = (block, correct_right_sibling)
-        self._pending_ask_parity_blocks.append(entry)
-
-    def _have_pending_ask_parity_blocks(self):
-        """
-        Are there any more blocks pending as needing to ask Alice what the correct parity is?
-
-        Returns:
-            True if there are any pending error blocks, False if not.
-        """
-        return self._pending_ask_parity_blocks != []
-
-    def _service_pending_ask_parity_blocks(self):
-        """
-        Send a single message to Alice, asking for the parities of all pending "ask parity" blocks.
-        When Alice answers (currently this is a blocking synchronous question) we update the
-        correct parity for the block (0 or 1), the error parity of the block (odd of even), and
-        if the error parity turns out to be odd, we add to the priority queue for pending error
-        blocks that we need to attempt to correct.
-        """
-
-        if not self._pending_ask_parity_blocks:
-            return
-
-        # Prepare the question for Alice, i.e. the list of shuffle ranges over which we want Alice
-        # to compute the correct parity.
-        shuffle_ranges = []
-        for entry in self._pending_ask_parity_blocks:
-            (block, _correct_right_sibling) = entry
-            shuffle_range = block.get_shuffle_range()
-            shuffle_ranges.append(shuffle_range)
-
-        # "Send a message" to Alice to ask her to compute the correct parities for the list that
-        # we prepared. For now, this is a synchronous blocking operations (i.e. we block here
-        # until we get the answer from Alice).
-        correct_parities = self._classical_channel.ask_parities(shuffle_ranges)
-
-        # Process the answer from Alice. IMPORTANT: Alice is required to send the list of parities
-        # in the exact same order as the ranges in the question; this allows us to zip.
-        for (correct_parity, entry) in zip(correct_parities, self._pending_ask_parity_blocks):
-            (block, correct_right_sibling) = entry
-            block.set_correct_parity(correct_parity)
-            self._register_pending_try_correct_block(block, correct_right_sibling)
-
-        # Clear the list of pending questions.
-        self._pending_ask_parity_blocks = []
+            self._try_correct(block, correct_right_sibling)
 
     def reconcile(self):
         """
@@ -209,6 +211,8 @@ class Reconciliation:
             The corrected key. There is still a small but non-zero chance that the corrected key
             still contains errors.
         """
+
+        self._reconciled_key = copy.deepcopy(self._noisy_key)
 
         # Inform Alice that we are starting a new reconciliation.
         self._classical_channel.start_reconciliation()
@@ -222,7 +226,7 @@ class Reconciliation:
         self._classical_channel.end_reconciliation()
 
         # Return the probably, but not surely, corrected key.
-        return self._key
+        return self._reconciled_key
 
     def _reconcile_iteration(self, iteration_nr):
 
@@ -234,12 +238,12 @@ class Reconciliation:
         # In the first iteration, we don't shuffle the key. In all subsequent iterations we
         # shuffle the key, using a different random shuffling in each iteration.
         if iteration_nr == 1:
-            shuffle = Shuffle(self._key.get_size(), Shuffle.SHUFFLE_KEEP_SAME)
+            shuffle = Shuffle(self._reconciled_key.get_size(), Shuffle.SHUFFLE_KEEP_SAME)
         else:
-            shuffle = Shuffle(self._key.get_size(), Shuffle.SHUFFLE_RANDOM)
+            shuffle = Shuffle(self._reconciled_key.get_size(), Shuffle.SHUFFLE_RANDOM)
 
         # Split the shuffled key into blocks, using the block size that we chose.
-        blocks = Block.create_covering_blocks(self._key, shuffle, block_size)
+        blocks = Block.create_covering_blocks(self._reconciled_key, shuffle, block_size)
 
         # For each top-level covering block...
         for block in blocks:
@@ -249,24 +253,24 @@ class Reconciliation:
 
             # We won't be able to do anything with the top-level covering blocks until we know what
             # the correct parity it.
-            self._register_pending_ask_parity_block(block, False)
+            self._schedule_ask_correct_parity(block, False)
 
         # Keep going while there is more work to do.
-        while self._have_pending_try_correct_blocks() or self._have_pending_ask_parity_blocks():
+        while self._have_pending_try_correct() or self._have_pending_ask_correct_parity():
 
             # Attempt to correct all of blocks that are currently pending as needing a correction
             # attempt. If we don't know the correct parity of the block, we won't be able to finish
             # the attempted correction yet. In that case the block will end up on the "pending ask
             # parity" list.
-            self._service_pending_try_correct_blocks()
+            self._service_pending_try_correct()
 
             # Now, ask Alice for the correct parity of the blocks that ended up on the "ask parity
             # list" in the above loop. When we get the answer from Alice, we may discover that the
             # block as an odd number of errors, in which case we add it back to the "pending error
             # block" priority queue.
-            self._service_pending_ask_parity_blocks()
+            self._service_pending_ask_correct_parity()
 
-    def _try_correct_block(self, block, correct_right_sibling):
+    def _try_correct(self, block, correct_right_sibling):
         """
         Try to correct a single bit error in a block by recursively dividing the block into
         sub-blocks and comparing the current parity of each of those sub-blocks with the correct
@@ -284,7 +288,7 @@ class Reconciliation:
         # If we don't know the correct parity of the block, we cannot make progress on this block
         # until Alice has told us what the correct parity is.
         if block.get_correct_parity() is None:
-            self._register_pending_ask_parity_block(block, correct_right_sibling)
+            self._schedule_ask_correct_parity(block, correct_right_sibling)
             return False
 
         # If there is an even number of errors in this block, we don't attempt to fix any errors
@@ -312,7 +316,7 @@ class Reconciliation:
         if  left_sub_block is None:
             left_sub_block = block.create_left_sub_block()
             self._register_block_key_indexes(left_sub_block)
-        return self._try_correct_block(left_sub_block, True)
+        return self._try_correct(left_sub_block, True)
 
     def _try_correct_right_sibling_block(self, block):
 
@@ -323,7 +327,7 @@ class Reconciliation:
         if right_sibling_block is None:
             right_sibling_block = parent_block.create_right_sub_block()
             self._register_block_key_indexes(right_sibling_block)
-        return self._try_correct_block(right_sibling_block, False)
+        return self._try_correct(right_sibling_block, False)
 
     def _flip_key_bit_corresponding_to_single_bit_block(self, block):
 
@@ -351,4 +355,4 @@ class Reconciliation:
                 # If sub_block_reuse is disabled, then only register top-level blocks for
                 # cascading.
                 if self._parameters.sub_block_reuse or affected_block.is_top_block():
-                    self._register_pending_try_correct_block(affected_block, False)
+                    self._schedule_try_correct(affected_block, False)

@@ -58,8 +58,6 @@
 
   * Add more statistics to the Cascade algorithm:
 
-    * Reconciliation run-time.
-
     * Git version of code.
 
     * Actual seed value.

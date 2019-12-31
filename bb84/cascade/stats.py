@@ -7,8 +7,8 @@ class Stats:
         """
         Create a new statistics context with all counters initialized to zero.
         """
-        self.start_reconciliation_messages = 0
-        self.end_reconciliation_messages = 0
+        self.elapsed_process_time = None
+        self.elapsed_real_time = None
         self.ask_parity_messages = 0
         self.ask_parity_blocks = 0
         self.infer_parity_blocks = 0

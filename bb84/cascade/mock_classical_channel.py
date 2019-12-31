@@ -21,14 +21,10 @@ class MockClassicalChannel(ClassicalChannel):
 
     def start_reconciliation(self):
         assert not self._reconciliation_started
-        if self._stats:
-            self._stats.start_reconciliation_messages += 1
         self._reconciliation_started = True
 
     def end_reconciliation(self):
         assert self._reconciliation_started
-        if self._stats:
-            self._stats.end_reconciliation_messages += 1
         self._reconciliation_started = False
         self._id_to_shuffle = {}
 

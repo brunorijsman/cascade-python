@@ -1,5 +1,6 @@
 import copy
 import heapq
+import time
 from bb84.cascade.block import Block
 from bb84.cascade.classical_channel import ClassicalChannel
 from bb84.cascade.key import Key
@@ -257,6 +258,9 @@ class Reconciliation:
             still contains errors.
         """
 
+        start_process_time = time.process_time()
+        start_real_time = time.perf_counter()
+
         self._reconciled_key = copy.deepcopy(self._noisy_key)
 
         # Inform Alice that we are starting a new reconciliation.
@@ -269,6 +273,10 @@ class Reconciliation:
 
         # Inform Alice that we have finished the reconciliation.
         self._classical_channel.end_reconciliation()
+
+        # Compute elapsed time.
+        self.stats.elapsed_process_time = time.process_time() - start_process_time
+        self.stats.elapsed_real_time = time.perf_counter() - start_real_time
 
         # Return the probably, but not surely, corrected key.
         return self._reconciled_key

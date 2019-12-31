@@ -1,95 +1,55 @@
-# BB84
+* Implement Cascade variations
 
-  * Am I using the correct CQC-Python library? https://github.com/SoftwareQuTech/CQC-Python vs https://github.com/SoftwareQuTech/SimulaQron
+  * Deterministic shuffle.
 
-  * Use SimulaQron from GitHub source instead of pip install
+  * Discard corrected bits at the end.
 
-  * File SimulaQron enhancement request: report sender when receiving message
+  * BICONF
 
-  * File SimulaQron enhancement request: wait for any event (qubit or classical message or timeout)
+  * Different number of iterations and values for k[i].
+  
+  * Full Block Parity Inference (BPI).
 
-  * File SimulaQron enhancement request: asynchronous model (or is there already a low-level API for this)?
+* Reproduce Andre Reis Cascade thesis results.
 
-  * Add authentication and data integrity on classical channel (see http://bit.ly/bb84auth)
+* Reproduce "Demystifying the Information Reconciliation Protocol Cascade" paper results.
 
-  * Add documentation comments (bb84 module; cascade already done)
+* Move cascade module into a separate Git repo and make it a dependency for the bb84 repo.
 
-  * Add noise estimation
+* Add more statistics to the Cascade algorithm:
 
-  * Add privacy amplification
+  * Actual seed value.
 
-  * Keep stats for measured qubits
+* Get rid of start/end_reconciliation_messages stats.
 
-  * Report Alice and Bob key, and differences at end of run
+* Add or move configuration items into parameters block:
 
-  * Handle case that block size is not multiple of window size
+  * Name of block size function.
 
-  * Rename bb84 block to something else
+  * Request seed value.
 
-  * Get rid of report kwargs, instead make report public
+  * Key size.
 
-  * Populate README.md file
+  * Fixed error count / Bernoulli error rate.
 
-  * Introduce "Evan" who does a full man-in-the-middle attack
+* Automate running multiple iterations of same scenario.
 
-  * Introduce a middle node for modeling normal (non-attack) noise
+* Automate running multiple scenarios.
 
-  * Code coverage on codecov should also include bb84 module itself.
+* Use all available cores using multi-threading.
 
-# Cascade
+* Further optimize code based on profiling results
 
-  * Implement Cascade variations
+* Reserved shuffle ID zero = no shuffling?
 
-    * Deterministic shuffle.
+* Get test coverage back to 100%.
 
-    * Discard corrected bits at the end.
+* Get documentation back to 100%.
 
-    * BICONF
+* Automatically produce results graph.
 
-    * Different number of iterations and values for k[i].
-    
-    * Full Block Parity Inference (BPI).
+* Script to only reproduce missing results (based on parameters)
 
-  * Reproduce Andre Reis Cascade thesis results.
+* Optionally regenerate results when version code has changes.
 
-  * Reproduce "Demystifying the Information Reconciliation Protocol Cascade" paper results.
-
-  * Move cascade module into a separate Git repo and make it a dependency for the bb84 repo.
-
-  * Add more statistics to the Cascade algorithm:
-
-    * Actual seed value.
-
-  * Get rid of start/end_reconciliation_messages stats.
-
-  * Add or move configuration items into parameters block:
-
-    * Name of block size function.
-
-    * Request seed value.
-
-    * Key size.
-
-    * Fixed error count / Bernoulli error rate.
-
-  * Automate running multiple iterations of same scenario.
-
-  * Automate running multiple scenarios.
-
-  * Use all available cores using multi-threading.
-
-  * Further optimize code based on profiling results
-
-  * Reserved shuffle ID zero = no shuffling?
-
-  * Get test coverage back to 100%.
-
-  * Get documentation back to 100%.
-
-  * Automatically produce results graph.
-
-  * Script to only reproduce missing results (based on parameters)
-
-  * Optionally regenerate results when version code has changes.
-
-  * Put LaTeX document that includes generated graphs under version control.
+* Put LaTeX document that includes generated graphs under version control.

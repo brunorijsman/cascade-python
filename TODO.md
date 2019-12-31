@@ -62,11 +62,19 @@
 
     * Reconciliation run-time.
 
-  * Store variation name in parameters block.
+    * Git version of code.
 
-  * Move key-size into parameters.
-  
-  * Move error-count and error-rate into parameters.
+    * Actual seed value.
+
+  * Add or move configuration items into parameters block:
+
+    * Name of block size function.
+
+    * Request seed value.
+
+    * Key size.
+
+    * Fixed error count / Bernoulli error rate.
 
   * Automate running multiple iterations of same scenario.
 
@@ -81,3 +89,11 @@
   * Get test coverage back to 100%.
 
   * Get documentation back to 100%.
+
+  * Automatically produce results graph.
+
+  * Script to only reproduce missing results (based on parameters)
+
+  * Optionally regenerate results when version code has changes.
+
+  * Put LaTeX document that includes generated graphs under version control.

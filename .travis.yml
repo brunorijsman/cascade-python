@@ -6,6 +6,6 @@ install:
   - source env/bin/activate
   - pip install -r requirements.txt
 script:
-  - make lint && make test && ./scripts/run.sh
+  - make pre-commit
 after_success:
   - codecov

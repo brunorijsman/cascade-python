@@ -64,6 +64,8 @@
 
     * Actual seed value.
 
+  * Get rid of start/end_reconciliation_messages stats.
+
   * Add or move configuration items into parameters block:
 
     * Name of block size function.

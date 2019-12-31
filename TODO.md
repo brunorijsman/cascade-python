@@ -58,8 +58,6 @@
 
   * Add more statistics to the Cascade algorithm:
 
-    * Git version of code.
-
     * Actual seed value.
 
   * Get rid of start/end_reconciliation_messages stats.

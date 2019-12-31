@@ -53,3 +53,7 @@
 * Optionally regenerate results when version code has changes.
 
 * Put LaTeX document that includes generated graphs under version control.
+
+* Prune requirements.txt now that cascade is separated from bb84
+
+* Remove cascade code from bb84 (handle as dependency using pip install)

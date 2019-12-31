@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 
-project = 'BB84'
+project = 'QKD Cascade'
 # pylint:disable=redefined-builtin
 copyright = '2019, Bruno Rijsman'
 author = 'Bruno Rijsman'
@@ -32,7 +32,7 @@ def is_venv():
             (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
 
 def run_apidoc(_):
-    modules = ['bb84']
+    modules = ['cascade']
     for module in modules:
         cur_dir = os.path.abspath(os.path.dirname(__file__))
         module = os.path.join(cur_dir, '..', '..', module)

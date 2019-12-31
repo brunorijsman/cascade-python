@@ -11,7 +11,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/env/bin/pytest",
-            "args": ["-v", "-s", "-x", "bb84/cascade/tests/test_reconciliation.py"] 
+            "args": ["-v", "-s", "-x", "cascade/tests/test_reconciliation.py"] 
         },        
     ]
 }

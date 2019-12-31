@@ -1,4 +1,4 @@
-Welcome to BB84's documentation!
+Welcome to Cascade's documentation!
 ================================
 
 .. toctree::

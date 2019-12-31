@@ -1,5 +1,6 @@
 import json
 import random
+import git
 
 from bb84.cascade.key import Key
 from bb84.cascade.mock_classical_channel import MockClassicalChannel
@@ -9,6 +10,14 @@ from bb84.cascade.shuffle import Shuffle
 from bb84.cascade.stats import Stats
 
 REPETITIONS = 5
+
+def get_code_version():
+    try:
+        repo = git.Repo(search_parent_directories=True)
+        sha = repo.head.object.hexsha
+        return str(sha)
+    except git.InvalidGitRepositoryError:
+        return "unknown"
 
 def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
 
@@ -30,8 +39,11 @@ def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
     # Create the corresponding noisy (received) key with some random errors.
     noisy_key = correct_key.copy(error_rate=bit_error_rate)
 
-    # Create a mock reconciliation.
+    # Prepare stats block with code version.
     stats = Stats()
+    stats.code_version = get_code_version()
+
+    # Create a mock reconciliation.
     mock_classical_channel = MockClassicalChannel(correct_key, stats)
     reconciliation = Reconciliation(parameters, mock_classical_channel, noisy_key, bit_error_rate,
                                     stats)

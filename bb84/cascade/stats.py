@@ -7,6 +7,7 @@ class Stats:
         """
         Create a new statistics context with all counters initialized to zero.
         """
+        self.code_version = None
         self.elapsed_process_time = None
         self.elapsed_real_time = None
         self.ask_parity_messages = 0

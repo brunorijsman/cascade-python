@@ -101,8 +101,7 @@ class Reconciliation:
         assert key_index >= 0
         return self._key_index_to_blocks.get(key_index, [])
 
-    @staticmethod
-    def _correct_parity_is_known_or_can_be_inferred(block):
+    def _correct_parity_is_known_or_can_be_inferred(self, block):
         """
         Is the correct parity of the block already known? Or can it be inferred based on the correct
         parity of the parent block and the correct parity of the sibling block?
@@ -149,6 +148,7 @@ class Reconciliation:
         else:
             correct_block_parity = correct_sibling_parity
         block.set_correct_parity(correct_block_parity)
+        self.stats.infer_parity_blocks += 1
         return True
 
     def _schedule_ask_correct_parity(self, block, correct_right_sibling):

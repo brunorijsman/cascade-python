@@ -9,7 +9,8 @@ class Stats:
         """
         self.start_reconciliation_messages = 0
         self.end_reconciliation_messages = 0
-        self.ask_parities_messages = 0
-        self.ask_parity_ranges = 0
-        self.bit_errors = 0
-        self.frame_errors = 0
+        self.ask_parity_messages = 0
+        self.ask_parity_blocks = 0
+        self.infer_parity_blocks = 0
+        self.remaining_bit_errors = 0
+        self.remaining_frame_errors = 0

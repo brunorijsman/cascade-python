@@ -41,9 +41,9 @@ def run_one_key_correction(parameters, seed, key_size, bit_error_rate):
 
     # Update statistics for bit errors and frame errors
     bit_errors = correct_key.difference(reconciliated_key)
-    reconciliation.stats.bit_errors += bit_errors
+    reconciliation.stats.remaining_bit_errors += bit_errors
     if bit_errors > 0:
-        reconciliation.stats.frame_errors += 1
+        reconciliation.stats.remaining_frame_errors += 1
 
     print(f" stats={json.dumps(stats.__dict__)}")
 

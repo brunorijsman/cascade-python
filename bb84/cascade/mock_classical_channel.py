@@ -40,7 +40,7 @@ class MockClassicalChannel(ClassicalChannel):
 
         # There is one bulked message for all asked parity ranges.
         if self._stats:
-            self._stats.ask_parities_messages += 1
+            self._stats.ask_parity_messages += 1
 
         # Collect the parities of all the requested shuffle ranges.
         parities = []
@@ -62,7 +62,7 @@ class MockClassicalChannel(ClassicalChannel):
 
             # Also count each individual asked range.
             if self._stats:
-                self._stats.ask_parity_ranges += 1
+                self._stats.ask_parity_blocks += 1
 
             # Compute the parity.
             parity = shuffle.calculate_parity(self._correct_key, shuffle_start_index,

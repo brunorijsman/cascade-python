@@ -58,8 +58,6 @@
 
   * Add more statistics to the Cascade algorithm:
 
-    * Inferred correct parities.
-
     * Reconciliation run-time.
 
     * Git version of code.

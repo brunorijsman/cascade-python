@@ -2,8 +2,8 @@ from .aggregate_stats import AggregateStats
 
 class Experiment:
 
-    def __init__(self, algorithm, key_size, error_rate, code_version):
-        self.algorithm = algorithm
+    def __init__(self, algorithm_name, key_size, error_rate, code_version):
+        self.algorithm_name = algorithm_name
         self.key_size = key_size
         self.error_rate = error_rate
         self.code_version = code_version

@@ -42,8 +42,9 @@ def parse_command_line_arguments():
     args = parser.parse_args()
     return args
 
-def run_experiment(runs, algorithm, key_size, error_rate):
-    experiment = Experiment(algorithm, key_size, error_rate, get_code_version())
+def run_experiment(runs, algorithm_name, key_size, error_rate):
+    experiment = Experiment(algorithm_name, key_size, error_rate, get_code_version())
+    algorithm = ALGORITHMS[algorithm_name]
     for run in range(runs):
         stats = run_reconciliation(run, algorithm, key_size, error_rate)
         experiment.record_reconciliation_stats(stats)
@@ -88,8 +89,7 @@ def to_json(obj):
 
 def main():
     args = parse_command_line_arguments()
-    algorithm = ALGORITHMS[args.algorithm]
-    run_experiment(args.runs, algorithm, args.key_size, args.error_rate)
+    run_experiment(args.runs, args.algorithm, args.key_size, args.error_rate)
 
 if __name__ == "__main__":
     main()

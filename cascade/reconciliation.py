@@ -6,7 +6,7 @@ from cascade.classical_channel import ClassicalChannel
 from cascade.key import Key
 from cascade.algorithm import Algorithm
 from cascade.shuffle import Shuffle
-from cascade.stats import Stats
+from cascade.results import Results
 
 class Reconciliation:
     """
@@ -14,7 +14,7 @@ class Reconciliation:
     """
 
     def __init__(self, algorithm, classical_channel, noisy_key, estimated_bit_error_rate,
-                 stats=None):
+                 results=None):
         """
         Create a Cascade reconciliation.
 
@@ -41,12 +41,12 @@ class Reconciliation:
         # Map key indexes to blocks.
         self._key_index_to_blocks = {}
 
-        # Keep track of statistics. Use the provided stats block, or if none was provided, create
-        # new stats block.
-        if stats is None:
-            self.stats = Stats()
+        # Keep track of statistics. Use the provided results block, or if none was provided, create
+        # new results block.
+        if results is None:
+            self.results = Results()
         else:
-            self.stats = stats
+            self.results = results
 
         # A set of blocks that are suspected to contain an error, pending to be corrected later.
         # These are stored as a priority queue with items (block.size, block) so that we can correct
@@ -149,7 +149,7 @@ class Reconciliation:
         else:
             correct_block_parity = correct_sibling_parity
         block.set_correct_parity(correct_block_parity)
-        self.stats.infer_parity_blocks += 1
+        self.results.infer_parity_blocks += 1
         return True
 
     def _schedule_ask_correct_parity(self, block, correct_right_sibling):
@@ -275,8 +275,8 @@ class Reconciliation:
         self._classical_channel.end_reconciliation()
 
         # Compute elapsed time.
-        self.stats.elapsed_process_time = time.process_time() - start_process_time
-        self.stats.elapsed_real_time = time.perf_counter() - start_real_time
+        self.results.elapsed_process_time = time.process_time() - start_process_time
+        self.results.elapsed_real_time = time.perf_counter() - start_real_time
 
         # Return the probably, but not surely, corrected key.
         return self._reconciled_key

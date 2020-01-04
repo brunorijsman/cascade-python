@@ -16,7 +16,8 @@
         "recurse",
         "reis",
         "simula",
-        "unshuffled"
+        "unshuffled",
+        "yanetal"
     ],
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true

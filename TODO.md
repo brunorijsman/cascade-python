@@ -20,7 +20,7 @@
 
   * Actual seed value.
 
-* Get rid of start/end_reconciliation_messages stats.
+* Get rid of start/end_reconciliation_messages results.
 
 * Add or move configuration items into parameters block:
 

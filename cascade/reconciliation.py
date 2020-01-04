@@ -13,8 +13,7 @@ class Reconciliation:
     A single information reconciliation exchange between a client (Bob) and a server (Alice).
     """
 
-    def __init__(self, algorithm, classical_channel, noisy_key, estimated_bit_error_rate,
-                 stats=None):
+    def __init__(self, algorithm, classical_channel, noisy_key, estimated_bit_error_rate):
         """
         Create a Cascade reconciliation.
 
@@ -41,12 +40,8 @@ class Reconciliation:
         # Map key indexes to blocks.
         self._key_index_to_blocks = {}
 
-        # Keep track of statistics. Use the provided stats block, or if none was provided, create
-        # new stats block.
-        if stats is None:
-            self.stats = Stats()
-        else:
-            self.stats = stats
+        # Keep track of statistics.
+        self.stats = Stats()
 
         # A set of blocks that are suspected to contain an error, pending to be corrected later.
         # These are stored as a priority queue with items (block.size, block) so that we can correct
@@ -198,6 +193,8 @@ class Reconciliation:
         # "Send a message" to Alice to ask her to compute the correct parities for the list that
         # we prepared. For now, this is a synchronous blocking operations (i.e. we block here
         # until we get the answer from Alice).
+        self.stats.ask_parity_messages += 1
+        self.stats.ask_parity_blocks += len(shuffle_ranges)
         correct_parities = self._classical_channel.ask_parities(shuffle_ranges)
 
         # Process the answer from Alice. IMPORTANT: Alice is required to send the list of parities

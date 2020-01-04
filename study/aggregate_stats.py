@@ -1,12 +1,11 @@
 import math
 
-class Aggregate:
+class AggregateStats:
 
     def __init__(self):
         self._count = 0
         self._sum = 0
         self._square_sum = 0
-        self.zulu = 1
 
     def record_value(self, value):
         self._count += 1

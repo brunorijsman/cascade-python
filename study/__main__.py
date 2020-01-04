@@ -6,12 +6,13 @@ from cascade.key import Key
 from cascade.mock_classical_channel import MockClassicalChannel
 from cascade.algorithm import ORIGINAL_ALGORITHM
 from cascade.reconciliation import Reconciliation
-from cascade.stats import Stats
+
+from study.experiment import Experiment
 
 DEFAULT_ALGORITHM = "original"
 DEFAULT_ERROR_RATE = 0.01
-DEFAULT_KEY_SIZE = 10_000
-DEFAULT_RUNS = 100    # TODO: Make this a larger number
+DEFAULT_KEY_SIZE = 100   # TODO
+DEFAULT_RUNS = 10         # TODO: Make this a larger number
 
 ALGORITHMS = {
     "original": ORIGINAL_ALGORITHM,
@@ -41,27 +42,26 @@ def parse_command_line_arguments():
     args = parser.parse_args()
     return args
 
-def run_experiment(runs, algorithm_name, key_size, error_rate):
+def run_experiment(runs, algorithm, key_size, error_rate):
+    experiment = Experiment(algorithm, key_size, error_rate, get_code_version())
     for run in range(runs):
-        run_reconciliation(run, algorithm_name, key_size, error_rate)
-    # stats.code_version = get_code_version()
+        stats = run_reconciliation(run, algorithm, key_size, error_rate)
+        experiment.record_reconciliation_stats(stats)
+    print(to_json(experiment))
 
-def run_reconciliation(run, algorithm_name, key_size, error_rate):
+def run_reconciliation(run, algorithm, key_size, error_rate):
     # Key.set_random_seed(seed)
     # Shuffle.set_random_seed(seed+1)
     correct_key = Key.create_random_key(key_size)
     noisy_key = correct_key.copy(error_rate=error_rate)
-    stats = Stats()
-    mock_classical_channel = MockClassicalChannel(correct_key, stats)
-    algorithm = ALGORITHMS[algorithm_name]
-    reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate,
-                                    stats)
+    mock_classical_channel = MockClassicalChannel(correct_key)
+    reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate)
     reconciliated_key = reconciliation.reconcile()
     bit_errors = correct_key.difference(reconciliated_key)
     reconciliation.stats.remaining_bit_errors += bit_errors
     if bit_errors > 0:
         reconciliation.stats.remaining_frame_errors += 1
-    print(f" stats={json.dumps(stats.__dict__)}")
+    return reconciliation.stats
 
 def get_code_version():
     try:
@@ -71,9 +71,25 @@ def get_code_version():
     except git.InvalidGitRepositoryError:
         return "unknown"
 
+def to_json_encodeable_object(obj):
+    members = dir(obj)
+    if 'to_json_encodeable_object' in members:
+        return obj.to_json_encodeable_object()
+    dictionary = {}
+    for member in members:
+        if member[0] != '_':
+            value = getattr(obj, member)
+            if not callable(value):
+                dictionary[member] = value
+    return dictionary
+
+def to_json(obj):
+    return json.dumps(obj, default=to_json_encodeable_object)
+
 def main():
     args = parse_command_line_arguments()
-    run_experiment(args.runs, args.algorithm, args.key_size, args.error_rate)
+    algorithm = ALGORITHMS[args.algorithm]
+    run_experiment(args.runs, algorithm, args.key_size, args.error_rate)
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,6 @@
 from cascade.classical_channel import ClassicalChannel
 from cascade.key import Key
 from cascade.shuffle import Shuffle
-from cascade.stats import Stats
 
 class MockClassicalChannel(ClassicalChannel):
     """
@@ -11,11 +10,9 @@ class MockClassicalChannel(ClassicalChannel):
 
     # TODO: Add unit test
 
-    def __init__(self, correct_key, stats=None):
+    def __init__(self, correct_key):
         assert isinstance(correct_key, Key)
-        assert stats is None or isinstance(stats, Stats)
         self._correct_key = correct_key
-        self._stats = stats
         self._id_to_shuffle = {}
         self._reconciliation_started = False
 
@@ -34,10 +31,6 @@ class MockClassicalChannel(ClassicalChannel):
         assert isinstance(shuffle_ranges, list)
         assert self._reconciliation_started
 
-        # There is one bulked message for all asked parity ranges.
-        if self._stats:
-            self._stats.ask_parity_messages += 1
-
         # Collect the parities of all the requested shuffle ranges.
         parities = []
         for shuffle_range in shuffle_ranges:
@@ -55,10 +48,6 @@ class MockClassicalChannel(ClassicalChannel):
             else:
                 shuffle = Shuffle.create_shuffle_from_identifier(shuffle_identifier)
                 self._id_to_shuffle[shuffle_identifier] = shuffle
-
-            # Also count each individual asked range.
-            if self._stats:
-                self._stats.ask_parity_blocks += 1
 
             # Compute the parity.
             parity = shuffle.calculate_parity(self._correct_key, shuffle_start_index,

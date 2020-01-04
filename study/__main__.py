@@ -10,15 +10,24 @@ from cascade.reconciliation import Reconciliation
 from study.experiment import Experiment
 
 DEFAULT_ALGORITHM = "original"
+DEFAULT_ERROR_METHOD = Key.ERROR_METHOD_EXACT
 DEFAULT_ERROR_RATE = 0.01
 DEFAULT_KEY_SIZE = 100   # TODO
 DEFAULT_RUNS = 10         # TODO: Make this a larger number
 
+# TODO: Put this in algorithm.py
 ALGORITHMS = {
     "original": ORIGINAL_ALGORITHM,
     "biconf": None,   # TODO
     "yanetal": None   # TODO
 }
+
+def error_method_type(arg):
+    if not isinstance(arg, str):
+        raise argparse.ArgumentTypeError("must be a string")
+    if arg not in Key.ERROR_METHODS:
+        raise argparse.ArgumentTypeError(f"valid values: {', '.join(Key.ERROR_METHODS)}")
+    return arg
 
 def error_rate_type(arg):
     try:
@@ -33,6 +42,9 @@ def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade reconciliations")
     parser.add_argument('-a', '--algorithm', type=str, default=DEFAULT_ALGORITHM,
                         help=f"cascade algorithm (default {DEFAULT_ALGORITHM})")
+    parser.add_argument('-m', '--error-method', type=error_method_type,
+                        default=DEFAULT_ERROR_METHOD,
+                        help=f"quantum bit error rate (default {DEFAULT_ERROR_METHOD})")
     parser.add_argument('-e', '--error-rate', type=error_rate_type, default=DEFAULT_ERROR_RATE,
                         help=f"quantum bit error rate (default {DEFAULT_ERROR_RATE})")
     parser.add_argument('-k', '--key-size', type=int, default=10000,
@@ -42,19 +54,19 @@ def parse_command_line_arguments():
     args = parser.parse_args()
     return args
 
-def run_experiment(runs, algorithm_name, key_size, error_rate):
+def run_experiment(runs, algorithm_name, key_size, error_method, error_rate):
     experiment = Experiment(algorithm_name, key_size, error_rate, get_code_version())
     algorithm = ALGORITHMS[algorithm_name]
     for run in range(runs):
-        stats = run_reconciliation(run, algorithm, key_size, error_rate)
+        stats = run_reconciliation(run, algorithm, key_size, error_method, error_rate)
         experiment.record_reconciliation_stats(stats)
     print(to_json(experiment))
 
-def run_reconciliation(run, algorithm, key_size, error_rate):
+def run_reconciliation(run, algorithm, key_size, error_method, error_rate):
     # Key.set_random_seed(seed)
     # Shuffle.set_random_seed(seed+1)
     correct_key = Key.create_random_key(key_size)
-    noisy_key = correct_key.copy(error_rate=error_rate)
+    noisy_key = correct_key.copy(error_rate, error_method)
     mock_classical_channel = MockClassicalChannel(correct_key)
     reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate)
     reconciliated_key = reconciliation.reconcile()
@@ -89,7 +101,7 @@ def to_json(obj):
 
 def main():
     args = parse_command_line_arguments()
-    run_experiment(args.runs, args.algorithm, args.key_size, args.error_rate)
+    run_experiment(args.runs, args.algorithm, args.key_size, args.error_method, args.error_rate)
 
 if __name__ == "__main__":
     main()

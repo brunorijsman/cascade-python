@@ -1,8 +1,11 @@
+import time
+
 from .aggregate_stats import AggregateStats
 
 class Experiment:
 
     def __init__(self, algorithm_name, key_size, error_rate, code_version):
+        self.execution_time = time.strftime('%Y-%m-%d %H:%M:%S %Z')
         self.algorithm_name = algorithm_name
         self.key_size = key_size
         self.error_rate = error_rate

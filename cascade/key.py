@@ -66,7 +66,7 @@ class Key:
         """
         Set the seed for the isolated random number generated that is used only in the key
         module and nowhere else. The application can set the seed to a specific value to make
-        experimental results reproduceable.
+        experimental stats reproduceable.
 
         Args:
             seed (int): The seed value for the random number generator which is isolated to the

@@ -1,7 +1,7 @@
 from cascade.classical_channel import ClassicalChannel
 from cascade.key import Key
 from cascade.shuffle import Shuffle
-from cascade.results import Results
+from cascade.stats import Stats
 
 class MockClassicalChannel(ClassicalChannel):
     """
@@ -11,11 +11,11 @@ class MockClassicalChannel(ClassicalChannel):
 
     # TODO: Add unit test
 
-    def __init__(self, correct_key, results=None):
+    def __init__(self, correct_key, stats=None):
         assert isinstance(correct_key, Key)
-        assert results is None or isinstance(results, Results)
+        assert stats is None or isinstance(stats, Stats)
         self._correct_key = correct_key
-        self._stats = results
+        self._stats = stats
         self._id_to_shuffle = {}
         self._reconciliation_started = False
 

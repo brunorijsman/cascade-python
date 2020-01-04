@@ -10,9 +10,9 @@
   
   * Full Block Parity Inference (BPI).
 
-* Reproduce Andre Reis Cascade thesis results.
+* Reproduce Andre Reis Cascade thesis stats.
 
-* Reproduce "Demystifying the Information Reconciliation Protocol Cascade" paper results.
+* Reproduce "Demystifying the Information Reconciliation Protocol Cascade" paper stats.
 
 * Move cascade module into a separate Git repo and make it a dependency for the bb84 repo.
 
@@ -20,7 +20,7 @@
 
   * Actual seed value.
 
-* Get rid of start/end_reconciliation_messages results.
+* Get rid of start/end_reconciliation_messages stats.
 
 * Add or move configuration items into parameters block:
 
@@ -38,7 +38,7 @@
 
 * Use all available cores using multi-threading.
 
-* Further optimize code based on profiling results
+* Further optimize code based on profiling stats
 
 * Reserved shuffle ID zero = no shuffling?
 
@@ -46,11 +46,11 @@
 
 * Get documentation back to 100%.
 
-* Automatically produce results graph.
+* Automatically produce stats graph.
 
-* Script to only reproduce missing results (based on parameters)
+* Script to only reproduce missing stats (based on parameters)
 
-* Optionally regenerate results when version code has changes.
+* Optionally regenerate stats when version code has changes.
 
 * Put LaTeX document that includes generated graphs under version control.
 

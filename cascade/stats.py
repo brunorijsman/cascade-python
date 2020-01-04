@@ -1,11 +1,11 @@
-class Results:
+class Stats:
     """
-    Results of a single reconciliation.
+    Stats of a single reconciliation.
     """
 
     def __init__(self):
         """
-        Create a new results block with all counters initialized to zero.
+        Create a new stats block with all counters initialized to zero.
         """
         self.code_version = None
         self.elapsed_process_time = None

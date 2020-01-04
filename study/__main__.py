@@ -6,7 +6,7 @@ from cascade.key import Key
 from cascade.mock_classical_channel import MockClassicalChannel
 from cascade.algorithm import ORIGINAL_ALGORITHM
 from cascade.reconciliation import Reconciliation
-from cascade.results import Results
+from cascade.stats import Stats
 
 DEFAULT_ALGORITHM = "original"
 DEFAULT_ERROR_RATE = 0.01
@@ -41,26 +41,27 @@ def parse_command_line_arguments():
     args = parser.parse_args()
     return args
 
-def run_all_reconciliations(runs, algorithm_name, key_size, error_rate):
+def run_experiment(runs, algorithm_name, key_size, error_rate):
     for run in range(runs):
-        run_one_reconciliation(run, algorithm_name, key_size, error_rate)
-    # results.code_version = get_code_version()
+        run_reconciliation(run, algorithm_name, key_size, error_rate)
+    # stats.code_version = get_code_version()
 
-def run_one_reconciliation(run, algorithm_name, key_size, error_rate):
+def run_reconciliation(run, algorithm_name, key_size, error_rate):
     # Key.set_random_seed(seed)
     # Shuffle.set_random_seed(seed+1)
     correct_key = Key.create_random_key(key_size)
     noisy_key = correct_key.copy(error_rate=error_rate)
-    results = Results()
-    mock_classical_channel = MockClassicalChannel(correct_key, results)
+    stats = Stats()
+    mock_classical_channel = MockClassicalChannel(correct_key, stats)
     algorithm = ALGORITHMS[algorithm_name]
-    reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate, results)
+    reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate,
+                                    stats)
     reconciliated_key = reconciliation.reconcile()
     bit_errors = correct_key.difference(reconciliated_key)
-    reconciliation.results.remaining_bit_errors += bit_errors
+    reconciliation.stats.remaining_bit_errors += bit_errors
     if bit_errors > 0:
-        reconciliation.results.remaining_frame_errors += 1
-    print(f" results={json.dumps(results.__dict__)}")
+        reconciliation.stats.remaining_frame_errors += 1
+    print(f" stats={json.dumps(stats.__dict__)}")
 
 def get_code_version():
     try:
@@ -72,7 +73,7 @@ def get_code_version():
 
 def main():
     args = parse_command_line_arguments()
-    run_all_reconciliations(args.runs, args.algorithm, args.key_size, args.error_rate)
+    run_experiment(args.runs, args.algorithm, args.key_size, args.error_rate)
 
 if __name__ == "__main__":
     main()

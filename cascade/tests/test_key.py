@@ -123,14 +123,14 @@ def test_copy_without_noise():
     # Copy an empty key.
     key = Key()
     assert key.__str__() == ""
-    key_copy = key.copy()
+    key_copy = key.copy(0.0, Key.ERROR_METHOD_EXACT)
     assert key.__str__() == ""
     assert key_copy.__str__() == ""
 
     # Copy a non-empty key.
     key = Key.create_random_key(64)
     assert key.__str__() == "1110011000011110100111010001100011100000010011010101110100000010"
-    key_copy = key.copy()
+    key_copy = key.copy(0.0, Key.ERROR_METHOD_EXACT)
     assert key.__str__() == "1110011000011110100111010001100011100000010011010101110100000010"
     assert key_copy.__str__() == "1110011000011110100111010001100011100000010011010101110100000010"
 
@@ -143,28 +143,24 @@ def test_copy_without_noise():
 def test_copy_parameter_checks():
     key = Key.create_random_key(6)
     with pytest.raises(AssertionError):
-        key.copy(error_count=-1)
+        key.copy(error_rate=-1.0, error_method=Key.ERROR_METHOD_EXACT)
     with pytest.raises(AssertionError):
-        key.copy(error_count=7)
+        key.copy(error_rate=2.0, error_method=Key.ERROR_METHOD_EXACT)
     with pytest.raises(AssertionError):
-        key.copy(error_count="not-none-and-not-an-int")
+        key.copy(error_rate="not-a-float", error_method=Key.ERROR_METHOD_EXACT)
     with pytest.raises(AssertionError):
-        key.copy(error_rate=-0.1)
+        key.copy(error_rate=0.5, error_method=1234)
     with pytest.raises(AssertionError):
-        key.copy(error_rate=1.1)
-    with pytest.raises(AssertionError):
-        key.copy(error_rate="not-none-and-not-a-float")
-    with pytest.raises(AssertionError):
-        key.copy(error_count=2, error_rate=0.1)
+        key.copy(error_rate=0.5, error_method="not-a-valid-method")
 
-def test_copy_with_error_count_noise():
+def test_copy_with_exact_noise():
 
     Key.set_random_seed(5678)
 
     # Copy a non-empty key with noise
     key = Key.create_random_key(6)
     assert key.__str__() == "001101"
-    key_copy = key.copy(error_count=3)
+    key_copy = key.copy(0.5, Key.ERROR_METHOD_EXACT)
     assert key.__str__() == "001101"
     assert key_copy.__str__() == "011011"
 
@@ -175,17 +171,17 @@ def test_copy_with_error_count_noise():
     assert key_copy.__str__() == "001011"
 
     # Extreme case, flip all bits.
-    key_copy = key.copy(error_count=6)
+    key_copy = key.copy(1.0, Key.ERROR_METHOD_EXACT)
     assert key_copy.__str__() == "110010"
 
-def test_copy_with_error_rate_noise():
+def test_copy_with_bernoulli_noise():
 
     Key.set_random_seed(5678)
 
     # Copy a non-empty key with noise
     key = Key.create_random_key(6)
     assert key.__str__() == "001101"
-    key_copy = key.copy(error_rate=0.5)
+    key_copy = key.copy(0.5, Key.ERROR_METHOD_BERNOULLI)
     assert key.__str__() == "001101"
     assert key_copy.__str__() == "011100"
 
@@ -196,13 +192,13 @@ def test_copy_with_error_rate_noise():
     assert key_copy.__str__() == "001100"
 
     # Extreme case, flip probability 1.0.
-    key_copy = key.copy(error_rate=1.0)
+    key_copy = key.copy(1.0, Key.ERROR_METHOD_BERNOULLI)
     assert key_copy.__str__() == "110010"
 
 def test_difference():
     # Normal case.
     key = Key.create_random_key(64)
-    key_copy = key.copy(5)
+    key_copy = key.copy(0.078125, Key.ERROR_METHOD_EXACT)
     assert key.difference(key_copy) == 5
     # Special case: compare with self.
     assert key.difference(key) == 0

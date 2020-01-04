@@ -7,6 +7,11 @@ class Key:
     """
     _random = random.Random()
 
+    # TODO: Is Bernoulli with one L or double L?
+    ERROR_METHOD_BERNOULLI = "bernoulli"
+    ERROR_METHOD_EXACT = "exact"
+    ERROR_METHODS = [ERROR_METHOD_BERNOULLI, ERROR_METHOD_EXACT]
+
     def __init__(self):
         """
         Create an empty key.
@@ -134,32 +139,23 @@ class Key:
         # Flip the bit value.
         self._bits[index] = 1 - self._bits[index]
 
-    def copy(self, error_count=None, error_rate=None):
+    def copy(self, error_rate, error_method):
         """
         Copy a key and optionally apply noise.
 
         Args:
-            error_count (None or int): If None, ignore. If an int, the exact number of bits that
-                are flipped in the copy of the key.
-            error_rate (None or float): If None, ignore. If a float, the probability that each
-                individual bit is flipped in the copy of they.
-
-            If error_count and error_rate are both None, then no bit flip errors are introduced in
-            the copy. Error_count and error_rate cannot both be non-None.
+            error_rate (float): The requested error rate.
+            error_method (str): The method for choosing errors.
 
         Returns:
-            A new Key instance, which is a copy of this key, with noise applied if asked for.
+            A new Key instance, which is a copy of this key, with noise applied.
         """
 
         # Validate arguments.
-        if error_count is not None:
-            assert isinstance(error_count, int)
-            assert 0 <= error_count <= self._size
-            assert error_rate is None
-        if error_rate is not None:
-            assert isinstance(error_rate, float)
-            assert 0.0 <= error_rate <= 1.0
-            assert error_count is None
+        assert isinstance(error_rate, float)
+        assert 0.0 <= error_rate <= 1.0
+        assert isinstance(error_method, str)
+        assert error_method in self.ERROR_METHODS
 
         # Create a new key which is a copy of this one.
         # pylint:disable=protected-access
@@ -167,14 +163,13 @@ class Key:
         key._size = self._size
         key._bits = copy.deepcopy(self._bits)
 
-        # First option for applying noise: flip the exact number of requested bits.
-        if error_count is not None:
+        if error_method == self.ERROR_METHOD_EXACT:
+            error_count = round(error_rate * self._size)
             bits_to_flip = Key._random.sample(self._bits.keys(), error_count)
             for index in bits_to_flip:
                 key._bits[index] = 1 - key._bits[index]
 
-        # Second option for applying noise:
-        if error_rate is not None:
+        if error_method == self.ERROR_METHOD_BERNOULLI:
             for index in self._bits.keys():
                 if Key._random.random() <= error_rate:
                     key._bits[index] = 1 - key._bits[index]

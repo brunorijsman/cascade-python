@@ -237,7 +237,7 @@ def test_error_parity():
     assert correct_key.__repr__() == "Key: 1011111100101110"
 
     # Create the noisy (received) key, which has 3 errors relative to the original key.
-    noisy_key = correct_key.copy(3)
+    noisy_key = correct_key.copy(0.1875, Key.ERROR_METHOD_EXACT)
     assert correct_key.__repr__() == "Key: 1011111100101110"
     assert noisy_key.__repr__() == "Key: 1111111110101100"
                             # Errors:  ^      ^     ^

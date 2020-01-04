@@ -9,7 +9,7 @@ def create_reconciliation(algorithm, seed, key_size, error_rate):
     Key.set_random_seed(seed)
     Shuffle.set_random_seed(seed+1)
     correct_key = Key.create_random_key(key_size)
-    noisy_key = correct_key.copy(error_rate=error_rate)
+    noisy_key = correct_key.copy(error_rate, Key.ERROR_METHOD_BERNOULLI)
     mock_classical_channel = MockClassicalChannel(correct_key)
     reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate)
     return reconciliation
@@ -24,7 +24,7 @@ def test_error_parity():
 
     # Create the noisy (received) key, which has 3 errors relative to the original key.
     # pylint:disable=bad-whitespace
-    noisy_key = correct_key.copy(3)
+    noisy_key = correct_key.copy(0.1875, Key.ERROR_METHOD_EXACT)
     assert correct_key.__repr__() == "Key: 1011111100101110"
     assert noisy_key.__repr__()   == "Key: 1111111110101100"
                                  # Errors:  ^      ^     ^

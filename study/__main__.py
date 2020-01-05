@@ -58,7 +58,7 @@ def run_experiment(runs, algorithm_name, key_size, error_method, error_rate):
     experiment = Experiment(algorithm_name, key_size, error_rate, get_code_version())
     algorithm = ALGORITHMS[algorithm_name]
     for _ in range(runs):
-        stats = run_reconciliation(experiment, algorithm, key_size, error_method, error_rate)
+        run_reconciliation(experiment, algorithm, key_size, error_method, error_rate)
     print(to_json(experiment))
 
 def run_reconciliation(experiment, algorithm, key_size, error_method, error_rate):

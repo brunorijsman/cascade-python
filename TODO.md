@@ -1,10 +1,10 @@
-* Implement Cascade variations
+* Implement Cascade variations:
 
   * Deterministic shuffle.
 
   * Discard corrected bits at the end.
 
-  * BICONF
+  * BICONF.
 
   * Different number of iterations and values for k[i].
   
@@ -30,9 +30,9 @@
 
 * Use all available cores using multi-threading.
 
-* Further optimize code based on profiling stats
+* Further optimize code based on profiling stats.
 
-* Use type annotations instead of asserts
+* Use type annotations instead of asserts.
 
 * Reserved shuffle ID zero = no shuffling?
 
@@ -48,8 +48,10 @@
 
 * Put LaTeX document that includes generated graphs under version control.
 
-* Publish cascade in Pip
+* Publish cascade in Pip.
 
-* Make cascade a Pip dependency for BB84
+* Make cascade a Pip dependency for BB84.
 
-* Make Spinx only document the public classes (and not the internal classes)
+* Make Spinx only document the public classes (and not the internal classes).
+
+* Add support for parameter range sweeping in study script.

@@ -22,6 +22,12 @@ ALGORITHMS = {
     "yanetal": None   # TODO
 }
 
+def float_range(start, end, step):
+    current = start
+    while current <= end:
+        yield current
+        current += step
+
 def error_method_type(arg):
     if not isinstance(arg, str):
         raise argparse.ArgumentTypeError("must be a string")
@@ -29,14 +35,38 @@ def error_method_type(arg):
         raise argparse.ArgumentTypeError(f"valid values: {', '.join(Key.ERROR_METHODS)}")
     return arg
 
-def error_rate_type(arg):
+def parse_float_value(value_name, value_str, min_value, max_value):
     try:
-        error_rate = float(arg)
+        value = float(value_str)
     except ValueError:
-        raise argparse.ArgumentTypeError("must be a floating point number")
-    if error_rate < 0.00 or error_rate > 1.00:
-        raise argparse.ArgumentTypeError("must be >= 0.0 and <= 1.0")
-    return error_rate
+        raise argparse.ArgumentTypeError(f"{value_name} {value_str} must be a float number")
+    if value < min_value:
+        raise argparse.ArgumentTypeError("{value_name} {value_str} must be >= {min_value}")
+    if value > max_value:
+        raise argparse.ArgumentTypeError("{value_name} {value_str} must be <= {max_value}")
+    return value
+
+def parse_float_range(value_str, min_value, max_value):
+    start_end_step = value_str.split(':')
+    if len(start_end_step) != 3:
+        raise argparse.ArgumentTypeError("must have two colons (start:end:stop)")
+    start = parse_float_value('start', start_end_step[0], min_value, max_value)
+    end = parse_float_value('end', start_end_step[1], min_value, max_value)
+    step = parse_float_value('step', start_end_step[2], min_value, max_value)
+    if start > end:
+        raise argparse.ArgumentTypeError("start must be <= end")
+    # Make sure we don't exclude the end due to rounding errors
+    end += step / 10_000.0
+    return float_range(start, end, step)
+
+def parse_float_value_or_range(value_str, min_value, max_value):
+    if ':' in value_str:
+        return parse_float_range(value_str, min_value, max_value)
+    value = parse_float_value('value', value_str, min_value, max_value)
+    return float_range(value, value, max_value)
+
+def error_rate_type(arg):
+    return parse_float_value_or_range(arg, 0.0, 1.0)
 
 def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade reconciliations")
@@ -53,6 +83,11 @@ def parse_command_line_arguments():
                         help=f"number of reconciliation runs (default {DEFAULT_RUNS})")
     args = parser.parse_args()
     return args
+
+
+def run_all_experiment(runs, algorithm_name, key_size, error_method, error_rates):
+    for error_rate in error_rates:
+        run_experiment(runs, algorithm_name, key_size, error_method, error_rate)
 
 def run_experiment(runs, algorithm_name, key_size, error_method, error_rate):
     experiment = Experiment(algorithm_name, key_size, error_rate, get_code_version())
@@ -108,7 +143,7 @@ def to_json(obj):
 
 def main():
     args = parse_command_line_arguments()
-    run_experiment(args.runs, args.algorithm, args.key_size, args.error_method, args.error_rate)
+    run_all_experiment(args.runs, args.algorithm, args.key_size, args.error_method, args.error_rate)
 
 if __name__ == "__main__":
     main()

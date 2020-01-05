@@ -27,8 +27,13 @@ class AggregateStats:
         """
         if self._count < 2:
             return math.nan
-        return math.sqrt(self._square_sum / (self._count - 1) -
-                         self._sum ** 2 / ((self._count - 1) * self._count))
+        variance = self._square_sum / (self._count - 1)
+        variance -= self._sum ** 2 / ((self._count - 1) * self._count)
+        # Variance can up being some vary small negative number due to rounding errors
+        if variance <= 0.0:
+            variance = 0.0
+        deviation = math.sqrt(variance)
+        return deviation
 
     def to_json_encodeable_object(self):
         return {'average': self.average(), 'deviation': self.deviation()}

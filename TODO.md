@@ -54,7 +54,9 @@
 
 * Make Spinx only document the public classes (and not the internal classes).
 
-* Add support for parameter range sweeping in study script.
+* Allow key_size to be a range (similar to error_rate)
+
+* Better --help documentation for error_rate (it can be a value or a range)
 
 * Cover study scripts with unit tests.
 

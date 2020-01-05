@@ -55,3 +55,7 @@
 * Make Spinx only document the public classes (and not the internal classes).
 
 * Add support for parameter range sweeping in study script.
+
+* Cover study scripts with unit tests.
+
+* Cover study with lint.

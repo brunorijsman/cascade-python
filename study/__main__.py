@@ -57,24 +57,31 @@ def parse_command_line_arguments():
 def run_experiment(runs, algorithm_name, key_size, error_method, error_rate):
     experiment = Experiment(algorithm_name, key_size, error_rate, get_code_version())
     algorithm = ALGORITHMS[algorithm_name]
-    for run in range(runs):
-        stats = run_reconciliation(run, algorithm, key_size, error_method, error_rate)
-        experiment.record_reconciliation_stats(stats)
+    for _ in range(runs):
+        stats = run_reconciliation(experiment, algorithm, key_size, error_method, error_rate)
     print(to_json(experiment))
 
-def run_reconciliation(run, algorithm, key_size, error_method, error_rate):
+def run_reconciliation(experiment, algorithm, key_size, error_method, error_rate):
     # Key.set_random_seed(seed)
     # Shuffle.set_random_seed(seed+1)
     correct_key = Key.create_random_key(key_size)
     noisy_key = correct_key.copy(error_rate, error_method)
+    actual_bit_errors = correct_key.difference(noisy_key)
+    experiment.actual_bit_errors.record_value(actual_bit_errors)
+    actual_bit_error_rate = actual_bit_errors / key_size
+    experiment.actual_bit_error_rate.record_value(actual_bit_error_rate)
     mock_classical_channel = MockClassicalChannel(correct_key)
     reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate)
     reconciliated_key = reconciliation.reconcile()
-    bit_errors = correct_key.difference(reconciliated_key)
-    reconciliation.stats.remaining_bit_errors += bit_errors
-    if bit_errors > 0:
-        reconciliation.stats.remaining_frame_errors += 1
-    return reconciliation.stats
+    experiment.record_reconciliation_stats(reconciliation.stats)
+    remaining_bit_errors = correct_key.difference(reconciliated_key)
+    experiment.remaining_bit_errors.record_value(remaining_bit_errors)
+    remaining_bit_error_rate = remaining_bit_errors / key_size
+    experiment.remaining_bit_error_rate.record_value(remaining_bit_error_rate)
+    if remaining_bit_errors > 0:
+        experiment.remaining_frame_errors.record_value(1.0)
+    else:
+        experiment.remaining_frame_errors.record_value(0.0)
 
 def get_code_version():
     try:

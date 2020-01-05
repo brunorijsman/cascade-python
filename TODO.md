@@ -20,25 +20,19 @@
 
   * Actual seed value.
 
-* Get rid of start/end_reconciliation_messages stats.
+  * Efficiency.
 
 * Add or move configuration items into parameters block:
 
-  * Name of block size function.
-
   * Request seed value.
-
-  * Key size.
-
-  * Fixed error count / Bernoulli error rate.
-
-* Automate running multiple iterations of same scenario.
 
 * Automate running multiple scenarios.
 
 * Use all available cores using multi-threading.
 
 * Further optimize code based on profiling stats
+
+* Use type annotations instead of asserts
 
 * Reserved shuffle ID zero = no shuffling?
 
@@ -54,6 +48,8 @@
 
 * Put LaTeX document that includes generated graphs under version control.
 
-* Remove cascade code from bb84 (handle as dependency using pip install)
+* Publish cascade in Pip
+
+* Make cascade a Pip dependency for BB84
 
 * Make Spinx only document the public classes (and not the internal classes)

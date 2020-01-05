@@ -1,12 +1,16 @@
 {
     "python.pythonPath": "env/bin/python",
     "cSpell.words": [
+        "Arial",
+        "Avenir",
         "basis",
+        "bgcolor",
         "biconf",
         "codecov",
         "cqclib",
         "hadamard",
         "kwargs",
+        "plotly",
         "pylint",
         "pytest",
         "qber",
@@ -18,7 +22,9 @@
         "simula",
         "strftime",
         "unshuffled",
-        "yanetal"
+        "xaxis",
+        "yanetal",
+        "yaxis"
     ],
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true

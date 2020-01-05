@@ -69,7 +69,7 @@ def error_rate_type(arg):
     return parse_float_value_or_range(arg, 0.0, 1.0)
 
 def parse_command_line_arguments():
-    parser = argparse.ArgumentParser(description="Run Cascade reconciliations")
+    parser = argparse.ArgumentParser(description="Run Cascade experiments")
     parser.add_argument('-a', '--algorithm', type=str, default=DEFAULT_ALGORITHM,
                         help=f"cascade algorithm (default {DEFAULT_ALGORITHM})")
     parser.add_argument('-m', '--error-method', type=error_method_type,
@@ -83,7 +83,6 @@ def parse_command_line_arguments():
                         help=f"number of reconciliation runs (default {DEFAULT_RUNS})")
     args = parser.parse_args()
     return args
-
 
 def run_all_experiment(runs, algorithm_name, key_size, error_method, error_rates):
     for error_rate in error_rates:

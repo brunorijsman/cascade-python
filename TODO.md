@@ -10,6 +10,12 @@
   
   * Full Block Parity Inference (BPI).
 
+* run_experiments:
+
+  * Add command-line for output file and flush after each result
+
+  * Report progress to stdout
+
 * Reproduce Andre Reis Cascade thesis stats.
 
 * Reproduce "Demystifying the Information Reconciliation Protocol Cascade" paper stats.

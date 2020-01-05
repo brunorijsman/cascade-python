@@ -19,7 +19,7 @@ class AggregateStats:
 
     def deviation(self):
         """
-        Compute the corrected standard deviation. 
+        Compute the corrected standard deviation.
         See https://en.wikipedia.org/wiki/Bessel%27s_correction.
 
         Returns:

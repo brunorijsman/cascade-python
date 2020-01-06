@@ -1,7 +1,6 @@
 from cascade.block import Block
 from cascade.key import Key
 from cascade.mock_classical_channel import MockClassicalChannel
-from cascade.algorithm import ORIGINAL_ALGORITHM
 from cascade.reconciliation import Reconciliation
 from cascade.shuffle import Shuffle
 
@@ -76,7 +75,7 @@ def test_error_parity():
 def test_get_blocks_containing_key_index():
 
     # Create a reconciliation object.
-    reconciliation = create_reconciliation(ORIGINAL_ALGORITHM, 9991, 8, 0.1)
+    reconciliation = create_reconciliation("original", 9991, 8, 0.1)
 
     # Make sure we have the noisy key that we expect to have based on the seed.
     noisy_key = reconciliation.get_noisy_key()

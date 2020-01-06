@@ -2,25 +2,18 @@ import argparse
 import json
 import git
 
+from cascade.algorithm import ALGORITHMS
 from cascade.key import Key
 from cascade.mock_classical_channel import MockClassicalChannel
-from cascade.algorithm import ORIGINAL_ALGORITHM
 from cascade.reconciliation import Reconciliation
 
 from study.experiment import Experiment
 
-DEFAULT_ALGORITHM = "original"
+DEFAULT_ALGORITHM_NAME = "original"
 DEFAULT_ERROR_METHOD = Key.ERROR_METHOD_EXACT
 DEFAULT_ERROR_RATE = 0.01
 DEFAULT_KEY_SIZE = 100   # TODO
 DEFAULT_RUNS = 10         # TODO: Make this a larger number
-
-# TODO: Put this in algorithm.py
-ALGORITHMS = {
-    "original": ORIGINAL_ALGORITHM,
-    "biconf": None,   # TODO
-    "yanetal": None   # TODO
-}
 
 def float_range(start, end, step):
     current = start
@@ -70,8 +63,8 @@ def error_rate_type(arg):
 
 def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade experiments")
-    parser.add_argument('-a', '--algorithm', type=str, default=DEFAULT_ALGORITHM,
-                        help=f"cascade algorithm (default {DEFAULT_ALGORITHM})")
+    parser.add_argument('-a', '--algorithm', type=str, default=DEFAULT_ALGORITHM_NAME,
+                        help=f"cascade algorithm (default {DEFAULT_ALGORITHM_NAME})")
     parser.add_argument('-m', '--error-method', type=error_method_type,
                         default=DEFAULT_ERROR_METHOD,
                         help=f"quantum bit error rate (default {DEFAULT_ERROR_METHOD})")
@@ -90,9 +83,8 @@ def run_all_experiment(runs, algorithm_name, key_size, error_method, error_rates
 
 def run_experiment(runs, algorithm_name, key_size, error_method, error_rate):
     experiment = Experiment(algorithm_name, key_size, error_rate, get_code_version())
-    algorithm = ALGORITHMS[algorithm_name]
     for _ in range(runs):
-        run_reconciliation(experiment, algorithm, key_size, error_method, error_rate)
+        run_reconciliation(experiment, algorithm_name, key_size, error_method, error_rate)
     print(to_json(experiment), flush=True)
 
 def run_reconciliation(experiment, algorithm, key_size, error_method, error_rate):

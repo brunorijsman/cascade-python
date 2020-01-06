@@ -5,7 +5,7 @@ import time
 from cascade.block import Block
 from cascade.classical_channel import ClassicalChannel
 from cascade.key import Key
-from cascade.algorithm import Algorithm
+from cascade.algorithm import get_algorithm_by_name
 from cascade.shuffle import Shuffle
 from cascade.stats import Stats
 
@@ -14,22 +14,26 @@ class Reconciliation:
     A single information reconciliation exchange between a client (Bob) and a server (Alice).
     """
 
-    def __init__(self, algorithm, classical_channel, noisy_key, estimated_bit_error_rate):
+    def __init__(self, algorithm_name, classical_channel, noisy_key, estimated_bit_error_rate):
         """
         Create a Cascade reconciliation.
 
         Args:
-            algorithm (Algorithm): The algorithm that describe the algorithm of the Cascade
-                algorithm.
+            algorithm_name (str): The name of the Cascade algorithm.
             classical_channel (subclass of ClassicalChannel): The classical channel over which
                 Bob communicates with Alice.
+            noisy_key (Key): The noisy key as Bob received it from Alice that needs to be
+                reconciliated.
+            estimated_bit_error_rate (float): The estimated bit error rate in the noisy key.
         """
 
         # Validate arguments.
-        assert isinstance(algorithm, Algorithm)
+        assert isinstance(algorithm_name, str)
         assert issubclass(type(classical_channel), ClassicalChannel)
         assert isinstance(noisy_key, Key)
         assert isinstance(estimated_bit_error_rate, float)
+        algorithm = get_algorithm_by_name(algorithm_name)
+        assert algorithm is not None
 
         # Store the arguments.
         self._classical_channel = classical_channel
@@ -57,9 +61,64 @@ class Reconciliation:
         self._pending_ask_correct_parity = []
 
     def get_noisy_key(self):
+        """
+        Get the noisy key, as Bob received it from Alice, that needs to be reconciled.
+
+        Returns:
+            The noisy key.
+        """
         return self._noisy_key
 
     def get_reconciled_key(self):
+        """
+        Get the reconciled key, i.e. the key from which the reconciliation process attempted to
+        remove the errors. There is still a small but non-zero chance that the reconciled key
+        still contains errors.
+
+        Returns:
+            The reconciled key. None if the reconciliation process was not yet run.
+        """
+        return self._reconciled_key
+
+    def reconcile(self):
+        """
+        Run the Cascade algorithm to reconciliate our ("Bob's") noisy key with the server's
+        ("Alice's") correct key.
+
+        Returns:
+            The reconciled key. There is still a small but non-zero chance that the corrected key
+            still contains errors.
+        """
+
+        # Start measuring process and real time.
+        start_process_time = time.process_time()
+        start_real_time = time.perf_counter()
+
+        # Make a deep copy of the key, so that we continue to have access to the original noisy key.
+        self._reconciled_key = copy.deepcopy(self._noisy_key)
+
+        # Inform Alice that we are starting a new reconciliation.
+        self._classical_channel.start_reconciliation()
+
+        # Do as many normal Cascade iterations as demanded by this particular Cascade algorithm.
+        self._all_normal_cascade_iterations()
+
+        # Do as many normal BICONF iterations as demanded by this particular Cascade algorithm.
+        self._all_biconf_iterations()
+
+        # Inform Alice that we have finished the reconciliation.
+        self._classical_channel.end_reconciliation()
+
+        # Compute elapsed time.
+        self.stats.elapsed_process_time = time.process_time() - start_process_time
+        self.stats.elapsed_real_time = time.perf_counter() - start_real_time
+
+        # Compute efficiencies.
+        self.stats.unrealistic_efficiency = self._compute_efficiency(self.stats.ask_parity_blocks)
+        realistic_reconciliation_bits = self.stats.ask_parity_bits + self.stats.reply_parity_bits
+        self.stats.realistic_efficiency = self._compute_efficiency(realistic_reconciliation_bits)
+
+        # Return the probably, but not surely, corrected key.
         return self._reconciled_key
 
     def _register_block_key_indexes(self, block):
@@ -85,31 +144,9 @@ class Reconciliation:
                 self._key_index_to_blocks[key_index] = [block]
 
     def _get_blocks_containing_key_index(self, key_index):
-        """
-        Get a list of block that contain a given key index.
-
-        Args:
-            key_index (int): The key index that we are looking for.
-
-        Returns:
-            The list of block that contain a given key index.
-        """
-        assert isinstance(key_index, int)
-        assert key_index >= 0
         return self._key_index_to_blocks.get(key_index, [])
 
     def _correct_parity_is_known_or_can_be_inferred(self, block):
-        """
-        Is the correct parity of the block already known? Or can it be inferred based on the correct
-        parity of the parent block and the correct parity of the sibling block?
-
-        Args:
-            block (Block): The block whose parity we are trying to infer. The correct parity must
-
-        Returns:
-            If the function returns True, the correct parity was known or successfully inferred and
-            is stored in the correct_parity attribute. False otherwise.
-        """
 
         # Already known?
         if block.get_correct_parity() is not None:
@@ -149,26 +186,11 @@ class Reconciliation:
         return True
 
     def _schedule_ask_correct_parity(self, block, correct_right_sibling):
-        """
-        Register a block as needing to ask Alice what the correct parity is.
-
-        Args:
-            block (Block): The block to be registered.
-        """
-        # Validate args.
-        assert isinstance(block, Block)
-
         # Adding an item to the end (not the start!) of a list is an efficient O(1) operation.
         entry = (block, correct_right_sibling)
         self._pending_ask_correct_parity.append(entry)
 
     def _have_pending_ask_correct_parity(self):
-        """
-        Are there any more blocks pending as needing to ask Alice what the correct parity is?
-
-        Returns:
-            True if there are any pending error blocks, False if not.
-        """
         return self._pending_ask_correct_parity != []
 
     @staticmethod
@@ -189,13 +211,6 @@ class Reconciliation:
                Reconciliation._bits_in_int(shuffle_end_index)
 
     def _service_pending_ask_correct_parity(self):
-        """
-        Send a single message to Alice, asking for the parities of all pending "ask parity" blocks.
-        When Alice answers (currently this is a blocking synchronous question) we update the
-        correct parity for the block (0 or 1), the error parity of the block (odd of even), and
-        if the error parity turns out to be odd, we add to the priority queue for pending error
-        blocks that we need to attempt to correct.
-        """
 
         if not self._pending_ask_correct_parity:
             return
@@ -228,15 +243,7 @@ class Reconciliation:
         self._pending_ask_correct_parity = []
 
     def _schedule_try_correct(self, block, correct_right_sibling):
-        """
-        Register a block as needing an attempted error correct. Either because we know for a fact
-        that it has an odd number of errors. Or because we don't yet know its correct parity, so
-        it might turn out to have an odd number of errors.
 
-        Args:
-            block (Block): The block to be registered as an error block. It is legal to register
-            the same block multiple times using this function.
-        """
         # Validate args.
         assert isinstance(block, Block)
 
@@ -246,62 +253,14 @@ class Reconciliation:
         heapq.heappush(self._pending_try_correct, (block.get_size(), entry))
 
     def _have_pending_try_correct(self):
-        """
-        Are there any more blocks pending that potentially have an odd number of errors?
-
-        Returns:
-            True if there are any pending error blocks, False if not.
-        """
         return self._pending_try_correct != []
 
     def _service_pending_try_correct(self):
-        """
-        For each registered error blocks, attempt to correct a single error in the block. The blocks
-        are processed in order of shortest block first.
-        """
         # Process each error block, in order of shortest block first.
         while self._pending_try_correct:
             (_, entry) = heapq.heappop(self._pending_try_correct)
             (block, correct_right_sibling) = entry
             self._try_correct(block, correct_right_sibling)
-
-    def reconcile(self):
-        """
-        Run the Cascade algorithm to reconciliate our ("Bob's") noisy key with the server's
-        ("Alice's") correct key.
-
-        Returns:
-            The corrected key. There is still a small but non-zero chance that the corrected key
-            still contains errors.
-        """
-
-        start_process_time = time.process_time()
-        start_real_time = time.perf_counter()
-
-        self._reconciled_key = copy.deepcopy(self._noisy_key)
-
-        # Inform Alice that we are starting a new reconciliation.
-        self._classical_channel.start_reconciliation()
-
-        # Do as many Cascade iterations (aka Cascade passes) as demanded by this particular
-        # algorithm of the Cascade algorithm.
-        for iteration_nr in range(1, self._algorithm.nr_iterations+1):
-            self._reconcile_iteration(iteration_nr)
-
-        # Inform Alice that we have finished the reconciliation.
-        self._classical_channel.end_reconciliation()
-
-        # Compute elapsed time.
-        self.stats.elapsed_process_time = time.process_time() - start_process_time
-        self.stats.elapsed_real_time = time.perf_counter() - start_real_time
-
-        # Compute efficiencies.
-        self.stats.unrealistic_efficiency = self._compute_efficiency(self.stats.ask_parity_blocks)
-        realistic_reconciliation_bits = self.stats.ask_parity_bits + self.stats.reply_parity_bits
-        self.stats.realistic_efficiency = self._compute_efficiency(realistic_reconciliation_bits)
-
-        # Return the probably, but not surely, corrected key.
-        return self._reconciled_key
 
     def _compute_efficiency(self, reconciliation_bits):
         eps = self._estimated_bit_error_rate
@@ -314,7 +273,11 @@ class Reconciliation:
             efficiency = 1.0
         return efficiency
 
-    def _reconcile_iteration(self, iteration_nr):
+    def _all_normal_cascade_iterations(self):
+        for iteration_nr in range(1, self._algorithm.cascade_iterations+1):
+            self._one_normal_cascade_iteration(iteration_nr)
+
+    def _one_normal_cascade_iteration(self, iteration_nr):
 
         # Determine the block size to be used for this iteration, using the rules for this
         # particular algorithm of the Cascade algorithm.
@@ -356,20 +319,30 @@ class Reconciliation:
             # block" priority queue.
             self._service_pending_ask_correct_parity()
 
+
+    def _all_biconf_iterations(self):
+
+        # Do nothing if BICONF is disabled.
+        if self._algorithm.error_free_biconf_iterations is None:
+            return
+
+        # Keep going until we have seen the required number of "error free" iterations.
+        # "Error free" is in quotes; it really means "iterations with an even number of errors."
+        # TODO: Count BICONF iterations separately from normal iterations in stats
+        error_free_iterations = 0
+        while error_free_iterations < self._algorithm.error_free_biconf_iterations:
+            odd_nr_errors_detected = self._one_biconf_iteration()
+            if odd_nr_errors_detected:
+                error_free_iterations = 0
+            else:
+                error_free_iterations += 1
+
+    @staticmethod
+    def _one_biconf_iteration():
+        odd_nr_errors_detected = False
+        return odd_nr_errors_detected
+
     def _try_correct(self, block, correct_right_sibling):
-        """
-        Try to correct a single bit error in a block by recursively dividing the block into
-        sub-blocks and comparing the current parity of each of those sub-blocks with the correct
-        parity of the same sub-block.
-
-        Params:
-            block (Block): The block in which we attempt to correct one bit error.
-            correct_sibbling (bool): If block contains an even number of errors, then try to correct
-                an error in the right sibling instead of this block.
-
-        Returns:
-            True if an error was corrected, False if not.
-        """
 
         # If we don't know the correct parity of the block, we cannot make progress on this block
         # until Alice has told us what the correct parity is.

@@ -16,7 +16,6 @@ class Key:
         """
         Create an empty key.
         """
-
         self._size = 0
         self._bits = {}  # Bits are stored as dictionary, indexed by index [0..size), value 0 or 1.
 

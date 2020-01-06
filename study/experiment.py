@@ -1,6 +1,6 @@
 import time
 
-from .aggregate_stats import AggregateStats
+from aggregate_stats import AggregateStats
 
 class Experiment:
 
@@ -17,6 +17,10 @@ class Experiment:
         self.elapsed_real_time = AggregateStats()
         self.ask_parity_messages = AggregateStats()
         self.ask_parity_blocks = AggregateStats()
+        self.ask_parity_bits = AggregateStats()
+        self.reply_parity_bits = AggregateStats()
+        self.unrealistic_efficiency = AggregateStats()
+        self.realistic_efficiency = AggregateStats()
         self.infer_parity_blocks = AggregateStats()
         self.remaining_bit_errors = AggregateStats()
         self.remaining_bit_error_rate = AggregateStats()
@@ -28,4 +32,8 @@ class Experiment:
         self.elapsed_real_time.record_value(stats.elapsed_real_time)
         self.ask_parity_messages.record_value(stats.ask_parity_messages)
         self.ask_parity_blocks.record_value(stats.ask_parity_blocks)
+        self.ask_parity_bits.record_value(stats.ask_parity_bits)
+        self.reply_parity_bits.record_value(stats.reply_parity_bits)
+        self.unrealistic_efficiency.record_value(stats.unrealistic_efficiency)
+        self.realistic_efficiency.record_value(stats.realistic_efficiency)
         self.infer_parity_blocks.record_value(stats.infer_parity_blocks)

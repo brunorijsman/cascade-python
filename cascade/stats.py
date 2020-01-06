@@ -11,4 +11,8 @@ class Stats:
         self.elapsed_real_time = None
         self.ask_parity_messages = 0
         self.ask_parity_blocks = 0
+        self.ask_parity_bits = 0
+        self.reply_parity_bits = 0
+        self.unrealistic_efficiency = None
+        self.realistic_efficiency = None
         self.infer_parity_blocks = 0

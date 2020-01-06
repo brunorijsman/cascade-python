@@ -1,5 +1,6 @@
 import copy
 import heapq
+import math
 import time
 from cascade.block import Block
 from cascade.classical_channel import ClassicalChannel
@@ -170,6 +171,23 @@ class Reconciliation:
         """
         return self._pending_ask_correct_parity != []
 
+    @staticmethod
+    def _bits_in_int(int_value):
+        bits = 0
+        while int_value != 0:
+            bits += 1
+            int_value //= 2
+        if bits == 0:
+            bits = 1
+        return bits
+
+    @staticmethod
+    def _bits_in_shuffle_range(shuffle_range):
+        (shuffle_identifier, shuffle_start_index, shuffle_end_index) = shuffle_range
+        return Reconciliation._bits_in_int(shuffle_identifier) + \
+               Reconciliation._bits_in_int(shuffle_start_index) + \
+               Reconciliation._bits_in_int(shuffle_end_index)
+
     def _service_pending_ask_correct_parity(self):
         """
         Send a single message to Alice, asking for the parities of all pending "ask parity" blocks.
@@ -189,6 +207,7 @@ class Reconciliation:
             (block, _correct_right_sibling) = entry
             shuffle_range = block.get_shuffle_range()
             shuffle_ranges.append(shuffle_range)
+            self.stats.ask_parity_bits += self._bits_in_shuffle_range(shuffle_range)
 
         # "Send a message" to Alice to ask her to compute the correct parities for the list that
         # we prepared. For now, this is a synchronous blocking operations (i.e. we block here
@@ -200,6 +219,7 @@ class Reconciliation:
         # Process the answer from Alice. IMPORTANT: Alice is required to send the list of parities
         # in the exact same order as the ranges in the question; this allows us to zip.
         for (correct_parity, entry) in zip(correct_parities, self._pending_ask_correct_parity):
+            self.stats.reply_parity_bits += 1
             (block, correct_right_sibling) = entry
             block.set_correct_parity(correct_parity)
             self._schedule_try_correct(block, correct_right_sibling)
@@ -275,8 +295,20 @@ class Reconciliation:
         self.stats.elapsed_process_time = time.process_time() - start_process_time
         self.stats.elapsed_real_time = time.perf_counter() - start_real_time
 
+        # Compute efficiencies.
+        self.stats.unrealistic_efficiency = self._compute_efficiency(self.stats.ask_parity_blocks)
+        realistic_reconciliation_bits = self.stats.ask_parity_bits + self.stats.reply_parity_bits
+        self.stats.realistic_efficiency = self._compute_efficiency(realistic_reconciliation_bits)
+
         # Return the probably, but not surely, corrected key.
         return self._reconciled_key
+
+    def _compute_efficiency(self, reconciliation_bits):
+        eps = self._estimated_bit_error_rate
+        shannon_efficiency = -eps * math.log2(eps) - (1 - eps) * math.log2(1 - eps)
+        key_size = self._noisy_key.get_size()
+        efficiency = reconciliation_bits / (key_size * shannon_efficiency)
+        return efficiency
 
     def _reconcile_iteration(self, iteration_nr):
 

@@ -32,6 +32,8 @@
 
   * Request seed value.
 
+* Separate JSON objects for experiment and data_point.
+
 * Automate running multiple scenarios.
 
 * Use all available cores using multi-threading.
@@ -67,3 +69,5 @@
 * Cover study scripts with unit tests.
 
 * Cover study with lint.
+
+* Don't repeat the shuffle index so often in ask_parities message (it makes the efficiency much worse).

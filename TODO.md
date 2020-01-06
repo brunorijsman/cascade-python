@@ -22,15 +22,11 @@
 
 * Move cascade module into a separate Git repo and make it a dependency for the bb84 repo.
 
-* Add more statistics to the Cascade algorithm:
+* Make results reproducible:
 
-  * Actual seed value.
+  * Report actual seed value.
 
-  * Efficiency.
-
-* Add or move configuration items into parameters block:
-
-  * Request seed value.
+  * Allow seed value to be specified (to reproduce)
 
 * Separate JSON objects for experiment and data_point.
 

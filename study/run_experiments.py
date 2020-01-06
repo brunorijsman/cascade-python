@@ -93,7 +93,7 @@ def run_experiment(runs, algorithm_name, key_size, error_method, error_rate):
     algorithm = ALGORITHMS[algorithm_name]
     for _ in range(runs):
         run_reconciliation(experiment, algorithm, key_size, error_method, error_rate)
-    print(to_json(experiment))
+    print(to_json(experiment), flush=True)
 
 def run_reconciliation(experiment, algorithm, key_size, error_method, error_rate):
     # Key.set_random_seed(seed)

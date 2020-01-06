@@ -305,9 +305,13 @@ class Reconciliation:
 
     def _compute_efficiency(self, reconciliation_bits):
         eps = self._estimated_bit_error_rate
-        shannon_efficiency = -eps * math.log2(eps) - (1 - eps) * math.log2(1 - eps)
-        key_size = self._noisy_key.get_size()
-        efficiency = reconciliation_bits / (key_size * shannon_efficiency)
+        try:
+            shannon_efficiency = -eps * math.log2(eps) - (1 - eps) * math.log2(1 - eps)
+            key_size = self._noisy_key.get_size()
+            efficiency = reconciliation_bits / (key_size * shannon_efficiency)
+        except (ValueError, ZeroDivisionError):
+            # TODO: Change this to NaN or None and do not plot in graph
+            efficiency = 1.0
         return efficiency
 
     def _reconcile_iteration(self, iteration_nr):

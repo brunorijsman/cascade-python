@@ -12,7 +12,52 @@ def parse_command_line_arguments():
 
 def produce_all_graphs():
     all_experiments = read_all_experiments()
-    produce_channel_uses_vs_error_rate_graph(all_experiments)
+    produce_demystifying_paper_graphs(all_experiments)
+
+def produce_demystifying_paper_graphs(experiments):
+    produce_demystifying_paper_figure_1_graph(experiments)
+    produce_demystifying_paper_figure_2_graph(experiments)
+
+def produce_demystifying_paper_figure_1_graph(experiments):
+    produce_aggregate_vs_qber_graph(
+        experiments,
+        'Reconciliation efficiency',
+        'unrealistic_efficiency')
+
+def produce_demystifying_paper_figure_2_graph(experiments):
+    produce_aggregate_vs_qber_graph(
+        experiments,
+        'Channel uses',
+        'ask_parity_messages')
+
+def produce_aggregate_vs_qber_graph(experiments, aggregate_title, aggregate_name):
+    figure = go.Figure()
+    figure.update_layout(
+        xaxis=dict(
+            showline=True,
+            linecolor='black',
+            showgrid=True,
+            gridcolor='lightgray',
+            showticklabels=True,
+            linewidth=1,
+            ticks='outside',
+            tickfont=dict(family='Arial', size=12, color='black'),
+        ),
+        xaxis_title='Quantum Bit Error Rate (QBER)',
+        yaxis=dict(
+            showline=True,
+            linecolor='black',
+            showgrid=True,
+            gridcolor='lightgray',
+            showticklabels=True,
+            linewidth=1,
+            ticks='outside',
+            tickfont=dict(family='Arial', size=12, color='black'),
+        ),
+        yaxis_title=aggregate_title,
+        plot_bgcolor='white')
+    plot_aggregate(experiments, figure, 'requested_error_rate', aggregate_name, 'blue')
+    figure.show()
 
 def plot_aggregate(experiments, figure, x_var, y_var, color):
     plot_deviation(experiments, figure, x_var, y_var, color)
@@ -44,8 +89,6 @@ def plot_deviation(experiments, figure, x_var, y_var, color):
         ys_lower.append(average - deviation)
     xs = xs + xs[::-1]
     ys = ys_upper + ys_lower[::-1]
-    print(len(xs), xs)
-    print(len(ys), ys)
     color = 'light' + color
     line = go.Scatter(
         x=xs,
@@ -57,35 +100,6 @@ def plot_deviation(experiments, figure, x_var, y_var, color):
         fillcolor=color,
         opacity=0.4)
     figure.add_trace(line)
-
-def produce_channel_uses_vs_error_rate_graph(experiments):
-    figure = go.Figure()
-    figure.update_layout(
-        xaxis=dict(
-            showline=True,
-            linecolor='black',
-            showgrid=True,
-            gridcolor='lightgray',
-            showticklabels=True,
-            linewidth=1,
-            ticks='outside',
-            tickfont=dict(family='Arial', size=12, color='black'),
-        ),
-        xaxis_title='Quantum Bit Error Rate (QBER)',
-        yaxis=dict(
-            showline=True,
-            linecolor='black',
-            showgrid=True,
-            gridcolor='lightgray',
-            showticklabels=True,
-            linewidth=1,
-            ticks='outside',
-            tickfont=dict(family='Arial', size=12, color='black'),
-        ),
-        yaxis_title='Channel uses',
-        plot_bgcolor='white')
-    plot_aggregate(experiments, figure, 'requested_error_rate', 'ask_parity_messages', 'blue')
-    figure.show()
 
 def read_all_experiments():
     experiments = []

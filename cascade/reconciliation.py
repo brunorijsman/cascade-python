@@ -271,6 +271,8 @@ class Reconciliation:
 
     def _one_normal_cascade_iteration(self, iteration_nr):
 
+        self.stats.normal_iterations += 1
+
         # Determine the block size to be used for this iteration, using the rules for this
         # particular algorithm of the Cascade algorithm.
         block_size = self._algorithm.block_size_function(self._estimated_bit_error_rate,
@@ -328,9 +330,12 @@ class Reconciliation:
         if not self._algorithm.biconf_iterations:
             return
 
-        # If asked to do so, keep going until we have seen the required number of "error free"
-        # iterations.
-        # TODO: Count BICONF iterations separately from normal iterations in stats
+        # If we are not cascading during BICONF, clear the key indexes to blocks map to avoid
+        # wasting time keeping it up to date as correct blocks during the BICONF phase.
+        if not self._algorithm.biconf_cascade:
+            self._key_index_to_blocks = {}
+
+        # Do the required number of BICONF iterations, as determined by the protocol.
         iterations_to_go = self._algorithm.biconf_iterations
         while iterations_to_go > 0:
             errors_corrected = self._one_biconf_iteration()
@@ -341,12 +346,18 @@ class Reconciliation:
 
     def _one_biconf_iteration(self):
 
+        self.stats.biconf_iterations += 1
+
+        cascade = self._algorithm.biconf_cascade
+
         # Randomly select half of the bits in the key. This is exactly the same as doing a new
         # random shuffle of the key and selecting the first half of newly shuffled key.
         key_size = self._reconciled_key.get_size()
         shuffle = Shuffle(key_size, Shuffle.SHUFFLE_RANDOM)
         mid_index = key_size // 2
         chosen_block = Block(self._reconciled_key, shuffle, 0, mid_index, None)
+        if cascade:
+            self._register_block_key_indexes(chosen_block)
 
         # Ask Alice what the correct parity of the chosen block is.
         self._schedule_ask_correct_parity(chosen_block, False)
@@ -355,11 +366,13 @@ class Reconciliation:
         # block is.
         if self._algorithm.biconf_correct_complement:
             complement_block = Block(self._reconciled_key, shuffle, mid_index, key_size, None)
+            if cascade:
+                self._register_block_key_indexes(complement_block)
             self._schedule_ask_correct_parity(complement_block, False)
 
         # Service all pending correction attempts (potentially including Cascaded ones) and ask
         # parity messages.
-        errors_corrected = self._service_all_pending_work(self._algorithm.biconf_cascade)
+        errors_corrected = self._service_all_pending_work(cascade)
         return errors_corrected
 
     def _try_correct(self, block, correct_right_sibling, cascade):

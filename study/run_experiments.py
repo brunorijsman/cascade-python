@@ -2,7 +2,6 @@ import argparse
 import json
 import git
 
-from cascade.algorithm import ALGORITHMS
 from cascade.key import Key
 from cascade.mock_classical_channel import MockClassicalChannel
 from cascade.reconciliation import Reconciliation

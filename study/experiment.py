@@ -15,6 +15,8 @@ class Experiment:
         self.actual_bit_error_rate = AggregateStats()
         self.elapsed_process_time = AggregateStats()
         self.elapsed_real_time = AggregateStats()
+        self.normal_iterations = AggregateStats()
+        self.biconf_iterations = AggregateStats()
         self.ask_parity_messages = AggregateStats()
         self.ask_parity_blocks = AggregateStats()
         self.ask_parity_bits = AggregateStats()
@@ -30,6 +32,8 @@ class Experiment:
         self.reconciliations += 1
         self.elapsed_process_time.record_value(stats.elapsed_process_time)
         self.elapsed_real_time.record_value(stats.elapsed_real_time)
+        self.normal_iterations.record_value(stats.normal_iterations)
+        self.biconf_iterations.record_value(stats.biconf_iterations)
         self.ask_parity_messages.record_value(stats.ask_parity_messages)
         self.ask_parity_blocks.record_value(stats.ask_parity_blocks)
         self.ask_parity_bits.record_value(stats.ask_parity_bits)

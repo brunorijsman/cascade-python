@@ -136,9 +136,12 @@ class Reconciliation:
 
     def _correct_parity_is_known_or_can_be_inferred(self, block):
 
-        # Already known?
+        # Is the parity of the block already known?
         if block.get_correct_parity() is not None:
             return True
+
+        # Try to do a very limited type of inference, using only the parity of the parent block and
+        # the sibling block.
 
         # Cannot infer if there is no parent block.
         parent_block = block.get_parent_block()
@@ -154,7 +157,7 @@ class Reconciliation:
         if sibling_block is None:
             return False
 
-        # Cannot infer if the correct parity of the parent and sibling block are unknown.
+        # Cannot infer if the correct parity of the parent or sibling block are unknown.
         correct_parent_parity = parent_block.get_correct_parity()
         if correct_parent_parity is None:
             return False
@@ -419,16 +422,8 @@ class Reconciliation:
             # Flip the parity of that block.
             affected_block.flip_parity()
 
-            # Perform the "Cascade effect" that is at the heart of the Cascade algorithm:
-            # If the block now has an odd number of errors, register it as an error block so we
-            # can go and correct it later on. The blocks from this iteration don't end up being
-            # registered here - since we corrected an odd error they always have an even number
-            # of errors at this point in the loop. Instead, it's blocks from previous iterations
-            # in the Cascade algorithm that end up being registered here.
-            # TODO: Better comment here
+            # If asked to do cascading, do so for blocks with an odd number of errors.
             if cascade and affected_block.get_error_parity() != Block.ERRORS_EVEN:
-
-                # If sub_block_reuse is disabled, then only register top-level blocks for
-                # cascading.
+                # If sub_block_reuse is disabled, then only cascade top-level blocks.
                 if self._algorithm.sub_block_reuse or affected_block.is_top_block():
                     self._schedule_try_correct(affected_block, False)

@@ -4,17 +4,43 @@
 
   * Discard corrected bits at the end.
 
-  * BICONF.
-
-  * Different number of iterations and values for k[i].
-  
   * Full Block Parity Inference (BPI).
+
+* Better handling of error_rate 0.0 for efficiency (don't assume 1.0, instead skip in graph)
 
 * run_experiments:
 
   * Add command-line for output file and flush after each result
 
   * Report progress to stdout
+
+  * Use JSON file to control a single experiment
+
+  * Have a script to automate running all experiments and producing all graphs
+
+  * Have nr_runs and error_rate_resolution as parameters for the script
+
+  * Automate running the scripts in AWS instances (including self shut-down and persistence)
+
+  * Write output to configurable file
+
+  * Report progress and estimated finish time to stdout
+
+  * Use all available cores using multi-threading.
+
+  * Mechanism for putting results under version control
+
+* graph
+
+  * Use JSON file to define graph
+
+  * Option to write to file
+
+  * Multiple lines in one graph
+
+  * More general; less hard-coding of graphs
+
+  * Higher resolution near error_rate 0.0
 
 * Reproduce Andre Reis Cascade thesis stats.
 
@@ -30,25 +56,15 @@
 
 * Separate JSON objects for experiment and data_point.
 
-* Automate running multiple scenarios.
-
-* Use all available cores using multi-threading.
-
 * Further optimize code based on profiling stats.
 
 * Use type annotations instead of asserts.
-
-* Reserved shuffle ID zero = no shuffling?
 
 * Get test coverage back to 100%.
 
 * Get documentation back to 100%.
 
 * Automatically produce stats graph.
-
-* Script to only reproduce missing stats (based on parameters)
-
-* Optionally regenerate stats when version code has changes.
 
 * Put LaTeX document that includes generated graphs under version control.
 
@@ -67,3 +83,8 @@
 * Cover study with lint.
 
 * Don't repeat the shuffle index so often in ask_parities message (it makes the efficiency much worse).
+
+* Rename experiment to data_point
+
+* Use JSON file to control a single graph
+

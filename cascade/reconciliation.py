@@ -122,18 +122,6 @@ class Reconciliation:
         return self._reconciled_key
 
     def _register_block_key_indexes(self, block):
-        """
-        Register the key indexes that are covered by this block. Later on, given a key index, we
-        will be able to find all blocks covering that key index efficiently.
-
-        Args:
-            block (Block): The block to be registered. It must not have been registered using this
-                function ever before.
-        """
-
-        # Validate args.
-        assert isinstance(block, Block)
-
         # For every key bit covered by the block, append the block to the list of blocks that depend
         # on that partical key bit.
         for key_index in block.get_key_indexes():
@@ -255,12 +243,13 @@ class Reconciliation:
     def _have_pending_try_correct(self):
         return self._pending_try_correct != []
 
-    def _service_pending_try_correct(self):
-        # Process each error block, in order of shortest block first.
+    def _service_pending_try_correct(self, cascade):
+        errors_corrected = 0
         while self._pending_try_correct:
             (_, entry) = heapq.heappop(self._pending_try_correct)
             (block, correct_right_sibling) = entry
-            self._try_correct(block, correct_right_sibling)
+            errors_corrected += self._try_correct(block, correct_right_sibling, cascade)
+        return errors_corrected
 
     def _compute_efficiency(self, reconciliation_bits):
         eps = self._estimated_bit_error_rate
@@ -304,6 +293,15 @@ class Reconciliation:
             # the correct parity it.
             self._schedule_ask_correct_parity(block, False)
 
+        # Service all pending correction attempts (including Cascaded ones) and ask parity
+        # messages.
+        self._service_all_pending_work(True)
+
+    def _service_all_pending_work(self, cascade):
+
+        # Keep track of how many errors were actually corrected in this call.
+        errors_corrected = 0
+
         # Keep going while there is more work to do.
         while self._have_pending_try_correct() or self._have_pending_ask_correct_parity():
 
@@ -311,7 +309,7 @@ class Reconciliation:
             # attempt. If we don't know the correct parity of the block, we won't be able to finish
             # the attempted correction yet. In that case the block will end up on the "pending ask
             # parity" list.
-            self._service_pending_try_correct()
+            errors_corrected += self._service_pending_try_correct(cascade)
 
             # Now, ask Alice for the correct parity of the blocks that ended up on the "ask parity
             # list" in the above loop. When we get the answer from Alice, we may discover that the
@@ -319,36 +317,55 @@ class Reconciliation:
             # block" priority queue.
             self._service_pending_ask_correct_parity()
 
+        return errors_corrected
 
     def _all_biconf_iterations(self):
 
         # Do nothing if BICONF is disabled.
-        if self._algorithm.error_free_biconf_iterations is None:
+        if not self._algorithm.biconf_iterations:
             return
 
-        # Keep going until we have seen the required number of "error free" iterations.
-        # "Error free" is in quotes; it really means "iterations with an even number of errors."
+        # If asked to do so, keep going until we have seen the required number of "error free"
+        # iterations.
         # TODO: Count BICONF iterations separately from normal iterations in stats
-        error_free_iterations = 0
-        while error_free_iterations < self._algorithm.error_free_biconf_iterations:
-            odd_nr_errors_detected = self._one_biconf_iteration()
-            if odd_nr_errors_detected:
-                error_free_iterations = 0
+        iterations_to_go = self._algorithm.biconf_iterations
+        while iterations_to_go > 0:
+            errors_corrected = self._one_biconf_iteration()
+            if self._algorithm.biconf_error_free_streak and errors_corrected > 0:
+                iterations_to_go = self._algorithm.biconf_iterations
             else:
-                error_free_iterations += 1
+                iterations_to_go -= 1
 
-    @staticmethod
-    def _one_biconf_iteration():
-        odd_nr_errors_detected = False
-        return odd_nr_errors_detected
+    def _one_biconf_iteration(self):
 
-    def _try_correct(self, block, correct_right_sibling):
+        # Randomly select half of the bits in the key. This is exactly the same as doing a new
+        # random shuffle of the key and selecting the first half of newly shuffled key.
+        key_size = self._reconciled_key.get_size()
+        shuffle = Shuffle(key_size, Shuffle.SHUFFLE_RANDOM)
+        mid_index = key_size // 2
+        chosen_block = Block(self._reconciled_key, shuffle, 0, mid_index, None)
+
+        # Ask Alice what the correct parity of the chosen block is.
+        self._schedule_ask_correct_parity(chosen_block, False)
+
+        # If the algorithm wants it, also ask Alice what the correct parity of the complementary
+        # block is.
+        if self._algorithm.biconf_correct_complement:
+            complement_block = Block(self._reconciled_key, shuffle, mid_index, key_size, None)
+            self._schedule_ask_correct_parity(complement_block, False)
+
+        # Service all pending correction attempts (potentially including Cascaded ones) and ask
+        # parity messages.
+        errors_corrected = self._service_all_pending_work(self._algorithm.biconf_cascade)
+        return errors_corrected
+
+    def _try_correct(self, block, correct_right_sibling, cascade):
 
         # If we don't know the correct parity of the block, we cannot make progress on this block
         # until Alice has told us what the correct parity is.
         if not self._correct_parity_is_known_or_can_be_inferred(block):
             self._schedule_ask_correct_parity(block, correct_right_sibling)
-            return False
+            return 0
 
         # If there is an even number of errors in this block, we don't attempt to fix any errors
         # in this block. But if asked to do so, we will attempt to fix an error in the right
@@ -357,14 +374,14 @@ class Reconciliation:
         assert error_parity != Block.ERRORS_UNKNOWN
         if block.get_error_parity() == Block.ERRORS_EVEN:
             if correct_right_sibling:
-                return self._try_correct_right_sibling_block(block)
-            return False
+                return self._try_correct_right_sibling_block(block, cascade)
+            return 0
 
         # If this block contains a single bit, we have finished the recursion and found an error.
         # Correct the error by flipping the key bit that corresponds to this block.
         if block.get_size() == 1:
-            self._flip_key_bit_corresponding_to_single_bit_block(block)
-            return True
+            self._flip_key_bit_corresponding_to_single_bit_block(block, cascade)
+            return 1
 
         # If we get here, it means that there is an odd number of errors in this block and that
         # the block is bigger than 1 bit.
@@ -375,9 +392,9 @@ class Reconciliation:
         if  left_sub_block is None:
             left_sub_block = block.create_left_sub_block()
             self._register_block_key_indexes(left_sub_block)
-        return self._try_correct(left_sub_block, True)
+        return self._try_correct(left_sub_block, True, cascade)
 
-    def _try_correct_right_sibling_block(self, block):
+    def _try_correct_right_sibling_block(self, block, cascade):
 
         assert not block.is_top_block()
 
@@ -386,9 +403,9 @@ class Reconciliation:
         if right_sibling_block is None:
             right_sibling_block = parent_block.create_right_sub_block()
             self._register_block_key_indexes(right_sibling_block)
-        return self._try_correct(right_sibling_block, False)
+        return self._try_correct(right_sibling_block, False, cascade)
 
-    def _flip_key_bit_corresponding_to_single_bit_block(self, block):
+    def _flip_key_bit_corresponding_to_single_bit_block(self, block, cascade):
 
         assert block.get_size() == 1
         flipped_shuffle_index = block.get_start_index()
@@ -409,7 +426,7 @@ class Reconciliation:
             # of errors at this point in the loop. Instead, it's blocks from previous iterations
             # in the Cascade algorithm that end up being registered here.
             # TODO: Better comment here
-            if affected_block.get_error_parity() != Block.ERRORS_EVEN:
+            if cascade and affected_block.get_error_parity() != Block.ERRORS_EVEN:
 
                 # If sub_block_reuse is disabled, then only register top-level blocks for
                 # cascading.

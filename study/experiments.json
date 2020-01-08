@@ -1,0 +1,22 @@
+[
+    {
+        "algorithm": "original",
+        "error_rate": {
+            "start": 0.00,
+            "end": 0.11,
+            "step": 0.01
+        },
+        "key_size": 10000,
+        "data_file": "data__algorithm=original;key_size=10000;error_rate=0.00-0.11"
+    },
+    {
+        "algorithm": "biconf",
+        "error_rate": {
+            "start": 0.00,
+            "end": 0.11,
+            "step": 0.01
+        },
+        "key_size": 10000,
+        "data_file": "data__algorithm=biconf;key_size=10000;error_rate=0.00-0.11"
+    }
+]

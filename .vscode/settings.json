@@ -10,6 +10,8 @@
         "cqclib",
         "hadamard",
         "kwargs",
+        "lightblue",
+        "lightgray",
         "plotly",
         "pylint",
         "pytest",

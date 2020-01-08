@@ -1,0 +1,28 @@
+[
+    {
+        "title": "Figure 2: Number of channel uses as a function of time.",
+        "name": "demystifying_paper_figure_2___channel_uses_vs_qber",
+        "x-axis": {
+            "title": "Quantum Bit Error Rate (QBER)",
+            "variable": "ask_parity_messages"
+        },
+        "y-axis": {
+            "title": "Channel uses",
+            "variable": "ask_parity_messages"
+        },
+        "lines": [
+            {
+                "data_file": "data__algorithm=original;key_size=10000",
+                "legend": "original",
+                "line_color": "black",
+                "variance_color": "lightgray"
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=10000",
+                "legend": "biconf",
+                "line_color": "blue",
+                "variance_color": "lightblue"
+            }
+        ]
+    }
+]

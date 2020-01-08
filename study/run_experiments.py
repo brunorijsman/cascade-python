@@ -8,85 +8,71 @@ from cascade.reconciliation import Reconciliation
 
 from study.experiment import Experiment
 
-DEFAULT_ALGORITHM_NAME = "original"
-DEFAULT_ERROR_METHOD = Key.ERROR_METHOD_EXACT
-DEFAULT_ERROR_RATE = 0.01
-DEFAULT_KEY_SIZE = 100   # TODO
+DEFAULT_EXPERIMENTS_FILE = "experiments.json"
 DEFAULT_RUNS = 10         # TODO: Make this a larger number
-
-def float_range(start, end, step):
-    current = start
-    while current <= end:
-        yield current
-        current += step
-
-def error_method_type(arg):
-    if not isinstance(arg, str):
-        raise argparse.ArgumentTypeError("must be a string")
-    if arg not in Key.ERROR_METHODS:
-        raise argparse.ArgumentTypeError(f"valid values: {', '.join(Key.ERROR_METHODS)}")
-    return arg
-
-def parse_float_value(value_name, value_str, min_value, max_value):
-    try:
-        value = float(value_str)
-    except ValueError:
-        raise argparse.ArgumentTypeError(f"{value_name} {value_str} must be a float number")
-    if value < min_value:
-        raise argparse.ArgumentTypeError("{value_name} {value_str} must be >= {min_value}")
-    if value > max_value:
-        raise argparse.ArgumentTypeError("{value_name} {value_str} must be <= {max_value}")
-    return value
-
-def parse_float_range(value_str, min_value, max_value):
-    start_end_step = value_str.split(':')
-    if len(start_end_step) != 3:
-        raise argparse.ArgumentTypeError("must have two colons (start:end:stop)")
-    start = parse_float_value('start', start_end_step[0], min_value, max_value)
-    end = parse_float_value('end', start_end_step[1], min_value, max_value)
-    step = parse_float_value('step', start_end_step[2], min_value, max_value)
-    if start > end:
-        raise argparse.ArgumentTypeError("start must be <= end")
-    # Make sure we don't exclude the end due to rounding errors
-    end += step / 10_000.0
-    return float_range(start, end, step)
-
-def parse_float_value_or_range(value_str, min_value, max_value):
-    if ':' in value_str:
-        return parse_float_range(value_str, min_value, max_value)
-    value = parse_float_value('value', value_str, min_value, max_value)
-    return float_range(value, value, max_value)
-
-def error_rate_type(arg):
-    return parse_float_value_or_range(arg, 0.0, 1.0)
 
 def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade experiments")
-    parser.add_argument('-a', '--algorithm', type=str, default=DEFAULT_ALGORITHM_NAME,
-                        help=f"cascade algorithm (default {DEFAULT_ALGORITHM_NAME})")
-    parser.add_argument('-m', '--error-method', type=error_method_type,
-                        default=DEFAULT_ERROR_METHOD,
-                        help=f"quantum bit error rate (default {DEFAULT_ERROR_METHOD})")
-    parser.add_argument('-e', '--error-rate', type=error_rate_type, default=DEFAULT_ERROR_RATE,
-                        help=f"quantum bit error rate (default {DEFAULT_ERROR_RATE})")
-    parser.add_argument('-k', '--key-size', type=int, default=10000,
-                        help=f"key size (default {DEFAULT_KEY_SIZE})")
+    parser.add_argument('experiments_file', metavar="experiments-file", type=str, nargs='?',
+                        default=DEFAULT_EXPERIMENTS_FILE,
+                        help=f"experiments file (default {DEFAULT_EXPERIMENTS_FILE})")
     parser.add_argument('-r', '--runs', type=int, default=DEFAULT_RUNS,
                         help=f"number of reconciliation runs (default {DEFAULT_RUNS})")
     args = parser.parse_args()
     return args
 
-def run_all_experiment(runs, algorithm_name, key_size, error_method, error_rates):
-    for error_rate in error_rates:
-        run_experiment(runs, algorithm_name, key_size, error_method, error_rate)
+def parse_experiments_file(file_name):
+    with open(file_name) as json_file:
+        experiments = json.load(json_file)
+    return experiments
 
-def run_experiment(runs, algorithm_name, key_size, error_method, error_rate):
-    experiment = Experiment(algorithm_name, key_size, error_rate, get_code_version())
-    for _ in range(runs):
-        run_reconciliation(experiment, algorithm_name, key_size, error_method, error_rate)
-    print(to_json(experiment), flush=True)
+def data_points_in_multiple_experiments(experiments):
+    total_nr_data_points = 0
+    for experiment in experiments:
+        total_nr_data_points += data_points_in_one_experiment(experiment)
+    return total_nr_data_points
 
-def run_reconciliation(experiment, algorithm, key_size, error_method, error_rate):
+def data_points_in_one_experiment(experiment):
+    error_rates = make_list(experiment['error_rate'])
+    key_sizes = make_list(experiment['key_size'])
+    return len(error_rates) * len(key_sizes)
+
+def run_experiment(experiment, total_nr_data_points):
+    algorithm = experiment['algorithm']
+    error_rates = make_list(experiment['error_rate'])
+    key_sizes = make_list(experiment['key_size'])
+    data_file_name = experiment['data_file']
+    with open(data_file_name, mode="w") as data_file:
+        data_point_nr = 0
+        for key_size in key_sizes:
+            for error_rate in error_rates:
+                # TODO: percent across ALL experiments in this process
+                percent = data_point_nr / total_nr_data_points * 100.0
+                print(f"percent={percent:.2f} "
+                      f"algorithm={algorithm} "
+                      f"key_size={key_size} "
+                      f"error_rate={error_rate:.4rf}")
+                data_point_nr += 1
+                produce_data_point(data_file, algorithm, key_size, "exact", error_rate)
+
+def make_list(value):
+    if isinstance(value, dict):
+        start = value['start']
+        end = value['end']
+        step = value['step']
+        lst = []
+        current = start
+        while current <= end:
+            lst.append(current)
+            current += step
+        return lst
+    return [value]
+
+def produce_data_point(data_file, algorithm, key_size, error_method, error_rate):
+    experiment = Experiment(algorithm, key_size, error_rate, get_code_version())
+    run_reconciliation(data_file, experiment, algorithm, key_size, error_method, error_rate)
+
+def run_reconciliation(data_file, experiment, algorithm, key_size, error_method, error_rate):
     # Key.set_random_seed(seed)
     # Shuffle.set_random_seed(seed+1)
     correct_key = Key.create_random_key(key_size)
@@ -107,6 +93,7 @@ def run_reconciliation(experiment, algorithm, key_size, error_method, error_rate
         experiment.remaining_frame_errors.record_value(1.0)
     else:
         experiment.remaining_frame_errors.record_value(0.0)
+    print(to_json(reconciliation.stats), file=data_file)
 
 def get_code_version():
     try:
@@ -116,6 +103,7 @@ def get_code_version():
     except git.InvalidGitRepositoryError:
         return "unknown"
 
+# TODO: need this?
 def to_json_encodeable_object(obj):
     members = dir(obj)
     if 'to_json_encodeable_object' in members:
@@ -133,7 +121,11 @@ def to_json(obj):
 
 def main():
     args = parse_command_line_arguments()
-    run_all_experiment(args.runs, args.algorithm, args.key_size, args.error_method, args.error_rate)
+    experiments = parse_experiments_file(args.experiments_file)
+    total_nr_data_points  = data_points_in_multiple_experiments(experiments)
+    for experiment in experiments:
+        run_experiment(experiment, total_nr_data_points)
+
 
 if __name__ == "__main__":
     main()

@@ -122,10 +122,9 @@ def to_json(obj):
 def main():
     args = parse_command_line_arguments()
     experiments = parse_experiments_file(args.experiments_file)
-    total_nr_data_points  = data_points_in_multiple_experiments(experiments)
+    total_nr_data_points = data_points_in_multiple_experiments(experiments)
     for experiment in experiments:
         run_experiment(experiment, total_nr_data_points)
-
 
 if __name__ == "__main__":
     main()

@@ -113,10 +113,10 @@ def read_data_points(data_file_name):
             data_points.append(data_point)
     return data_points
 
-def filter_data_points(data_points, filter):
-    filter_variable = filter['variable']
-    min_value = filter['value'] - filter['margin']
-    max_value = filter['value'] + filter['margin']
+def filter_data_points(data_points, filter_def):
+    filter_variable = filter_def['variable']
+    min_value = filter_def['value'] - filter_def['margin']
+    max_value = filter_def['value'] + filter_def['margin']
     filtered_data_points = []
     for data_point in data_points:
         value = data_point[filter_variable]

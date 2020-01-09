@@ -15,13 +15,13 @@
                 "data_file": "data__algorithm=original;key_size=10000;error_rate=0.00-0.11",
                 "legend": "original",
                 "line_color": "black",
-                "variance_color": "lightgray"
+                "deviation_color": "lightgray"
             },
             {
                 "data_file": "data__algorithm=biconf;key_size=10000;error_rate=0.00-0.11",
                 "legend": "biconf",
                 "line_color": "blue",
-                "variance_color": "lightblue"
+                "deviation_color": "lightblue"
             }
         ]
     }

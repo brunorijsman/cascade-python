@@ -50,7 +50,7 @@ def produce_graph(graph):
 def plot_series(figure, x_axis_variable, y_axis_variable, series):
     data_file_name = series['data_file']
     data_points = read_data_points(data_file_name)
-    # plot_deviation(experiments, figure, x_var, y_var, color)
+    plot_deviation(figure, series, x_axis_variable, y_axis_variable, data_points)
     plot_average(figure, series, x_axis_variable, y_axis_variable, data_points)
 
 def plot_average(figure, series, x_axis_variable, y_axis_variable, data_points):
@@ -67,29 +67,28 @@ def plot_average(figure, series, x_axis_variable, y_axis_variable, data_points):
         line=dict(color=series['line_color'], width=1))
     figure.add_trace(line)
 
-# def plot_deviation(experiments, figure, x_var, y_var, color):
-#     xs = []
-#     ys_upper = []
-#     ys_lower = []
-#     for experiment in experiments:
-#         xs.append(experiment[x_var])
-#         average = experiment[y_var]['average']
-#         deviation = experiment[y_var]['deviation']
-#         ys_upper.append(average + deviation)
-#         ys_lower.append(average - deviation)
-#     xs = xs + xs[::-1]
-#     ys = ys_upper + ys_lower[::-1]
-#     color = 'light' + color
-#     line = go.Scatter(
-#         x=xs,
-#         y=ys,
-#         showlegend=False,
-#         hoverinfo='none',
-#         fill='toself',
-#         line_color=color,
-#         fillcolor=color,
-#         opacity=0.4)
-#     figure.add_trace(line)
+def plot_deviation(figure, series, x_axis_variable, y_axis_variable, data_points):
+    xs = []
+    ys_upper = []
+    ys_lower = []
+    for data_point in data_points:
+        xs.append(data_point[x_axis_variable])
+        average = data_point[y_axis_variable]['average']
+        deviation = data_point[y_axis_variable]['deviation']
+        ys_upper.append(average + deviation)
+        ys_lower.append(average - deviation)
+    xs = xs + xs[::-1]
+    ys = ys_upper + ys_lower[::-1]
+    line = go.Scatter(
+        x=xs,
+        y=ys,
+        showlegend=False,
+        hoverinfo='none',
+        fill='toself',
+        line_color=series['deviation_color'],
+        fillcolor=series['deviation_color'],
+        opacity=0.4)
+    figure.add_trace(line)
 
 def read_data_points(data_file_name):
     data_points = []

@@ -4,11 +4,11 @@ from aggregate_stats import AggregateStats
 
 class DataPoint:
 
-    def __init__(self, algorithm_name, key_size, requested_error_rate, code_version):
+    def __init__(self, algorithm_name, key_size, requested_bit_error_rate, code_version):
         self.execution_time = time.strftime('%Y-%m-%d %H:%M:%S %Z')
         self.algorithm_name = algorithm_name
         self.key_size = key_size
-        self.requested_error_rate = requested_error_rate
+        self.requested_bit_error_rate = requested_bit_error_rate
         self.code_version = code_version
         self.reconciliations = 0
         self.actual_bit_errors = AggregateStats()
@@ -26,7 +26,7 @@ class DataPoint:
         self.infer_parity_blocks = AggregateStats()
         self.remaining_bit_errors = AggregateStats()
         self.remaining_bit_error_rate = AggregateStats()
-        self.remaining_frame_errors = AggregateStats()
+        self.remaining_frame_error_rate = AggregateStats()
 
     def record_reconciliation_stats(self, stats):
         self.reconciliations += 1

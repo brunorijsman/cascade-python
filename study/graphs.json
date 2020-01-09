@@ -4,7 +4,7 @@
         "title": "Figure 1 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
         "x_axis": {
             "title": "Quantum Bit Error Rate (QBER)",
-            "variable": "requested_error_rate"
+            "variable": "requested_bit_error_rate"
         },
         "y_axis": {
             "title": "Reconciliation efficiency",
@@ -30,7 +30,7 @@
         "title": "Figure 2 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
         "x_axis": {
             "title": "Quantum Bit Error Rate (QBER)",
-            "variable": "requested_error_rate"
+            "variable": "requested_bit_error_rate"
         },
         "y_axis": {
             "title": "Channel uses",
@@ -66,38 +66,68 @@
         },
         "series": [
             {
-                "data_file": "data__algorithm=original;key_size=1e2-1e6;error_rate=0.01,0.02,0.05",
+                "data_file": "data__algorithm=original;key_size=1e2-1e6;error_rate=0.01",
                 "legend": "Q=1%",
                 "line_color": "red",
-                "deviation_color": "none",
-                "filter": {
-                    "variable": "requested_error_rate",
-                    "value": 0.01,
-                    "margin": 0.001
-                }
+                "deviation_color": "none"
             },
             {
-                "data_file": "data__algorithm=original;key_size=1e2-1e6;error_rate=0.01,0.02,0.05",
+                "data_file": "data__algorithm=original;key_size=1e2-1e6;error_rate=0.02",
                 "legend": "Q=2%",
                 "line_color": "green",
-                "deviation_color": "none",
-                "filter": {
-                    "variable": "requested_error_rate",
-                    "value": 0.02,
-                    "margin": 0.001
-                }
+                "deviation_color": "none"
             },
             {
-                "data_file": "data__algorithm=original;key_size=1e2-1e6;error_rate=0.01,0.02,0.05",
+                "data_file": "data__algorithm=original;key_size=1e2-1e6;error_rate=0.05",
                 "legend": "Q=5%",
+                "line_color": "blue",
+                "deviation_color": "none"
+            }
+        ]
+    },
+    {
+        "graph_name": "demystifying_figure_4",
+        "title": "Figure 4 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
+        "x_axis": {
+            "title": "Quantum Bit Error Rate (QBER)",
+            "variable": "requested_bit_error_rate",
+            "range": [0.0, 1.1]
+        },
+        "y_axis": {
+            "title": "Frame error rate",
+            "type": "log",
+            "variable": "remaining_frame_error_rate",
+            "range": [-6.0, 0.0]
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=original;key_size=10000;error_rate=0.00-0.11",
+                "legend": "original key_size=10,000",
+                "mode": "lines+markers",
+                "marker": {
+                    "symbol": "circle"
+                },
+                "line_color": "black",
+                "deviation_color": "none",
+                "filter": {
+                    "variable": "remaining_frame_error_rate",
+                    "min_value": 1e-8
+                }                
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=10000;error_rate=0.00-0.11",
+                "legend": "biconf key_size=10,000",
+                "mode": "lines+markers",
+                "marker": {
+                    "symbol": "triangle-down"
+                },
                 "line_color": "blue",
                 "deviation_color": "none",
                 "filter": {
-                    "variable": "requested_error_rate",
-                    "value": 0.05,
-                    "margin": 0.001
-                }
+                    "variable": "remaining_frame_error_rate",
+                    "min_value": 1e-8
+                }                
             }
-        ]
+       ]
     }
 ]

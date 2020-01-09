@@ -112,9 +112,9 @@ def run_reconciliation(data_point, algorithm, key_size, error_method, error_rate
     remaining_bit_error_rate = remaining_bit_errors / key_size
     data_point.remaining_bit_error_rate.record_value(remaining_bit_error_rate)
     if remaining_bit_errors > 0:
-        data_point.remaining_frame_errors.record_value(1.0)
+        data_point.remaining_frame_error_rate.record_value(1.0)
     else:
-        data_point.remaining_frame_errors.record_value(0.0)
+        data_point.remaining_frame_error_rate.record_value(0.0)
 
 def get_code_version():
     try:

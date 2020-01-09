@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 
 def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Produce graph for Cascade experimental results")
-    parser.add_argument('graphs_file_name', metavar="graphs-file", type=str, 
+    parser.add_argument('graphs_file_name', metavar="graphs-file", type=str,
                         help="graphs definition file")
     parser.add_argument('-g', '--graph-name', type=str,
                         help=f"name of graph to produce (default: produce all graphs)")
@@ -26,32 +26,34 @@ def select_graph(graphs, graph_name):
 
 def produce_graph(graph):
     figure = go.Figure()
+    x_axis = dict(title=graph['x_axis']['title'],
+                  type=graph['x_axis'].get('type', 'linear'),
+                  showline=True,
+                  linecolor='black',
+                  showgrid=True,
+                  gridcolor='lightgray',
+                  showticklabels=True,
+                  linewidth=1,
+                  ticks='outside',
+                  tickfont=dict(family='Arial', size=12, color='black'))
+    if 'range' in graph['x_axis']:
+        x_axis['range'] = graph['x_axis']['range']
+    y_axis = dict(title=graph['y_axis']['title'],
+                  type=graph['y_axis'].get('type', 'linear'),
+                  showline=True,
+                  linecolor='black',
+                  showgrid=True,
+                  gridcolor='lightgray',
+                  showticklabels=True,
+                  linewidth=1,
+                  ticks='outside',
+                  tickfont=dict(family='Arial', size=12, color='black'))
+    if 'range' in graph['y_axis']:
+        y_axis['range'] = graph['y_axis']['range']
     figure.update_layout(
         title=graph['title'],
-        xaxis=dict(
-            title=graph['x_axis']['title'],
-            type=graph['x_axis'].get('type', 'linear'),
-            showline=True,
-            linecolor='black',
-            showgrid=True,
-            gridcolor='lightgray',
-            showticklabels=True,
-            linewidth=1,
-            ticks='outside',
-            tickfont=dict(family='Arial', size=12, color='black'),
-        ),
-        yaxis=dict(
-            title=graph['y_axis']['title'],
-            type=graph['y_axis'].get('type', 'linear'),
-            showline=True,
-            linecolor='black',
-            showgrid=True,
-            gridcolor='lightgray',
-            showticklabels=True,
-            linewidth=1,
-            ticks='outside',
-            tickfont=dict(family='Arial', size=12, color='black'),
-        ),
+        xaxis=x_axis,
+        yaxis=y_axis,
         plot_bgcolor='white')
     x_axis_variable = graph['x_axis']['variable']
     y_axis_variable = graph['y_axis']['variable']
@@ -74,11 +76,14 @@ def plot_average(figure, series, x_axis_variable, y_axis_variable, data_points):
     for data_point in data_points:
         xs.append(data_point[x_axis_variable])
         ys.append(data_point[y_axis_variable]['average'])
+    mode = series.get('mode', 'lines')
+    marker = series.get('marker', {})
     line = go.Scatter(
         x=xs,
         y=ys,
         name=series['legend'],
-        mode='lines',
+        mode=mode,
+        marker=marker,
         line=dict(color=series['line_color'], width=1))
     figure.add_trace(line)
 
@@ -115,14 +120,26 @@ def read_data_points(data_file_name):
 
 def filter_data_points(data_points, filter_def):
     filter_variable = filter_def['variable']
-    min_value = filter_def['value'] - filter_def['margin']
-    max_value = filter_def['value'] + filter_def['margin']
+    min_value = None
+    max_value = None
+    if 'value' in filter_def:
+        min_value = filter_def['value'] - filter_def['margin']
+        max_value = filter_def['value'] + filter_def['margin']
+    if 'min_value' in filter_def:
+        min_value = filter_def['min_value']
+    if 'max_value' in filter_def:
+        max_value = filter_def['max_value']
     filtered_data_points = []
     for data_point in data_points:
         value = data_point[filter_variable]
         if isinstance(value, dict):
             value = value['average']
-        if min_value <= value <= max_value:
+        keep = True
+        if min_value is not None and value < min_value:
+            keep = False
+        if max_value is not None and value > max_value:
+            keep = False
+        if keep:
             filtered_data_points.append(data_point)
     return filtered_data_points
 

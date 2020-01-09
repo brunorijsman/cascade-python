@@ -2,7 +2,7 @@ import time
 
 from aggregate_stats import AggregateStats
 
-class Experiment:
+class DataPoint:
 
     def __init__(self, algorithm_name, key_size, requested_error_rate, code_version):
         self.execution_time = time.strftime('%Y-%m-%d %H:%M:%S %Z')

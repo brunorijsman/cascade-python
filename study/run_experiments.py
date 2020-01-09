@@ -6,7 +6,7 @@ from cascade.key import Key
 from cascade.mock_classical_channel import MockClassicalChannel
 from cascade.reconciliation import Reconciliation
 
-from study.experiment import Experiment
+from study.data_point import DataPoint
 
 DEFAULT_RUNS = 10         # TODO: Make this a larger number
 
@@ -34,7 +34,6 @@ def data_points_in_one_experiment(experiment):
     error_rates = make_list(experiment['error_rate'])
     key_sizes = make_list(experiment['key_size'])
     return len(error_rates) * len(key_sizes)
-
 
 def run_multiple_experiments(experiments):
     total_nr_data_points = data_points_in_multiple_experiments(experiments)
@@ -74,30 +73,30 @@ def make_list(value):
     return [value]
 
 def produce_data_point(data_file, algorithm, key_size, error_method, error_rate):
-    experiment = Experiment(algorithm, key_size, error_rate, get_code_version())
-    run_reconciliation(data_file, experiment, algorithm, key_size, error_method, error_rate)
+    run_reconciliation(data_file, algorithm, key_size, error_method, error_rate)
 
-def run_reconciliation(data_file, experiment, algorithm, key_size, error_method, error_rate):
+def run_reconciliation(data_file, algorithm, key_size, error_method, error_rate):
     # Key.set_random_seed(seed)
     # Shuffle.set_random_seed(seed+1)
+    data_point = DataPoint(algorithm, key_size, error_rate, get_code_version())
     correct_key = Key.create_random_key(key_size)
     noisy_key = correct_key.copy(error_rate, error_method)
     actual_bit_errors = correct_key.difference(noisy_key)
-    experiment.actual_bit_errors.record_value(actual_bit_errors)
+    data_point.actual_bit_errors.record_value(actual_bit_errors)
     actual_bit_error_rate = actual_bit_errors / key_size
-    experiment.actual_bit_error_rate.record_value(actual_bit_error_rate)
+    data_point.actual_bit_error_rate.record_value(actual_bit_error_rate)
     mock_classical_channel = MockClassicalChannel(correct_key)
     reconciliation = Reconciliation(algorithm, mock_classical_channel, noisy_key, error_rate)
     reconciliated_key = reconciliation.reconcile()
-    experiment.record_reconciliation_stats(reconciliation.stats)
+    data_point.record_reconciliation_stats(reconciliation.stats)
     remaining_bit_errors = correct_key.difference(reconciliated_key)
-    experiment.remaining_bit_errors.record_value(remaining_bit_errors)
+    data_point.remaining_bit_errors.record_value(remaining_bit_errors)
     remaining_bit_error_rate = remaining_bit_errors / key_size
-    experiment.remaining_bit_error_rate.record_value(remaining_bit_error_rate)
+    data_point.remaining_bit_error_rate.record_value(remaining_bit_error_rate)
     if remaining_bit_errors > 0:
-        experiment.remaining_frame_errors.record_value(1.0)
+        data_point.remaining_frame_errors.record_value(1.0)
     else:
-        experiment.remaining_frame_errors.record_value(0.0)
+        data_point.remaining_frame_errors.record_value(0.0)
     print(to_json(reconciliation.stats), file=data_file)
 
 def get_code_version():

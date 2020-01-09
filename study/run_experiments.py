@@ -8,14 +8,12 @@ from cascade.reconciliation import Reconciliation
 
 from study.experiment import Experiment
 
-DEFAULT_EXPERIMENTS_FILE = "experiments.json"
 DEFAULT_RUNS = 10         # TODO: Make this a larger number
 
 def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade experiments")
-    parser.add_argument('experiments_file', metavar="experiments-file", type=str, nargs='?',
-                        default=DEFAULT_EXPERIMENTS_FILE,
-                        help=f"experiments file (default {DEFAULT_EXPERIMENTS_FILE})")
+    parser.add_argument('experiments_file_name', metavar="experiments-file", type=str,
+                        help="experiments definition file")
     parser.add_argument('-r', '--runs', type=int, default=DEFAULT_RUNS,
                         help=f"number of reconciliation runs (default {DEFAULT_RUNS})")
     args = parser.parse_args()
@@ -51,7 +49,7 @@ def run_experiment(experiment, total_nr_data_points):
                 print(f"percent={percent:.2f} "
                       f"algorithm={algorithm} "
                       f"key_size={key_size} "
-                      f"error_rate={error_rate:.4rf}")
+                      f"error_rate={error_rate:.4f}")
                 data_point_nr += 1
                 produce_data_point(data_file, algorithm, key_size, "exact", error_rate)
 
@@ -103,7 +101,6 @@ def get_code_version():
     except git.InvalidGitRepositoryError:
         return "unknown"
 
-# TODO: need this?
 def to_json_encodeable_object(obj):
     members = dir(obj)
     if 'to_json_encodeable_object' in members:
@@ -121,7 +118,7 @@ def to_json(obj):
 
 def main():
     args = parse_command_line_arguments()
-    experiments = parse_experiments_file(args.experiments_file)
+    experiments = parse_experiments_file(args.experiments_file_name)
     total_nr_data_points = data_points_in_multiple_experiments(experiments)
     for experiment in experiments:
         run_experiment(experiment, total_nr_data_points)

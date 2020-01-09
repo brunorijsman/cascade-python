@@ -1,7 +1,8 @@
+import sys
+
 import argparse
 import json
 import git
-import sys
 
 from cascade.key import Key
 from cascade.mock_classical_channel import MockClassicalChannel

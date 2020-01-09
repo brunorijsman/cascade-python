@@ -2,7 +2,6 @@
     {
         "graph_name": "demystifying_figure_1",
         "title": "Figure 1 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
-        "name": "demystifying_paper_figure_1___efficiency_vs_qber",
         "x_axis": {
             "title": "Quantum Bit Error Rate (QBER)",
             "variable": "requested_error_rate"
@@ -29,7 +28,6 @@
     {
         "graph_name": "demystifying_figure_2",
         "title": "Figure 2 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
-        "name": "demystifying_paper_figure_2___channel_uses_vs_qber",
         "x_axis": {
             "title": "Quantum Bit Error Rate (QBER)",
             "variable": "requested_error_rate"
@@ -50,6 +48,55 @@
                 "legend": "biconf",
                 "line_color": "blue",
                 "deviation_color": "lightblue"
+            }
+        ]
+    },
+    {
+        "graph_name": "demystifying_figure_3",
+        "title": "Figure 3 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
+        "x_axis": {
+            "title": "Key Size",
+            "type": "log",
+            "variable": "key_size"
+        },
+        "y_axis": {
+            "title": "Channel uses",
+            "type": "log",
+            "variable": "ask_parity_messages"
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=original;key_size=1e2-1e6;error_rate=0.01,0.02,0.05",
+                "legend": "Q=1%",
+                "line_color": "red",
+                "deviation_color": "none",
+                "filter": {
+                    "variable": "requested_error_rate",
+                    "value": 0.01,
+                    "margin": 0.001
+                }
+            },
+            {
+                "data_file": "data__algorithm=original;key_size=1e2-1e6;error_rate=0.01,0.02,0.05",
+                "legend": "Q=2%",
+                "line_color": "green",
+                "deviation_color": "none",
+                "filter": {
+                    "variable": "requested_error_rate",
+                    "value": 0.02,
+                    "margin": 0.001
+                }
+            },
+            {
+                "data_file": "data__algorithm=original;key_size=1e2-1e6;error_rate=0.01,0.02,0.05",
+                "legend": "Q=5%",
+                "line_color": "blue",
+                "deviation_color": "none",
+                "filter": {
+                    "variable": "requested_error_rate",
+                    "value": 0.05,
+                    "margin": 0.001
+                }
             }
         ]
     }

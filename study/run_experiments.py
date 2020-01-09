@@ -35,16 +35,22 @@ def data_points_in_one_experiment(experiment):
     key_sizes = make_list(experiment['key_size'])
     return len(error_rates) * len(key_sizes)
 
-def run_experiment(experiment, total_nr_data_points):
+
+def run_multiple_experiments(experiments):
+    total_nr_data_points = data_points_in_multiple_experiments(experiments)
+    data_point_nr = 0
+    for experiment in experiments:
+        data_point_nr = run_experiment(experiment, data_point_nr, total_nr_data_points)
+
+def run_experiment(experiment, start_data_point_nr, total_nr_data_points):
     algorithm = experiment['algorithm']
     error_rates = make_list(experiment['error_rate'])
     key_sizes = make_list(experiment['key_size'])
     data_file_name = experiment['data_file']
+    data_point_nr = start_data_point_nr
     with open(data_file_name, mode="w") as data_file:
-        data_point_nr = 0
         for key_size in key_sizes:
             for error_rate in error_rates:
-                # TODO: percent across ALL experiments in this process
                 percent = data_point_nr / total_nr_data_points * 100.0
                 print(f"percent={percent:.2f} "
                       f"algorithm={algorithm} "
@@ -52,6 +58,7 @@ def run_experiment(experiment, total_nr_data_points):
                       f"error_rate={error_rate:.4f}")
                 data_point_nr += 1
                 produce_data_point(data_file, algorithm, key_size, "exact", error_rate)
+    return data_point_nr
 
 def make_list(value):
     if isinstance(value, dict):
@@ -119,9 +126,7 @@ def to_json(obj):
 def main():
     args = parse_command_line_arguments()
     experiments = parse_experiments_file(args.experiments_file_name)
-    total_nr_data_points = data_points_in_multiple_experiments(experiments)
-    for experiment in experiments:
-        run_experiment(experiment, total_nr_data_points)
+    run_multiple_experiments(experiments)
 
 if __name__ == "__main__":
     main()

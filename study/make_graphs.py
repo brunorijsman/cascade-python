@@ -18,6 +18,7 @@ def parse_graphs_file(graphs_file_name):
 def produce_graph(graph):
     figure = go.Figure()
     figure.update_layout(
+        title=graph['title'],
         xaxis=dict(
             showline=True,
             linecolor='black',

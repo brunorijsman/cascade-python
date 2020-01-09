@@ -1,22 +1,32 @@
 [
     {
+        "experiment_name": "algorithm=original;key_size=10000;error_rate=0.00-0.11",
         "algorithm": "original",
         "error_rate": {
             "start": 0.00,
             "end": 0.11,
-            "step": 0.01
+            "step_size": 0.001
         },
-        "key_size": 10000,
-        "data_file": "data__algorithm=original;key_size=10000;error_rate=0.00-0.11"
+        "key_size": 10000
     },
     {
+        "experiment_name": "algorithm=biconf;key_size=10000;error_rate=0.00-0.11",
         "algorithm": "biconf",
         "error_rate": {
             "start": 0.00,
             "end": 0.11,
-            "step": 0.01
+            "step_size": 0.001
         },
-        "key_size": 10000,
-        "data_file": "data__algorithm=biconf;key_size=10000;error_rate=0.00-0.11"
+        "key_size": 10000
+    },
+    {
+        "experiment_name": "algorithm=original;key_size=1e2-1e6;error_rate=0.01,0.02,0.05",
+        "algorithm": "original",
+        "error_rate": [0.01, 0.02, 0.05],
+        "key_size": {
+            "start": 1e3,
+            "end": 1e6,
+            "step_factor": 10.0
+        }
     }
 ]

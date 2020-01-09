@@ -1,6 +1,7 @@
 import argparse
 import json
 import git
+import sys
 
 from cascade.key import Key
 from cascade.mock_classical_channel import MockClassicalChannel
@@ -14,8 +15,12 @@ def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade experiments")
     parser.add_argument('experiments_file_name', metavar="experiments-file", type=str,
                         help="experiments definition file")
+    # TODO: Move runs to definition file, and replace with sample argument
     parser.add_argument('-r', '--runs', type=int, default=DEFAULT_RUNS,
-                        help=f"number of reconciliation runs (default {DEFAULT_RUNS})")
+                        help=(f"number of reconciliation runs per experiment "
+                              f"(default: {DEFAULT_RUNS})"))
+    parser.add_argument('-e', '--experiment-name', type=str,
+                        help=f"name of experiment to run (default: run all experiments)")
     args = parser.parse_args()
     return args
 
@@ -23,6 +28,12 @@ def parse_experiments_file(file_name):
     with open(file_name) as json_file:
         experiments = json.load(json_file)
     return experiments
+
+def select_experiment(experiments, experiment_name):
+    for experiment in experiments:
+        if experiment['experiment_name'] == experiment_name:
+            return [experiment]
+    sys.exit(f"Experiment name {experiment_name} not found")
 
 def data_points_in_multiple_experiments(experiments):
     total_nr_data_points = 0
@@ -44,8 +55,9 @@ def run_multiple_experiments(experiments, runs):
 def run_experiment(experiment, runs, start_data_point_nr, total_nr_data_points):
     algorithm = experiment['algorithm']
     error_rates = make_list(experiment['error_rate'])
-    key_sizes = make_list(experiment['key_size'])
-    data_file_name = experiment['data_file']
+    key_sizes = [round(v) for v in make_list(experiment['key_size'])]
+    experiment_name = experiment['experiment_name']
+    data_file_name = "data__" + experiment_name
     data_point_nr = start_data_point_nr
     with open(data_file_name, mode="w") as data_file:
         for key_size in key_sizes:
@@ -63,14 +75,17 @@ def make_list(value):
     if isinstance(value, dict):
         start = value['start']
         end = value['end']
-        step = value['step']
+        assert ('step_size' in value) != ('step_factor' in value)   # logical xor
+        step_size = value.get('step_size', 0.0)
+        step_factor = value.get('step_factor', 1.0)
         lst = []
         current = start
         while current <= end:
             lst.append(current)
-            current += step
+            current += step_size
+            current *= step_factor
         return lst
-    return [value]
+    return value
 
 def produce_data_point(data_file, runs, algorithm, key_size, error_method, error_rate):
     data_point = DataPoint(algorithm, key_size, error_rate, get_code_version())
@@ -126,6 +141,8 @@ def to_json(obj):
 def main():
     args = parse_command_line_arguments()
     experiments = parse_experiments_file(args.experiments_file_name)
+    if args.experiment_name is not None:
+        experiments = select_experiment(experiments, args.experiment_name)
     runs = args.runs
     run_multiple_experiments(experiments, runs)
 

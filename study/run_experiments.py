@@ -35,13 +35,13 @@ def data_points_in_one_experiment(experiment):
     key_sizes = make_list(experiment['key_size'])
     return len(error_rates) * len(key_sizes)
 
-def run_multiple_experiments(experiments):
+def run_multiple_experiments(experiments, runs):
     total_nr_data_points = data_points_in_multiple_experiments(experiments)
     data_point_nr = 0
     for experiment in experiments:
-        data_point_nr = run_experiment(experiment, data_point_nr, total_nr_data_points)
+        data_point_nr = run_experiment(experiment, runs, data_point_nr, total_nr_data_points)
 
-def run_experiment(experiment, start_data_point_nr, total_nr_data_points):
+def run_experiment(experiment, runs, start_data_point_nr, total_nr_data_points):
     algorithm = experiment['algorithm']
     error_rates = make_list(experiment['error_rate'])
     key_sizes = make_list(experiment['key_size'])
@@ -56,7 +56,7 @@ def run_experiment(experiment, start_data_point_nr, total_nr_data_points):
                       f"key_size={key_size} "
                       f"error_rate={error_rate:.4f}")
                 data_point_nr += 1
-                produce_data_point(data_file, algorithm, key_size, "exact", error_rate)
+                produce_data_point(data_file, runs, algorithm, key_size, "exact", error_rate)
     return data_point_nr
 
 def make_list(value):
@@ -72,13 +72,15 @@ def make_list(value):
         return lst
     return [value]
 
-def produce_data_point(data_file, algorithm, key_size, error_method, error_rate):
-    run_reconciliation(data_file, algorithm, key_size, error_method, error_rate)
+def produce_data_point(data_file, runs, algorithm, key_size, error_method, error_rate):
+    data_point = DataPoint(algorithm, key_size, error_rate, get_code_version())
+    for _ in range(runs):
+        run_reconciliation(data_point, algorithm, key_size, error_method, error_rate)
+    print(to_json(data_point), file=data_file)
 
-def run_reconciliation(data_file, algorithm, key_size, error_method, error_rate):
+def run_reconciliation(data_point, algorithm, key_size, error_method, error_rate):
     # Key.set_random_seed(seed)
     # Shuffle.set_random_seed(seed+1)
-    data_point = DataPoint(algorithm, key_size, error_rate, get_code_version())
     correct_key = Key.create_random_key(key_size)
     noisy_key = correct_key.copy(error_rate, error_method)
     actual_bit_errors = correct_key.difference(noisy_key)
@@ -97,7 +99,6 @@ def run_reconciliation(data_file, algorithm, key_size, error_method, error_rate)
         data_point.remaining_frame_errors.record_value(1.0)
     else:
         data_point.remaining_frame_errors.record_value(0.0)
-    print(to_json(reconciliation.stats), file=data_file)
 
 def get_code_version():
     try:
@@ -125,7 +126,8 @@ def to_json(obj):
 def main():
     args = parse_command_line_arguments()
     experiments = parse_experiments_file(args.experiments_file_name)
-    run_multiple_experiments(experiments)
+    runs = args.runs
+    run_multiple_experiments(experiments, runs)
 
 if __name__ == "__main__":
     main()

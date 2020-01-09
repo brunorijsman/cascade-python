@@ -123,7 +123,6 @@ def filter_data_points(data_points, filter):
         if isinstance(value, dict):
             value = value['average']
         if min_value <= value <= max_value:
-            print(data_point)
             filtered_data_points.append(data_point)
     return filtered_data_points
 

@@ -383,5 +383,37 @@
                 }                
             }
         ]
-    }
+    },
+    {
+        "graph_name": "demystifying_figure_11",
+        "title": "Figure 11 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
+        "x_axis": {
+            "title": "Quantum Bit Error Rate (QBER)",
+            "variable": "requested_bit_error_rate"
+        },
+        "y_axis": {
+            "title": "Reconciliation efficiency",
+            "variable": "unrealistic_efficiency"
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
+                "legend": "Cascade orig.",
+                "line_color": "black",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=option3;key_size=10000;error_rate=vary",
+                "legend": "Cascade opt. (3)",
+                "line_color": "green",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=option4;key_size=10000;error_rate=vary",
+                "legend": "Cascade opt. (4)",
+                "line_color": "brown",
+                "deviation_color": "none"
+            }
+        ]
+    }    
 ]

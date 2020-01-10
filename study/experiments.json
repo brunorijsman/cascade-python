@@ -1,51 +1,21 @@
 [
     {
-        "experiment_name": "algorithm=original;key_size=10000;error_rate=0.00-0.11",
-        "algorithm": "original",
+        "independent_variable": "error_rate",
+        "algorithm": ["original", "biconf"],
         "error_rate": {
             "start": 0.00,
             "end": 0.11,
             "step_size": 0.001
         },
-        "key_size": 10000
+        "key_size": [1000, 10000]
     },
     {
-        "experiment_name": "algorithm=biconf;key_size=10000;error_rate=0.00-0.11",
-        "algorithm": "biconf",
-        "error_rate": {
-            "start": 0.00,
-            "end": 0.11,
-            "step_size": 0.001
-        },
-        "key_size": 10000
-    },
-    {
-        "experiment_name": "algorithm=original;key_size=1e2-1e6;error_rate=0.01",
+        "independent_variable": "key_size",
         "algorithm": "original",
-        "error_rate": 0.01,
+        "error_rate": [0.01, 0.02, 0.05],
         "key_size": {
             "start": 1e3,
-            "end": 1e6,
-            "step_factor": 3.16227766
-        }
-    },
-    {
-        "experiment_name": "algorithm=original;key_size=1e2-1e6;error_rate=0.02",
-        "algorithm": "original",
-        "error_rate": 0.02,
-        "key_size": {
-            "start": 1e3,
-            "end": 1e6,
-            "step_factor": 3.16227766
-        }
-    },
-    {
-        "experiment_name": "algorithm=original;key_size=1e2-1e6;error_rate=0.05",
-        "algorithm": "original",
-        "error_rate": 0.05,
-        "key_size": {
-            "start": 1e3,
-            "end": 1e6,
+            "end": 1e5,
             "step_factor": 3.16227766
         }
     }

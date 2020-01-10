@@ -39,7 +39,6 @@ def produce_graph(graph):
     if 'range' in graph['x_axis']:
         x_axis['range'] = graph['x_axis']['range']
     y_axis = dict(title=graph['y_axis']['title'],
-                  type=graph['y_axis'].get('type', 'linear'),
                   showline=True,
                   linecolor='black',
                   showgrid=True,
@@ -48,6 +47,10 @@ def produce_graph(graph):
                   linewidth=1,
                   ticks='outside',
                   tickfont=dict(family='Arial', size=12, color='black'))
+    if graph['y_axis'].get('type') == 'log':
+        y_axis['type'] = 'log'
+        y_axis['showexponent'] = 'all'
+        y_axis['exponentformat'] = 'e'
     if 'range' in graph['y_axis']:
         y_axis['range'] = graph['y_axis']['range']
     figure.update_layout(

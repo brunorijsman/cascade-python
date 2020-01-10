@@ -18,10 +18,8 @@ def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade experiments")
     parser.add_argument('experiments_file_name', metavar="experiments-file", type=str,
                         help="experiments definition file")
-    # TODO: Move runs to definition file, and replace with sample argument
-    parser.add_argument('-r', '--runs', type=int, default=DEFAULT_RUNS,
-                        help=(f"number of reconciliation runs per experiment "
-                              f"(default: {DEFAULT_RUNS})"))
+    parser.add_argument('-r', '--max-runs', type=int,
+                        help=f"maximum number of reconciliation runs per data point")
     args = parser.parse_args()
     return args
 
@@ -30,19 +28,22 @@ def parse_experiments_file(file_name):
         experiments = json.load(json_file)
     return experiments
 
-def experiments_to_series(experiments):
+def experiments_to_series(experiments, max_runs):
     all_series = []
     for experiment in experiments:
+        runs = experiment['runs']
+        if max_runs is not None and runs > max_runs:
+            runs = max_runs
         if experiment['independent_variable'] == 'error_rate':
-            experiment_series = experiment_to_error_rate_series(experiment)
+            experiment_series = experiment_to_error_rate_series(experiment, runs)
         elif experiment['independent_variable'] == 'key_size':
-            experiment_series = experiment_to_key_size_series(experiment)
+            experiment_series = experiment_to_key_size_series(experiment, runs)
         else:
             assert False
         all_series += experiment_series
     return all_series
 
-def experiment_to_error_rate_series(experiment):
+def experiment_to_error_rate_series(experiment, runs):
     series = []
     for algorithm in make_list(experiment['algorithm']):
         for key_size in make_list(experiment['key_size']):
@@ -50,18 +51,19 @@ def experiment_to_error_rate_series(experiment):
                          algorithms=[algorithm],
                          key_sizes=[key_size],
                          error_rates=make_list(experiment['error_rate']),
-                         runs=experiment['runs'])
+                         runs=runs)
             series.append(serie)
     return series
 
-def experiment_to_key_size_series(experiment):
+def experiment_to_key_size_series(experiment, runs):
     series = []
     for algorithm in make_list(experiment['algorithm']):
         for error_rate in make_list(experiment['error_rate']):
             serie = dict(name=f"algorithm={algorithm};key_size=vary;error_rate={error_rate}",
                          algorithms=[algorithm],
                          key_sizes=make_list(experiment['key_size'], do_round=True),
-                         error_rates=[error_rate])
+                         error_rates=[error_rate],
+                         runs=runs)
             series.append(serie)
     return series
 
@@ -178,7 +180,7 @@ def to_json(obj):
 def main():
     args = parse_command_line_arguments()
     experiments = parse_experiments_file(args.experiments_file_name)
-    series = experiments_to_series(experiments)
+    series = experiments_to_series(experiments, args.max_runs)
     compute_total_nr_data_points(series)
     run_series(series)
 

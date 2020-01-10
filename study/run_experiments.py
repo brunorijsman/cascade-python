@@ -49,7 +49,8 @@ def experiment_to_error_rate_series(experiment):
             serie = dict(name=f"algorithm={algorithm};key_size={key_size};error_rate=vary",
                          algorithms=[algorithm],
                          key_sizes=[key_size],
-                         error_rates=make_list(experiment['error_rate']))
+                         error_rates=make_list(experiment['error_rate']),
+                         runs=experiment['runs'])
             series.append(serie)
     return series
 
@@ -92,8 +93,8 @@ def compute_total_nr_data_points(series):
     global TOTAL_NR_DATA_POINTS
     TOTAL_NR_DATA_POINTS = 0
     for serie in series:
-        TOTAL_NR_DATA_POINTS += (len(serie['algorithms']) * 
-                                 len(serie['key_sizes']) * 
+        TOTAL_NR_DATA_POINTS += (len(serie['algorithms']) *
+                                 len(serie['key_sizes']) *
                                  len(serie['error_rates']))
 
 def run_series(series):
@@ -104,23 +105,24 @@ def run_series(series):
         run_serie(serie)
 
 def run_serie(serie):
+    runs = serie['runs']
     data_file_name = "data__" + serie['name']
     with open(data_file_name, mode="w") as data_file:
         for algorithm in serie['algorithms']:
             for key_size in serie['key_sizes']:
                 for error_rate in serie['error_rates']:
-                    # TODO: put number of runs in definition
-                    produce_data_point(data_file, 10, algorithm, key_size, "exact", error_rate)
-                    report_data_point_done(algorithm, key_size, error_rate)
+                    produce_data_point(data_file, runs, algorithm, key_size, "exact", error_rate)
+                    report_data_point_done(algorithm, key_size, error_rate, runs)
 
-def report_data_point_done(algorithm, key_size, error_rate):
+def report_data_point_done(algorithm, key_size, error_rate, runs):
     global CURRENT_DATA_POINT_NR, TOTAL_NR_DATA_POINTS
     CURRENT_DATA_POINT_NR += 1
     percent = CURRENT_DATA_POINT_NR / TOTAL_NR_DATA_POINTS * 100.0
     print(f"percent={percent:.2f} "
           f"algorithm={algorithm} "
           f"key_size={key_size} "
-          f"error_rate={error_rate:.4f}")
+          f"error_rate={error_rate:.4f} "
+          f"runs={runs}")
 
 def produce_data_point(data_file, runs, algorithm, key_size, error_method, error_rate):
     data_point = DataPoint(algorithm, key_size, error_rate, get_code_version())

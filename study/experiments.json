@@ -1,7 +1,7 @@
 [
     {
         "independent_variable": "error_rate",
-        "algorithm": ["original", "biconf"],
+        "algorithm": "all",
         "error_rate": {
             "start": 0.00,
             "end": 0.11,

@@ -106,7 +106,7 @@ def _yanetal_block_size_function(estimated_bit_error_rate, key_size, iteration):
         return math.ceil(0.80 / estimated_bit_error_rate)
     if iteration == 2:
         return 5 * _yanetal_block_size_function(estimated_bit_error_rate, key_size, iteration - 1)
-    return key_size / 2
+    return key_size // 2
 
 _YANETAL_ALGORITHM = Algorithm(name="yanetal",
                                cascade_iterations=10,
@@ -128,7 +128,7 @@ def _yanetal_block_size_function(estimated_bit_error_rate, key_size, iteration):
         return math.ceil(0.80 / estimated_bit_error_rate)
     if iteration == 2:
         return 5 * _yanetal_block_size_function(estimated_bit_error_rate, key_size, iteration - 1)
-    return key_size / 2
+    return key_size // 2
 
 _YANETAL_ALGORITHM = Algorithm(name="yanetal",
                                cascade_iterations=10,
@@ -151,7 +151,7 @@ def _option3456_block_size_function(estimated_bit_error_rate, key_size, iteratio
     if iteration == 2:
         return 2 * _option3456_block_size_function(estimated_bit_error_rate, key_size,
                                                    iteration - 1)
-    return key_size / 2
+    return key_size // 2
 
 _OPTION3_ALGORITHM = Algorithm(name="option3",
                                cascade_iterations=16,
@@ -189,10 +189,10 @@ def _option7_block_size_function(estimated_bit_error_rate, key_size, iteration):
     if estimated_bit_error_rate < _MIN_ESTIMATED_BIT_ERROR_RATE:
         estimated_bit_error_rate = _MIN_ESTIMATED_BIT_ERROR_RATE
     if iteration == 1:
-        return 2.0 ** math.ceil(math.log2(1.00 / estimated_bit_error_rate))
+        return 2 ** math.ceil(math.log2(1.00 / estimated_bit_error_rate))
     if iteration == 2:
-        return 4.0 * _option7_block_size_function(estimated_bit_error_rate, key_size, iteration - 1)
-    return key_size / 2
+        return 4 * _option7_block_size_function(estimated_bit_error_rate, key_size, iteration - 1)
+    return key_size // 2
 
 _OPTION7_ALGORITHM = Algorithm(name="option7",
                                cascade_iterations=14,
@@ -212,12 +212,12 @@ def _option8_block_size_function(estimated_bit_error_rate, key_size, iteration):
         estimated_bit_error_rate = _MIN_ESTIMATED_BIT_ERROR_RATE
     alpha = math.log2(1.00 / estimated_bit_error_rate) - 0.5
     if iteration == 1:
-        return 2.0 ** math.ceil(alpha)
+        return 2 ** math.ceil(alpha)
     if iteration == 2:
-        return 2.0 ** math.ceil((alpha + 12.0) / 2.0)
+        return 2 ** math.ceil((alpha + 12.0) / 2.0)
     if iteration == 3:
-        return 4096.0
-    return key_size / 2
+        return 4096
+    return key_size // 2
 
 _OPTION8_ALGORITHM = Algorithm(name="option8",
                                cascade_iterations=14,

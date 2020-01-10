@@ -2,6 +2,7 @@ import argparse
 import json
 import git
 
+from cascade.algorithm import ALGORITHMS
 from cascade.key import Key
 from cascade.mock_classical_channel import MockClassicalChannel
 from cascade.reconciliation import Reconciliation
@@ -45,7 +46,10 @@ def experiments_to_series(experiments, max_runs):
 
 def experiment_to_error_rate_series(experiment, runs):
     series = []
-    for algorithm in make_list(experiment['algorithm']):
+    algorithms = make_list(experiment['algorithm'])
+    if algorithms == ['all']:
+        algorithms = list(ALGORITHMS.keys())
+    for algorithm in algorithms:
         for key_size in make_list(experiment['key_size']):
             serie = dict(name=f"algorithm={algorithm};key_size={key_size};error_rate=vary",
                          algorithms=[algorithm],
@@ -57,7 +61,10 @@ def experiment_to_error_rate_series(experiment, runs):
 
 def experiment_to_key_size_series(experiment, runs):
     series = []
-    for algorithm in make_list(experiment['algorithm']):
+    algorithms = make_list(experiment['algorithm'])
+    if algorithms == ['all']:
+        algorithms = list(ALGORITHMS.keys())
+    for algorithm in algorithms:
         for error_rate in make_list(experiment['error_rate']):
             serie = dict(name=f"algorithm={algorithm};key_size=vary;error_rate={error_rate}",
                          algorithms=[algorithm],

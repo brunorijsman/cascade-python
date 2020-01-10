@@ -81,14 +81,17 @@ def plot_average(figure, series, x_axis_variable, y_axis_variable, data_points):
         ys.append(data_point[y_axis_variable]['average'])
     mode = series.get('mode', 'lines')
     marker = series.get('marker', {})
-    line = go.Scatter(
+    line = dict(color=series['line_color'], width=1)
+    if 'dash' in series:
+        line['dash'] = series['dash']
+    scatter = go.Scatter(
         x=xs,
         y=ys,
         name=series['legend'],
         mode=mode,
         marker=marker,
-        line=dict(color=series['line_color'], width=1))
-    figure.add_trace(line)
+        line=line)
+    figure.add_trace(scatter)
 
 def plot_deviation(figure, series, x_axis_variable, y_axis_variable, data_points):
     xs = []
@@ -102,7 +105,7 @@ def plot_deviation(figure, series, x_axis_variable, y_axis_variable, data_points
         ys_lower.append(average - deviation)
     xs = xs + xs[::-1]
     ys = ys_upper + ys_lower[::-1]
-    line = go.Scatter(
+    scatter = go.Scatter(
         x=xs,
         y=ys,
         showlegend=False,
@@ -111,7 +114,7 @@ def plot_deviation(figure, series, x_axis_variable, y_axis_variable, data_points
         line_color=series['deviation_color'],
         fillcolor=series['deviation_color'],
         opacity=0.4)
-    figure.add_trace(line)
+    figure.add_trace(scatter)
 
 def read_data_points(data_file_name):
     data_points = []

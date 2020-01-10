@@ -120,6 +120,7 @@
                 "marker": {
                     "symbol": "circle"
                 },
+                "dash": "dot",
                 "line_color": "black",
                 "deviation_color": "none",
                 "filter": {
@@ -148,6 +149,7 @@
                 "marker": {
                     "symbol": "triangle-down"
                 },
+                "dash": "dot",
                 "line_color": "blue",
                 "deviation_color": "none",
                 "filter": {

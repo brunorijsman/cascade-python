@@ -13,13 +13,13 @@
         "series": [
             {
                 "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
-                "legend": "original",
+                "legend": "Cascade orig.",
                 "line_color": "black",
                 "deviation_color": "lightgray"
             },
             {
                 "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
-                "legend": "biconf",
+                "legend": "Cascade mod. (1)",
                 "line_color": "blue",
                 "deviation_color": "lightblue"
             }
@@ -39,13 +39,13 @@
         "series": [
             {
                 "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
-                "legend": "original",
+                "legend": "Cascade orig.",
                 "line_color": "black",
                 "deviation_color": "lightgray"
             },
             {
                 "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
-                "legend": "biconf",
+                "legend": "Cascade mod. (1)",
                 "line_color": "blue",
                 "deviation_color": "lightblue"
             }
@@ -249,28 +249,66 @@
         "series": [
             {
                 "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
-                "legend": "original",
+                "legend": "Cascade orig.",
                 "line_color": "black",
                 "deviation_color": "none"
             },
             {
                 "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
-                "legend": "biconf",
+                "legend": "Cascade mod. (1)",
                 "line_color": "blue",
                 "deviation_color": "none"
             },
             {
                 "data_file": "data__algorithm=yanetal;key_size=10000;error_rate=vary",
-                "legend": "yanetal",
+                "legend": "Cascade opt. (2)",
                 "line_color": "red",
                 "deviation_color": "none"
             },
             {
                 "data_file": "data__algorithm=option3;key_size=10000;error_rate=vary",
-                "legend": "option3",
+                "legend": "Cascade opt. (3)",
                 "line_color": "green",
                 "deviation_color": "none"
             }
         ]
-    }    
+    },
+    {
+        "graph_name": "demystifying_figure_9",
+        "title": "Figure 9 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
+        "x_axis": {
+            "title": "Quantum Bit Error Rate (QBER)",
+            "variable": "requested_bit_error_rate"
+        },
+        "y_axis": {
+            "title": "Channel uses",
+            "variable": "ask_parity_messages"
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
+                "legend": "Cascade orig.",
+                "line_color": "black",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
+                "legend": "Cascade mod. (1)",
+                "line_color": "blue",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=yanetal;key_size=10000;error_rate=vary",
+                "legend": "Cascade opt. (2)",
+                "line_color": "red",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=option3;key_size=10000;error_rate=vary",
+                "legend": "Cascade opt. (3)",
+                "line_color": "green",
+                "deviation_color": "none"
+            }
+        ]
+    }
 ]

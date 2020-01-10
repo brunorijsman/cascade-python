@@ -1,3 +1,6 @@
+import math
+import time
+
 import argparse
 import json
 import git
@@ -12,8 +15,8 @@ from study.data_point import DataPoint
 DEFAULT_RUNS = 10         # TODO: Make this a larger number
 
 TOTAL_NR_DATA_POINTS = None
-
-CURRENT_DATA_POINT_NR = None
+DATA_POINTS_PROCESSED = None
+START_TIME = None
 
 def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade experiments")
@@ -108,8 +111,9 @@ def compute_total_nr_data_points(series):
 
 def run_series(series):
     # TODO: Run in parallel
-    global CURRENT_DATA_POINT_NR
-    CURRENT_DATA_POINT_NR = 0
+    global DATA_POINTS_PROCESSED, START_TIME
+    DATA_POINTS_PROCESSED = 0
+    START_TIME = time.time()
     for serie in series:
         run_serie(serie)
 
@@ -120,24 +124,34 @@ def run_serie(serie):
         for algorithm in serie['algorithms']:
             for key_size in serie['key_sizes']:
                 for error_rate in serie['error_rates']:
-                    produce_data_point(data_file, runs, algorithm, key_size, "exact", error_rate)
-                    report_data_point_done(algorithm, key_size, error_rate, runs)
+                    data_point = produce_data_point(runs, algorithm, key_size, "exact", error_rate)
+                    print(to_json(data_point), file=data_file)
+                    report_data_point_done(data_point)
 
-def report_data_point_done(algorithm, key_size, error_rate, runs):
-    global CURRENT_DATA_POINT_NR, TOTAL_NR_DATA_POINTS
-    CURRENT_DATA_POINT_NR += 1
-    percent = CURRENT_DATA_POINT_NR / TOTAL_NR_DATA_POINTS * 100.0
+def report_data_point_done(data_point):
+    global DATA_POINTS_PROCESSED, TOTAL_NR_DATA_POINTS, START_TIME
+    DATA_POINTS_PROCESSED += 1
+    elapsed_time = time.time() - START_TIME
+    total_time = elapsed_time * TOTAL_NR_DATA_POINTS / DATA_POINTS_PROCESSED
+    seconds_remaining = math.ceil(total_time - elapsed_time)
+    minutes_remaining = seconds_remaining // 60
+    seconds_remaining %= 60
+    hours_remaining = minutes_remaining // 60
+    minutes_remaining %= 60
+    remaining_time_str = f"{hours_remaining}:{minutes_remaining:02d}:{seconds_remaining:02d}"
+    percent = DATA_POINTS_PROCESSED / TOTAL_NR_DATA_POINTS * 100.0
     print(f"percent={percent:.2f} "
-          f"algorithm={algorithm} "
-          f"key_size={key_size} "
-          f"error_rate={error_rate:.4f} "
-          f"runs={runs}")
+          f"algorithm={data_point.algorithm_name} "
+          f"key_size={data_point.key_size} "
+          f"error_rate={data_point.requested_bit_error_rate:.4f} "
+          f"runs={data_point.reconciliations} "
+          f"remaining_time={remaining_time_str}")
 
-def produce_data_point(data_file, runs, algorithm, key_size, error_method, error_rate):
+def produce_data_point(runs, algorithm, key_size, error_method, error_rate):
     data_point = DataPoint(algorithm, key_size, error_rate, get_code_version())
     for _ in range(runs):
         run_reconciliation(data_point, algorithm, key_size, error_method, error_rate)
-    print(to_json(data_point), file=data_file)
+    return data_point
 
 def run_reconciliation(data_point, algorithm, key_size, error_method, error_rate):
     # Key.set_random_seed(seed)

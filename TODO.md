@@ -1,8 +1,10 @@
 * Implement Cascade variations:
 
-  * Deterministic shuffle.
-
   * Discard corrected bits at the end.
+
+  * Option (5) in Demystifying paper (deterministic shuffle)
+
+  * Option (6) in Demystifying paper (remove singleton blocks)
 
   * Full Block Parity Inference (BPI).
 
@@ -14,15 +16,11 @@
 
   * Report progress to stdout
 
-  * Use JSON file to control a single experiment
-
   * Have a script to automate running all experiments and producing all graphs
 
   * Have nr_runs and error_rate_resolution as parameters for the script
 
   * Automate running the scripts in AWS instances (including self shut-down and persistence)
-
-  * Write output to configurable file
 
   * Report progress and estimated finish time to stdout
 
@@ -32,13 +30,7 @@
 
 * graph
 
-  * Use JSON file to define graph
-
   * Option to write to file
-
-  * Multiple lines in one graph
-
-  * More general; less hard-coding of graphs
 
   * Higher resolution near error_rate 0.0
 

@@ -276,6 +276,7 @@ class Reconciliation:
         # Determine the block size to be used for this iteration, using the rules for this
         # particular algorithm of the Cascade algorithm.
         block_size = self._algorithm.block_size_function(self._estimated_bit_error_rate,
+                                                         self._reconciled_key.get_size(),
                                                          iteration_nr)
 
         # In the first iteration, we don't shuffle the key. In all subsequent iterations we

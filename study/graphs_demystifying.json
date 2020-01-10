@@ -90,7 +90,8 @@
         "title": "Figure 4 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
         "x_axis": {
             "title": "Quantum Bit Error Rate (QBER)",
-            "variable": "requested_bit_error_rate"
+            "variable": "requested_bit_error_rate",
+            "range": [0.0, 0.11]
         },
         "y_axis": {
             "title": "Frame error rate",
@@ -158,5 +159,79 @@
                 }                
             }
        ]
-    }
-]
+    },
+    {
+        "graph_name": "demystifying_figure_5",
+        "title": "Figure 5 from \"Demystifying the Information Reconciliation Protocol Cascade\"",
+        "x_axis": {
+            "title": "Quantum Bit Error Rate (QBER)",
+            "variable": "requested_bit_error_rate",
+            "range": [0.0, 0.11]
+        },
+        "y_axis": {
+            "title": "Bit error rate",
+            "type": "log",
+            "variable": "remaining_bit_error_rate",
+            "range": [-10.0, -2.0]
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=original;key_size=1000;error_rate=vary",
+                "legend": "original key_size=1,000",
+                "mode": "lines+markers",
+                "marker": {
+                    "symbol": "square"
+                },
+                "line_color": "black",
+                "deviation_color": "none",
+                "filter": {
+                    "variable": "remaining_bit_error_rate",
+                    "min_value": 1e-11
+                }                
+            },
+            {
+                "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
+                "legend": "original key_size=10,000",
+                "mode": "lines+markers",
+                "marker": {
+                    "symbol": "circle"
+                },
+                "dash": "dot",
+                "line_color": "black",
+                "deviation_color": "none",
+                "filter": {
+                    "variable": "remaining_bit_error_rate",
+                    "min_value": 1e-11
+                }                
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=1000;error_rate=vary",
+                "legend": "biconf key_size=1,000",
+                "mode": "lines+markers",
+                "marker": {
+                    "symbol": "triangle-up"
+                },
+                "line_color": "blue",
+                "deviation_color": "none",
+                "filter": {
+                    "variable": "remaining_bit_error_rate",
+                    "min_value": 1e-11
+                }                
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
+                "legend": "biconf key_size=10,000",
+                "mode": "lines+markers",
+                "marker": {
+                    "symbol": "triangle-down"
+                },
+                "dash": "dot",
+                "line_color": "blue",
+                "deviation_color": "none",
+                "filter": {
+                    "variable": "remaining_bit_error_rate",
+                    "min_value": 1e-11
+                }                
+            }
+       ]
+    }]

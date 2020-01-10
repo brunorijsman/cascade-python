@@ -1,0 +1,127 @@
+[
+    {
+        "graph_name": "andre_reis_thesis_figure_5_1",
+        "title": "Figure 5.1 from \"Andre Reis Thesis\"",
+        "x_axis": {
+            "title": "Quantum Bit Error Rate (QBER)",
+            "variable": "requested_bit_error_rate",
+            "range": [0.00, 0.10]
+        },
+        "y_axis": {
+            "title": "Reconciliation efficiency",
+            "variable": "unrealistic_efficiency",
+            "range": [1.00, 1.50]
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=yanetal;key_size=10000;error_rate=vary",
+                "legend": "yanetal",
+                "line_color": "blue",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
+                "legend": "original",
+                "line_color": "orange",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
+                "legend": "biconf",
+                "line_color": "green",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=option7;key_size=10000;error_rate=vary",
+                "legend": "option7",
+                "line_color": "red",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=option8;key_size=10000;error_rate=vary",
+                "legend": "option8",
+                "line_color": "purple",
+                "deviation_color": "none"
+            }
+        ]
+    },
+    {
+        "graph_name": "andre_reis_thesis_figure_5_2",
+        "title": "Figure 5.2 from \"Andre Reis Thesis\"",
+        "x_axis": {
+            "title": "Quantum Bit Error Rate (QBER)",
+            "variable": "requested_bit_error_rate",
+            "range": [0.0, 0.10]
+        },
+        "y_axis": {
+            "title": "Frame error rate",
+            "variable": "remaining_frame_error_rate",
+            "range": [0.00, 0.005]
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=yanetal;key_size=10000;error_rate=vary",
+                "legend": "yanetal",
+                "line_color": "blue",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
+                "legend": "original",
+                "line_color": "orange",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
+                "legend": "biconf",
+                "line_color": "green",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=option7;key_size=10000;error_rate=vary",
+                "legend": "option7",
+                "line_color": "red",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=option8;key_size=10000;error_rate=vary",
+                "legend": "option8",
+                "line_color": "purple",
+                "deviation_color": "none"
+            }
+       ]
+    },
+    {
+        "graph_name": "andre_reis_thesis_figure_5_3",
+        "title": "Figure 5.3 from \"Andre Reis Thesis\"",
+        "x_axis": {
+            "title": "Quantum Bit Error Rate (QBER)",
+            "variable": "requested_bit_error_rate",
+            "range": [0.0, 0.10]
+        },
+        "y_axis": {
+            "title": "Channel uses",
+            "variable": "ask_parity_messages"
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=yanetal;key_size=10000;error_rate=vary",
+                "legend": "yanetal",
+                "line_color": "blue",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
+                "legend": "original",
+                "line_color": "orange",
+                "deviation_color": "none"
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
+                "legend": "biconf",
+                "line_color": "green",
+                "deviation_color": "none"
+            }
+        ]
+    }
+]

@@ -10,6 +10,7 @@
         "codecov",
         "cqclib",
         "hadamard",
+        "imap",
         "kwargs",
         "lightblue",
         "lightgray",

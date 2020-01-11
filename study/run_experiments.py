@@ -1,4 +1,5 @@
 import math
+import multiprocessing
 import time
 
 import argparse
@@ -118,15 +119,22 @@ def run_series(series):
         run_serie(serie)
 
 def run_serie(serie):
-    runs = serie['runs']
+    reconciliation_params = serie_to_reconciliation_params(serie)
     data_file_name = "data__" + serie['name']
+    pool = multiprocessing.Pool()
     with open(data_file_name, mode="w") as data_file:
-        for algorithm in serie['algorithms']:
-            for key_size in serie['key_sizes']:
-                for error_rate in serie['error_rates']:
-                    data_point = produce_data_point(runs, algorithm, key_size, "exact", error_rate)
-                    print(to_json(data_point), file=data_file)
-                    report_data_point_done(data_point)
+        for data_point in pool.imap(produce_data_point, reconciliation_params):
+            print(to_json(data_point), file=data_file)
+            report_data_point_done(data_point)
+
+def serie_to_reconciliation_params(serie):
+    reconciliation_params = []
+    runs = serie['runs']
+    for algorithm in serie['algorithms']:
+        for key_size in serie['key_sizes']:
+            for error_rate in serie['error_rates']:
+                reconciliation_params.append((algorithm, key_size, error_rate, runs))
+    return reconciliation_params
 
 def report_data_point_done(data_point):
     global DATA_POINTS_PROCESSED, TOTAL_NR_DATA_POINTS, START_TIME
@@ -147,10 +155,11 @@ def report_data_point_done(data_point):
           f"runs={data_point.reconciliations} "
           f"remaining_time={remaining_time_str}")
 
-def produce_data_point(runs, algorithm, key_size, error_method, error_rate):
+def produce_data_point(reconciliation_params):
+    (algorithm, key_size, error_rate, runs) = reconciliation_params
     data_point = DataPoint(algorithm, key_size, error_rate, get_code_version())
     for _ in range(runs):
-        run_reconciliation(data_point, algorithm, key_size, error_method, error_rate)
+        run_reconciliation(data_point, algorithm, key_size, 'exact', error_rate)
     return data_point
 
 def run_reconciliation(data_point, algorithm, key_size, error_method, error_rate):

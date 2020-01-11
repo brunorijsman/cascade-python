@@ -7,38 +7,12 @@ def test_encode_identifier():
     assert Shuffle._encode_identifier(0, 0, 0) == 0
     assert Shuffle._encode_identifier(1, 2, 3) == 302000000001
     assert Shuffle._encode_identifier(999999999, 99, 999999999999) == 99999999999999999999999
-    with pytest.raises(AssertionError):
-        Shuffle._encode_identifier(1_000_000_000, 0, 0)
-    with pytest.raises(AssertionError):
-        Shuffle._encode_identifier("not-an-int", 0, 0)
-    with pytest.raises(AssertionError):
-        Shuffle._encode_identifier(0, 100, 0)
-    with pytest.raises(AssertionError):
-        Shuffle._encode_identifier(0, "not-an-int", 0)
-    with pytest.raises(AssertionError):
-        Shuffle._encode_identifier(0, 0, 1_000_000_000_000)
-    with pytest.raises(AssertionError):
-        Shuffle._encode_identifier(0, 0, "not-an-int")
 
 def test_decode_identifier():
     # pylint:disable=protected-access
     assert Shuffle._decode_identifier(0) == (0, 0, 0)
     assert Shuffle._decode_identifier(302000000001) == (1, 2, 3)
     assert Shuffle._decode_identifier(99999999999999999999999) == (999999999, 99, 999999999999)
-    with pytest.raises(AssertionError):
-        Shuffle._decode_identifier("not-an-int")
-
-def test_create_shuffle_invalid_args():
-    with pytest.raises(AssertionError):
-        Shuffle(-1, Shuffle.SHUFFLE_KEEP_SAME)
-    with pytest.raises(AssertionError):
-        Shuffle("hello", Shuffle.SHUFFLE_KEEP_SAME)
-    with pytest.raises(AssertionError):
-        Shuffle(32, "hello")
-    with pytest.raises(AssertionError):
-        Shuffle(32, -1)
-    with pytest.raises(AssertionError):
-        Shuffle(32, Shuffle.SHUFFLE_RANDOM, "not-none-or-int")
 
 def test_create_shuffle_keep_same():
     Key.set_random_seed(1111)
@@ -154,14 +128,6 @@ def test_get_bit():
     assert shuffle.get_bit(key, 1) == 0   # Shuffle bit 1 -> Key bit 9 -> Bit value 0
     assert shuffle.get_bit(key, 2) == 1   # Shuffle bit 2 -> Key bit 3 -> Bit value 1
     assert shuffle.get_bit(key, 12) == 1  # Shuffle bit 12 -> Key bit 8 -> Bit value 1
-    with pytest.raises(AssertionError):
-        shuffle.get_bit(key, -1)
-    with pytest.raises(AssertionError):
-        shuffle.get_bit(key, 13)
-    with pytest.raises(AssertionError):
-        shuffle.get_bit(key, "hello")
-    with pytest.raises(AssertionError):
-        shuffle.get_bit("hello", 1)
 
 def test_set_bit():
     Key.set_random_seed(6661)
@@ -176,20 +142,6 @@ def test_set_bit():
     assert key.__repr__() == "Key: 011100"
     shuffle.set_bit(key, 5, 0)                  # Shuffle bit 5 -> Key bit 3 -> Bit value 0->0
     assert key.__repr__() == "Key: 011000"
-    with pytest.raises(AssertionError):
-        shuffle.set_bit("hello", 1, 0)
-    with pytest.raises(AssertionError):
-        shuffle.set_bit(key, -1, 0)
-    with pytest.raises(AssertionError):
-        shuffle.set_bit(key, 13, 0)
-    with pytest.raises(AssertionError):
-        shuffle.set_bit(key, "hello", 0)
-    with pytest.raises(AssertionError):
-        shuffle.set_bit(key, 1, -1)
-    with pytest.raises(AssertionError):
-        shuffle.set_bit(key, 1, 2)
-    with pytest.raises(AssertionError):
-        shuffle.set_bit(key, 1, "hello")
 
 def test_flip_bit():
     Key.set_random_seed(7771)
@@ -200,14 +152,6 @@ def test_flip_bit():
     assert shuffle.__repr__() == "Shuffle: 0->5 1->2 2->4 3->3 4->1 5->0"
     shuffle.flip_bit(key, 0)                    # Shuffle bit 0 -> Key bit 5 -> Bit value 1->0
     assert key.__repr__() == "Key: 010010"
-    with pytest.raises(AssertionError):
-        shuffle.flip_bit("hello", 1)
-    with pytest.raises(AssertionError):
-        shuffle.flip_bit(key, -1)
-    with pytest.raises(AssertionError):
-        shuffle.flip_bit(key, 6)
-    with pytest.raises(AssertionError):
-        shuffle.flip_bit(key, "hello")
 
 def test_get_key_index():
     Shuffle.set_random_seed(9992)
@@ -216,9 +160,3 @@ def test_get_key_index():
     assert shuffle.get_key_index(0) == 5
     assert shuffle.get_key_index(1) == 4
     assert shuffle.get_key_index(5) == 3
-    with pytest.raises(AssertionError):
-        shuffle.get_key_index(-1)
-    with pytest.raises(AssertionError):
-        shuffle.get_key_index(6)
-    with pytest.raises(AssertionError):
-        shuffle.get_key_index("hello")

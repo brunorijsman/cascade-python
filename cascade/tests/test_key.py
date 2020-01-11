@@ -1,12 +1,6 @@
 import pytest
 from cascade.key import Key
 
-def test_create_validate_args():
-    with pytest.raises(AssertionError):
-        Key.create_random_key(-1)
-    with pytest.raises(AssertionError):
-        Key.create_random_key("hello")
-
 def test_create_empty_key():
     key = Key()
     assert key.get_size() == 0
@@ -63,12 +57,6 @@ def test_get_bit():
     Key.set_random_seed(1234)
     key = Key.create_random_key(11)
     assert key.__str__() == "10000001000"
-    with pytest.raises(AssertionError):
-        key.get_bit(11)
-    with pytest.raises(AssertionError):
-        key.get_bit(-1)
-    with pytest.raises(AssertionError):
-        key.get_bit("hello")
 
 def test_set_bit():
     Key.set_random_seed(2345)
@@ -86,18 +74,6 @@ def test_set_bit():
     assert key.__str__() == "1001111111010"
     key.set_bit(12, 1)
     assert key.__str__() == "1001111111011"
-    with pytest.raises(AssertionError):
-        key.set_bit(14, 0)
-    with pytest.raises(AssertionError):
-        key.set_bit(-1, 0)
-    with pytest.raises(AssertionError):
-        key.set_bit(1, 2)
-    with pytest.raises(AssertionError):
-        key.set_bit(1, -1)
-    with pytest.raises(AssertionError):
-        key.set_bit("hello", 0)
-    with pytest.raises(AssertionError):
-        key.set_bit(1, "hello")
 
 def test_flip_bit():
     Key.set_random_seed(3456)
@@ -109,12 +85,6 @@ def test_flip_bit():
     assert key.__str__() == "011101100"
     key.flip_bit(8)
     assert key.__str__() == "011101101"
-    with pytest.raises(AssertionError):
-        key.flip_bit(10)
-    with pytest.raises(AssertionError):
-        key.flip_bit(-1)
-    with pytest.raises(AssertionError):
-        key.flip_bit("hello")
 
 def test_copy_without_noise():
 
@@ -139,19 +109,6 @@ def test_copy_without_noise():
     key_copy.flip_bit(1)
     assert key.__str__() == "1110011000011110100111010001100011100000010011010101110100000010"
     assert key_copy.__str__() == "1010011000011110100111010001100011100000010011010101110100000010"
-
-def test_copy_parameter_checks():
-    key = Key.create_random_key(6)
-    with pytest.raises(AssertionError):
-        key.copy(error_rate=-1.0, error_method=Key.ERROR_METHOD_EXACT)
-    with pytest.raises(AssertionError):
-        key.copy(error_rate=2.0, error_method=Key.ERROR_METHOD_EXACT)
-    with pytest.raises(AssertionError):
-        key.copy(error_rate="not-a-float", error_method=Key.ERROR_METHOD_EXACT)
-    with pytest.raises(AssertionError):
-        key.copy(error_rate=0.5, error_method=1234)
-    with pytest.raises(AssertionError):
-        key.copy(error_rate=0.5, error_method="not-a-valid-method")
 
 def test_copy_with_exact_noise():
 
@@ -206,6 +163,3 @@ def test_difference():
     empty_key_1 = Key()
     empty_key_2 = Key()
     assert empty_key_1.difference(empty_key_2) == 0
-    # Keys of different sizes.
-    with pytest.raises(AssertionError):
-        key.difference(empty_key_1)

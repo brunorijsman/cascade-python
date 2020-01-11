@@ -1,6 +1,3 @@
-from cascade.key import Key
-from cascade.shuffle import Shuffle
-
 class Block:
     """
     A block is a contiguous subset of bits in a potentially shuffled key.
@@ -28,17 +25,6 @@ class Block:
             parent_block (Block): The parent block. None if there is no parent, i.e. if this is a
                 top-level block.
         """
-
-        # Validate arguments.
-        assert isinstance(key, Key)
-        assert isinstance(shuffle, Shuffle)
-        assert shuffle.get_size() == key.get_size()
-        assert isinstance(start_index, int)
-        assert 0 <= start_index < shuffle.get_size()
-        assert isinstance(end_index, int)
-        assert 0 <= end_index <= shuffle.get_size()
-        assert end_index > start_index
-        assert parent_block is None or isinstance(parent_block, Block)
 
         # Store block attributes.
         self._key = key
@@ -74,13 +60,6 @@ class Block:
         Returns:
             A list of blocks that cover the shuffled key.
         """
-
-        # Validate arguments.
-        assert isinstance(key, Key)
-        assert isinstance(shuffle, Shuffle)
-        assert shuffle.get_size() == key.get_size()
-        assert isinstance(block_size, int)
-        assert block_size > 0
 
         # Generate the blocks.
         blocks = []
@@ -198,8 +177,6 @@ class Block:
         Params:
             correct_parity (int): The current parity (0 or 1).
         """
-        assert isinstance(correct_parity, int)
-        assert correct_parity in [0, 1]
         self._correct_parity = correct_parity
 
     def is_top_block(self):
@@ -223,8 +200,6 @@ class Block:
         return self._left_sub_block
 
     def create_left_sub_block(self):
-        assert self._end_index - self._start_index > 1
-        assert self._left_sub_block is None
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
         self._left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index,
                                      self)
@@ -257,8 +232,6 @@ class Block:
         Returns:
             The right sub-block.
         """
-        assert self._end_index - self._start_index > 1
-        assert self._right_sub_block is None
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
         self._right_sub_block = Block(self._key, self._shuffle, middle_index, self._end_index, self)
         return self._right_sub_block

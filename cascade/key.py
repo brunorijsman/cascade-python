@@ -31,10 +31,6 @@ class Key:
             A new key of the specified size with random bits.
         """
 
-        # Validate arguments.
-        assert isinstance(size, int)
-        assert size >= 0
-
         # Create a new random key.
         # pylint:disable=protected-access
         key = Key()
@@ -97,12 +93,6 @@ class Key:
         Returns:
             The value (0 or 1) of the key bit at the given index.
         """
-
-        # Validate arguments.
-        assert isinstance(index, int)
-        assert 0 <= index < self._size
-
-        # Return the bit value.
         return self._bits[index]
 
     def set_bit(self, index, value):
@@ -113,14 +103,6 @@ class Key:
             index (int): The index of the bit. Index must be in range [0, key.size).
             value (int): The new value of the bit. Must be 0 or 1.
         """
-
-        # Validate arguments.
-        assert isinstance(index, int)
-        assert 0 <= index < self._size
-        assert isinstance(value, int)
-        assert value in [0, 1]
-
-        # Set the bit value.
         self._bits[index] = value
 
     def flip_bit(self, index):
@@ -130,12 +112,6 @@ class Key:
         Args:
             index (int): The index of the bit. Index must be in range [0, key.size).
         """
-
-        # Validate arguments.
-        assert isinstance(index, int)
-        assert 0 <= index < self._size
-
-        # Flip the bit value.
         self._bits[index] = 1 - self._bits[index]
 
     def copy(self, error_rate, error_method):
@@ -149,12 +125,6 @@ class Key:
         Returns:
             A new Key instance, which is a copy of this key, with noise applied.
         """
-
-        # Validate arguments.
-        assert isinstance(error_rate, float)
-        assert 0.0 <= error_rate <= 1.0
-        assert isinstance(error_method, str)
-        assert error_method in self.ERROR_METHODS
 
         # Create a new key which is a copy of this one.
         # pylint:disable=protected-access
@@ -187,15 +157,9 @@ class Key:
         Returns:
             The number of bits that are different between this key and the other key.
         """
-
-        # Validate arguments.
-        # pylint:disable=protected-access
-        assert isinstance(other_key, Key)
-        assert self._size == other_key._size
-
-        # Compute difference.
         difference = 0
         for i in range(self._size):
+            # pylint:disable=protected-access
             if self._bits[i] != other_key._bits[i]:
                 difference += 1
         return difference

@@ -3,41 +3,6 @@ from cascade.block import Block
 from cascade.key import Key
 from cascade.shuffle import Shuffle
 
-def test_create_validate_args():
-    Key.set_random_seed(1111)
-    Shuffle.set_random_seed(1112)
-    key = Key.create_random_key(8)
-    shuffle = Shuffle(key.get_size(), Shuffle.SHUFFLE_RANDOM)
-    # Validate key argument.
-    with pytest.raises(AssertionError):
-        Block("not-a-key", shuffle, 0, 1, None)
-    # Validate shuffle argument.
-    with pytest.raises(AssertionError):
-        Block(key, "not-a-shuffle", 0, 1, None)
-    # Validate start_shuffle_index argument.
-    with pytest.raises(AssertionError):
-        Block(key, shuffle, -1, 1, None)
-    with pytest.raises(AssertionError):
-        Block(key, shuffle, 8, 1, None)
-    with pytest.raises(AssertionError):
-        Block(key, shuffle, "not-an-int", 1, None)
-    # Validate end_shuffle_index argument.
-    with pytest.raises(AssertionError):
-        Block(key, shuffle, 3, -1, None)
-    with pytest.raises(AssertionError):
-        Block(key, shuffle, 3, 9, None)
-    with pytest.raises(AssertionError):
-        Block(key, shuffle, 3, 2, None)
-    with pytest.raises(AssertionError):
-        Block(key, shuffle, 3, "not-an-int", None)
-    with pytest.raises(AssertionError):
-        Block(key, shuffle, 3, 5, "not-none-and-not-a-block")
-    # Empty key.
-    key = Key()
-    shuffle = Shuffle(key.get_size(), Shuffle.SHUFFLE_RANDOM)
-    with pytest.raises(AssertionError):
-        Block(key, shuffle, 2, 2, None)
-
 def test_create_block():
 
     # Block covers entire shuffle.
@@ -221,12 +186,6 @@ def test_create_sub_blocks():
     right_sub_sub_sub_block = left_sub_sub_block.create_right_sub_block()
     assert left_sub_sub_sub_block.__str__() == "00"
     assert right_sub_sub_sub_block.__str__() == "0"
-
-    # Not allowed to split a block of size 1.
-    with pytest.raises(AssertionError):
-        right_sub_sub_sub_block.create_left_sub_block()
-    with pytest.raises(AssertionError):
-        right_sub_sub_sub_block.create_right_sub_block()
 
 def test_error_parity():
 

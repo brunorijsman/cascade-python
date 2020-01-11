@@ -36,16 +36,6 @@ class Shuffle:
 
     @staticmethod
     def _encode_identifier(size, algorithm, shuffle_seed):
-
-        # Validate arguments.
-        assert isinstance(size, int)
-        assert size < Shuffle._MAX_KEY_SIZE
-        assert isinstance(algorithm, int)
-        assert algorithm < Shuffle._MAX_ALGORITHM
-        assert isinstance(shuffle_seed, int)
-        assert shuffle_seed < Shuffle._MAX_SHUFFLE_SEED
-
-        # Encode the identifier.
         identifier = shuffle_seed
         identifier *= Shuffle._MAX_ALGORITHM
         identifier += algorithm
@@ -55,11 +45,6 @@ class Shuffle:
 
     @staticmethod
     def _decode_identifier(identifier):
-
-        # Validate arguments.
-        assert isinstance(identifier, int)
-
-        # Decode the identifier.
         size = identifier % Shuffle._MAX_KEY_SIZE
         identifier //= Shuffle._MAX_KEY_SIZE
         algorithm = identifier % Shuffle._MAX_ALGORITHM
@@ -87,12 +72,6 @@ class Shuffle:
                 generator that is used to generate the shuffling permutation. If shuffle_seed is
                 None, then a random shuffle_seed value will be generated.
         """
-
-        # Validate arguments.
-        assert isinstance(size, int)
-        assert size >= 0
-        assert algorithm in [self.SHUFFLE_KEEP_SAME, self.SHUFFLE_RANDOM]
-        assert shuffle_seed is None or isinstance(shuffle_seed, int)
 
         # Create a mapping from "shuffle indexes" to "key indexes".
         self._size = size
@@ -187,12 +166,6 @@ class Shuffle:
         Returns:
             The key index.
         """
-
-        # Validate arguments.
-        assert isinstance(shuffle_index, int)
-        assert shuffle_index in self._shuffle_index_to_key_index
-
-        # Return the key index.
         return self._shuffle_index_to_key_index[shuffle_index]
 
     def get_bit(self, key, shuffle_index):
@@ -209,14 +182,6 @@ class Shuffle:
         Returns:
             The value (0 or 1) of the shuffled key bit at the given index.
         """
-
-        # Validate arguments.
-        assert isinstance(key, Key)
-        assert key.get_size() == self._size
-        assert isinstance(shuffle_index, int)
-        assert shuffle_index in self._shuffle_index_to_key_index
-
-        # Return the key bit.
         key_index = self._shuffle_index_to_key_index[shuffle_index]
         return key.get_bit(key_index)
 
@@ -232,16 +197,6 @@ class Shuffle:
                 range [0, shuffle.size).
             value (int): The new value of the bit. Must be 0 or 1.
         """
-
-        # Validate arguments.
-        assert isinstance(key, Key)
-        assert key.get_size() == self._size
-        assert isinstance(shuffle_index, int)
-        assert shuffle_index in self._shuffle_index_to_key_index
-        assert isinstance(value, int)
-        assert value in [0, 1]
-
-        # Set the key bit.
         key_index = self._shuffle_index_to_key_index[shuffle_index]
         key.set_bit(key_index, value)
 
@@ -256,14 +211,6 @@ class Shuffle:
             shuffle_index (int): The index of the bit in the shuffled key. The index must be in
                 range [0, shuffle.size).
         """
-
-        # Validate arguments.
-        assert isinstance(key, Key)
-        assert key.get_size() == self._size
-        assert isinstance(shuffle_index, int)
-        assert shuffle_index in self._shuffle_index_to_key_index
-
-        # Flip the bit value.
         key_index = self._shuffle_index_to_key_index[shuffle_index]
         key.flip_bit(key_index)
 
@@ -281,16 +228,6 @@ class Shuffle:
         Returns:
             The parity of the contiguous sub-range of bits in the shuffled key.
         """
-
-        # Validate arguments.
-        assert isinstance(key, Key)
-        assert key.get_size() == self._size
-        assert isinstance(shuffle_start_index, int)
-        assert shuffle_start_index in range(0, key.get_size())
-        assert isinstance(shuffle_end_index, int)
-        assert shuffle_end_index in range(0, key.get_size() + 1)
-
-        # Calculate the parity.
         parity = 0
         for shuffle_index in range(shuffle_start_index, shuffle_end_index):
             key_index = self._shuffle_index_to_key_index[shuffle_index]

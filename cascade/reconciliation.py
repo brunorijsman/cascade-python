@@ -27,17 +27,10 @@ class Reconciliation:
             estimated_bit_error_rate (float): The estimated bit error rate in the noisy key.
         """
 
-        # Validate arguments.
-        assert isinstance(algorithm_name, str)
-        assert issubclass(type(classical_channel), ClassicalChannel)
-        assert isinstance(noisy_key, Key)
-        assert isinstance(estimated_bit_error_rate, float)
-        algorithm = get_algorithm_by_name(algorithm_name)
-        assert algorithm is not None
-
         # Store the arguments.
         self._classical_channel = classical_channel
-        self._algorithm = algorithm
+        self._algorithm = get_algorithm_by_name(algorithm_name)
+        assert self._algorithm is not None
         self._estimated_bit_error_rate = estimated_bit_error_rate
         self._noisy_key = noisy_key
         self._reconciled_key = None
@@ -126,7 +119,6 @@ class Reconciliation:
         # on that partical key bit.
         for key_index in block.get_key_indexes():
             if key_index in self._key_index_to_blocks:
-                assert block not in self._key_index_to_blocks[key_index]   # TODO: Get rid of this
                 self._key_index_to_blocks[key_index].append(block)
             else:
                 self._key_index_to_blocks[key_index] = [block]
@@ -152,7 +144,6 @@ class Reconciliation:
         if parent_block.get_left_sub_block() == block:
             sibling_block = parent_block.get_right_sub_block()
         else:
-            assert parent_block.get_right_sub_block() == block
             sibling_block = parent_block.get_left_sub_block()
         if sibling_block is None:
             return False
@@ -161,11 +152,9 @@ class Reconciliation:
         correct_parent_parity = parent_block.get_correct_parity()
         if correct_parent_parity is None:
             return False
-        assert correct_parent_parity in [0, 1]
         correct_sibling_parity = sibling_block.get_correct_parity()
         if correct_sibling_parity is None:
             return False
-        assert correct_sibling_parity in [0, 1]
 
         # We have everything we need. Infer the correct parity.
         if correct_parent_parity == 1:
@@ -235,10 +224,6 @@ class Reconciliation:
         self._pending_ask_correct_parity = []
 
     def _schedule_try_correct(self, block, correct_right_sibling):
-
-        # Validate args.
-        assert isinstance(block, Block)
-
         # Push the error block onto the heap. It is pushed as a tuple (block.size, block) to allow
         # us to correct the error blocks in order of shortest blocks first.
         entry = (block, correct_right_sibling)
@@ -389,7 +374,6 @@ class Reconciliation:
         # in this block. But if asked to do so, we will attempt to fix an error in the right
         # sibling block.
         error_parity = block.get_error_parity()
-        assert error_parity != Block.ERRORS_UNKNOWN
         if block.get_error_parity() == Block.ERRORS_EVEN:
             if correct_right_sibling:
                 return self._try_correct_right_sibling_block(block, cascade)
@@ -413,9 +397,6 @@ class Reconciliation:
         return self._try_correct(left_sub_block, True, cascade)
 
     def _try_correct_right_sibling_block(self, block, cascade):
-
-        assert not block.is_top_block()
-
         parent_block = block.get_parent_block()
         right_sibling_block = parent_block.get_right_sub_block()
         if right_sibling_block is None:
@@ -425,7 +406,6 @@ class Reconciliation:
 
     def _flip_key_bit_corresponding_to_single_bit_block(self, block, cascade):
 
-        assert block.get_size() == 1
         flipped_shuffle_index = block.get_start_index()
         block.flip_bit(flipped_shuffle_index)
 

@@ -1,4 +1,5 @@
 import multiprocessing
+import os.path
 
 import argparse
 import json
@@ -18,10 +19,12 @@ def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade experiments")
     parser.add_argument('experiments_file_name', metavar="experiments-file", type=str,
                         help="experiments definition file")
-    parser.add_argument('-r', '--max-runs', type=int,
-                        help=f"maximum number of reconciliation runs per data point")
     parser.add_argument('-d', '--disable-multi-processing', action='store_true',
-                        help=f"disable multi-processing (used when profiling code)")
+                        help="disable multi-processing")
+    parser.add_argument('-m', '--max-runs', type=int,
+                        help="maximum number of reconciliation runs per data point")
+    parser.add_argument('-o', '--output-directory', type=str,
+                        help="output directory where to store data__* files")
     args = parser.parse_args()
     return args
 
@@ -107,15 +110,17 @@ def compute_total_nr_data_points(series):
                                  len(serie['key_sizes']) *
                                  len(serie['error_rates']))
 
-def run_series(series, disable_multi_processing):
+def run_series(series, output_directory, disable_multi_processing):
     global DATA_POINTS_PROCESSED
     DATA_POINTS_PROCESSED = 0
     for serie in series:
-        run_serie(serie, disable_multi_processing)
+        run_serie(serie, output_directory, disable_multi_processing)
 
-def run_serie(serie, disable_multi_processing):
+def run_serie(serie, output_directory, disable_multi_processing):
     reconciliation_params = serie_to_reconciliation_params(serie)
     data_file_name = "data__" + serie['name']
+    if output_directory:
+        data_file_name = os.path.join(output_directory, data_file_name)
     if disable_multi_processing:
         with open(data_file_name, mode="w") as data_file:
             for param in reconciliation_params:
@@ -207,7 +212,7 @@ def main():
     experiments = parse_experiments_file(args.experiments_file_name)
     series = experiments_to_series(experiments, args.max_runs)
     compute_total_nr_data_points(series)
-    run_series(series, args.disable_multi_processing)
+    run_series(series, args.output_directory, args.disable_multi_processing)
 
 if __name__ == "__main__":
     main()

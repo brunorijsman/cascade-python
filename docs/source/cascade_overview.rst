@@ -34,15 +34,11 @@ The Cascade protocol.
 Splitting the key into top-level blocks.
 ========================================
 
-
-
 Parallelization.
 ================
 
 Variations on the Cascade Protocol.
 ===================================
-
-
 
 Variations on the Cascade Protocol.
 ===================================

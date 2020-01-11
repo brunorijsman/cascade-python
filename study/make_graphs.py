@@ -1,4 +1,5 @@
 import sys
+import os.path
 
 import argparse
 import json
@@ -8,6 +9,8 @@ def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Produce graph for Cascade experimental results")
     parser.add_argument('graphs_file_name', metavar="graphs-file", type=str,
                         help="graphs definition file")
+    parser.add_argument('-d', '--data-dir', type=str,
+                        help=f"directory where the data files are stored")
     parser.add_argument('-g', '--graph-name', type=str,
                         help=f"name of graph to produce (default: produce all graphs)")
     args = parser.parse_args()
@@ -24,7 +27,7 @@ def select_graph(graphs, graph_name):
             return [graph]
     sys.exit(f"Graph name {graph_name} not found")
 
-def produce_graph(graph):
+def produce_graph(graph, data_dir):
     figure = go.Figure()
     x_axis = dict(title=graph['x_axis']['title'],
                   type=graph['x_axis'].get('type', 'linear'),
@@ -61,11 +64,13 @@ def produce_graph(graph):
     x_axis_variable = graph['x_axis']['variable']
     y_axis_variable = graph['y_axis']['variable']
     for series in graph['series']:
-        plot_series(figure, x_axis_variable, y_axis_variable, series)
+        plot_series(figure, x_axis_variable, y_axis_variable, series, data_dir)
     figure.show()
 
-def plot_series(figure, x_axis_variable, y_axis_variable, series):
+def plot_series(figure, x_axis_variable, y_axis_variable, series, data_dir):
     data_file_name = series['data_file']
+    if data_dir:
+        data_file_name = os.path.join(data_dir, data_file_name)
     data_points = read_data_points(data_file_name)
     if 'filter' in series:
         data_points = filter_data_points(data_points, series['filter'])
@@ -155,7 +160,7 @@ def main():
     if args.graph_name is not None:
         graphs = select_graph(graphs, args.graph_name)
     for graph in graphs:
-        produce_graph(graph)
+        produce_graph(graph, args.data_dir)
 
 if __name__ == "__main__":
     main()

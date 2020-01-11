@@ -41,6 +41,12 @@ docs:
 docs-open: docs
 	open docs/build/index.html
 
+graphs-performance:
+	mkdir -p study/graphs/performance
+	rm -f study/graphs/performance/*.png
+	python study/make_graphs.py study/graphs_performance.json \
+		--data-dir study/data/performance
+
 install:
 	pip install -r requirements.txt
 

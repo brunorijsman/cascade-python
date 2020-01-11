@@ -1,5 +1,4 @@
 import random
-from cascade.key import Key
 
 class Shuffle:
     """

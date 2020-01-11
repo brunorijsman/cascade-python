@@ -1,4 +1,3 @@
-import pytest
 from cascade.block import Block
 from cascade.key import Key
 from cascade.shuffle import Shuffle

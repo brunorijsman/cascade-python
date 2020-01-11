@@ -3,8 +3,6 @@ import heapq
 import math
 import time
 from cascade.block import Block
-from cascade.classical_channel import ClassicalChannel
-from cascade.key import Key
 from cascade.algorithm import get_algorithm_by_name
 from cascade.shuffle import Shuffle
 from cascade.stats import Stats
@@ -373,7 +371,6 @@ class Reconciliation:
         # If there is an even number of errors in this block, we don't attempt to fix any errors
         # in this block. But if asked to do so, we will attempt to fix an error in the right
         # sibling block.
-        error_parity = block.get_error_parity()
         if block.get_error_parity() == Block.ERRORS_EVEN:
             if correct_right_sibling:
                 return self._try_correct_right_sibling_block(block, cascade)

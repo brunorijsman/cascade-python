@@ -1,4 +1,3 @@
-import pytest
 from cascade.key import Key
 
 def test_create_empty_key():

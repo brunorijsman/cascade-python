@@ -148,8 +148,7 @@ def serie_to_reconciliation_params(serie):
 def report_data_point_done(data_point):
     global DATA_POINTS_PROCESSED, TOTAL_NR_DATA_POINTS
     DATA_POINTS_PROCESSED += 1
-    percent = DATA_POINTS_PROCESSED / TOTAL_NR_DATA_POINTS * 100.0
-    print(f"percent={percent:.2f} "
+    print(f"data_point={DATA_POINTS_PROCESSED}/{TOTAL_NR_DATA_POINTS} "
           f"algorithm={data_point.algorithm_name} "
           f"key_size={data_point.key_size} "
           f"error_rate={data_point.requested_bit_error_rate:.4f} "

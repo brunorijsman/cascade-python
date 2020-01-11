@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/brunorijsman/qkd-cascade.svg?branch=master)](https://travis-ci.org/brunorijsman/qkd-cascade)  [![Code Coverage](https://codecov.io/gh/brunorijsman/qkd-cascade/branch/master/graph/badge.svg)](https://codecov.io/gh/brunorijsman/qkd-cascade)  [![Documentation](https://readthedocs.org/projects/qkd-cascade/badge/?version=latest)](https://qkd-cascade.readthedocs.io/en/latest/)
+[![Build Status](https://travis-ci.org/brunorijsman/cascade-python.svg?branch=master)](https://travis-ci.org/brunorijsman/cascade-python)  [![Code Coverage](https://codecov.io/gh/brunorijsman/cascade-python/branch/master/graph/badge.svg)](https://codecov.io/gh/brunorijsman/cascade-python)  [![Documentation](https://readthedocs.org/projects/cascade-python/badge/?version=latest)](https://cascade-python.readthedocs.io/en/latest/)
 
 
-# qkd-cascade
+# cascade-python
 
 Cascade information reconciliation protocol for Quantum Key Distribution (QKD).

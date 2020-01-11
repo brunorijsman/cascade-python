@@ -3,12 +3,14 @@
     "cSpell.words": [
         "Arial",
         "Avenir",
+        "Parallelization",
         "Singl",
         "basis",
         "bgcolor",
         "biconf",
         "codecov",
         "cqclib",
+        "dichotomic",
         "hadamard",
         "imap",
         "kwargs",
@@ -25,6 +27,7 @@
         "qubit",
         "qubits",
         "recurse",
+        "recurses",
         "reis",
         "serie",
         "simula",
@@ -36,5 +39,6 @@
         "yaxis"
     ],
     "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "restructuredtext.confPath": "${workspaceFolder}/docs/source"
 }

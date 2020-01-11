@@ -126,6 +126,8 @@ def run_serie(serie):
         for data_point in pool.imap(produce_data_point, reconciliation_params):
             print(to_json(data_point), file=data_file)
             report_data_point_done(data_point)
+    pool.close()
+    pool.terminate()
 
 def serie_to_reconciliation_params(serie):
     reconciliation_params = []

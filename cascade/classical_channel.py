@@ -19,14 +19,14 @@ class ClassicalChannel(ABC):
         """
 
     @abstractmethod
-    def ask_parities(self, shuffle_ranges):
+    def ask_parities(self, blocks):
         """
         Bob asks Alice to compute the parities for a list of blocks.
 
         Params:
-            shuffle_ranges (list): A list of shuffle_ranges, where each shuffle_range is a tuple
-                (shuffle_identifier, shuffle_start_index, shuffle_end_index).
+            blocks (list): A list of blocks for which the ask the parities.
 
         Returns:
-            parities (list): A list of parities, where each parity is an int value 0 or 1.
+            parities (list): A list of parities, where each parity is an int value 0 or 1. The list
+            of parities must be in the same order as the list of blocks.
         """

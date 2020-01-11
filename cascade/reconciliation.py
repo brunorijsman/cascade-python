@@ -195,8 +195,10 @@ class Reconciliation:
         return bits
 
     @staticmethod
-    def _bits_in_shuffle_range(shuffle_range):
-        (shuffle_identifier, shuffle_start_index, shuffle_end_index) = shuffle_range
+    def _bits_in_block_ask_parity(block):
+        shuffle_identifier = block.get_shuffle().get_identifier()
+        shuffle_start_index = block.get_start_index()
+        shuffle_end_index = block.get_end_index()
         return Reconciliation._bits_in_int(shuffle_identifier) + \
                Reconciliation._bits_in_int(shuffle_start_index) + \
                Reconciliation._bits_in_int(shuffle_end_index)
@@ -208,19 +210,18 @@ class Reconciliation:
 
         # Prepare the question for Alice, i.e. the list of shuffle ranges over which we want Alice
         # to compute the correct parity.
-        shuffle_ranges = []
+        ask_parity_blocks = []
         for entry in self._pending_ask_correct_parity:
             (block, _correct_right_sibling) = entry
-            shuffle_range = block.get_shuffle_range()
-            shuffle_ranges.append(shuffle_range)
-            self.stats.ask_parity_bits += self._bits_in_shuffle_range(shuffle_range)
+            ask_parity_blocks.append(block)
+            self.stats.ask_parity_bits += self._bits_in_block_ask_parity(block)
 
         # "Send a message" to Alice to ask her to compute the correct parities for the list that
         # we prepared. For now, this is a synchronous blocking operations (i.e. we block here
         # until we get the answer from Alice).
         self.stats.ask_parity_messages += 1
-        self.stats.ask_parity_blocks += len(shuffle_ranges)
-        correct_parities = self._classical_channel.ask_parities(shuffle_ranges)
+        self.stats.ask_parity_blocks += len(ask_parity_blocks)
+        correct_parities = self._classical_channel.ask_parities(ask_parity_blocks)
 
         # Process the answer from Alice. IMPORTANT: Alice is required to send the list of parities
         # in the exact same order as the ranges in the question; this allows us to zip.

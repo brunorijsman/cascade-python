@@ -137,15 +137,17 @@ class Block:
     def get_start_index(self):
         return self._start_index
 
-    def get_shuffle_range(self):
+    def get_end_index(self):
+        return self._end_index
+
+    def get_shuffle(self):
         """
         Get the shuffle for this block.
 
         Returns:
-            The shuffle range for this block, which is the following tuple:
-            (shuffle_identifier, shuffle_start_index, shuffle_end_index)
+            The shuffle for this block.
         """
-        return (self._shuffle.get_identifier(), self._start_index, self._end_index)
+        return self._shuffle
 
     def get_size(self):
         """

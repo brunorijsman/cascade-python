@@ -6,6 +6,7 @@ install:
 
 lint:
 	pylint cascade cascade/tests
+	pylint study
 
 test:
 	rm -f .coverage*
@@ -21,10 +22,12 @@ docs-open: docs
 	open docs/build/index.html
 
 profile:
-	PYTHONPATH=$(pwd) python -m cProfile -o profile.out cascade/tests/test_session.py
+	python -m cProfile -o profile.out study/run_experiments.py --disable-multi-processing \
+		study/experiments_profile.json
 	python -m gprof2dot -f pstats profile.out | dot -Tpng -o profile.png
+	open profile.png
 
-profile-open: profile
+profile-open:
 	open profile.png
 
 clean:
@@ -39,4 +42,14 @@ clean:
 	rm -rf docs/source/_modules
 	rm -rf docs/build/*
 
-.PHONY: pre-commit install lint test coverage-open docs docs-open profile profile-open clean
+.PHONY: \
+	clean \
+	coverage-open \
+	docs \
+	docs-open \
+	install \
+	lint \
+	pre-commit \
+	profile \
+	profile-open \
+	test

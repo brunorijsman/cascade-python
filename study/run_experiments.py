@@ -1,6 +1,4 @@
-import math
 import multiprocessing
-import time
 
 import argparse
 import json
@@ -13,11 +11,8 @@ from cascade.reconciliation import Reconciliation
 
 from study.data_point import DataPoint
 
-DEFAULT_RUNS = 10         # TODO: Make this a larger number
-
 TOTAL_NR_DATA_POINTS = None
 DATA_POINTS_PROCESSED = None
-START_TIME = None
 
 def parse_command_line_arguments():
     parser = argparse.ArgumentParser(description="Run Cascade experiments")
@@ -25,6 +20,8 @@ def parse_command_line_arguments():
                         help="experiments definition file")
     parser.add_argument('-r', '--max-runs', type=int,
                         help=f"maximum number of reconciliation runs per data point")
+    parser.add_argument('-d', '--disable-multi-processing', action='store_true',
+                        help=f"disable multi-processing (used when profiling code)")
     args = parser.parse_args()
     return args
 
@@ -110,24 +107,29 @@ def compute_total_nr_data_points(series):
                                  len(serie['key_sizes']) *
                                  len(serie['error_rates']))
 
-def run_series(series):
-    # TODO: Run in parallel
-    global DATA_POINTS_PROCESSED, START_TIME
+def run_series(series, disable_multi_processing):
+    global DATA_POINTS_PROCESSED
     DATA_POINTS_PROCESSED = 0
-    START_TIME = time.time()
     for serie in series:
-        run_serie(serie)
+        run_serie(serie, disable_multi_processing)
 
-def run_serie(serie):
+def run_serie(serie, disable_multi_processing):
     reconciliation_params = serie_to_reconciliation_params(serie)
     data_file_name = "data__" + serie['name']
-    pool = multiprocessing.Pool()
-    with open(data_file_name, mode="w") as data_file:
-        for data_point in pool.imap(produce_data_point, reconciliation_params):
-            print(to_json(data_point), file=data_file)
-            report_data_point_done(data_point)
-    pool.close()
-    pool.terminate()
+    if disable_multi_processing:
+        with open(data_file_name, mode="w") as data_file:
+            for param in reconciliation_params:
+                data_point = produce_data_point(param)
+                print(to_json(data_point), file=data_file)
+                report_data_point_done(data_point)
+    else:
+        pool = multiprocessing.Pool()
+        with open(data_file_name, mode="w") as data_file:
+            for data_point in pool.imap(produce_data_point, reconciliation_params):
+                print(to_json(data_point), file=data_file)
+                report_data_point_done(data_point)
+        pool.close()
+        pool.terminate()
 
 def serie_to_reconciliation_params(serie):
     reconciliation_params = []
@@ -139,23 +141,14 @@ def serie_to_reconciliation_params(serie):
     return reconciliation_params
 
 def report_data_point_done(data_point):
-    global DATA_POINTS_PROCESSED, TOTAL_NR_DATA_POINTS, START_TIME
+    global DATA_POINTS_PROCESSED, TOTAL_NR_DATA_POINTS
     DATA_POINTS_PROCESSED += 1
-    elapsed_time = time.time() - START_TIME
-    total_time = elapsed_time * TOTAL_NR_DATA_POINTS / DATA_POINTS_PROCESSED
-    seconds_remaining = math.ceil(total_time - elapsed_time)
-    minutes_remaining = seconds_remaining // 60
-    seconds_remaining %= 60
-    hours_remaining = minutes_remaining // 60
-    minutes_remaining %= 60
-    remaining_time_str = f"{hours_remaining}:{minutes_remaining:02d}:{seconds_remaining:02d}"
     percent = DATA_POINTS_PROCESSED / TOTAL_NR_DATA_POINTS * 100.0
     print(f"percent={percent:.2f} "
           f"algorithm={data_point.algorithm_name} "
           f"key_size={data_point.key_size} "
           f"error_rate={data_point.requested_bit_error_rate:.4f} "
-          f"runs={data_point.reconciliations} "
-          f"remaining_time={remaining_time_str}")
+          f"runs={data_point.reconciliations}")
 
 def produce_data_point(reconciliation_params):
     (algorithm, key_size, error_rate, runs) = reconciliation_params
@@ -214,7 +207,7 @@ def main():
     experiments = parse_experiments_file(args.experiments_file_name)
     series = experiments_to_series(experiments, args.max_runs)
     compute_total_nr_data_points(series)
-    run_series(series)
+    run_series(series, args.disable_multi_processing)
 
 if __name__ == "__main__":
     main()

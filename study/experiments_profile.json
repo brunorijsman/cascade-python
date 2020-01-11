@@ -1,0 +1,9 @@
+[
+    {
+        "independent_variable": "key_size",
+        "algorithm": ["original", "yanetal", "biconf", "option7"],
+        "error_rate": 0.02,
+        "key_size": [1000, 10000],
+        "runs": 10
+    }
+]

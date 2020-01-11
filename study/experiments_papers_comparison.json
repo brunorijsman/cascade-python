@@ -12,8 +12,19 @@
     },
     {
         "independent_variable": "key_size",
+        "algorithm": "all",
+        "error_rate": 0.05,
+        "key_size": {
+            "start": 1e3,
+            "end": 1e5,
+            "step_factor": 1.1
+        },
+        "runs": 100
+    },
+    {
+        "independent_variable": "key_size",
         "algorithm": "original",
-        "error_rate": [0.01, 0.02, 0.05],
+        "error_rate": [0.01, 0.02],
         "key_size": {
             "start": 1e3,
             "end": 1e5,

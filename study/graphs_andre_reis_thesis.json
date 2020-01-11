@@ -173,7 +173,7 @@
                 "legend": "option7",
                 "mode": "lines+markers",
                 "marker": {
-                    "symbol": "line"
+                    "symbol": "cross"
                 },
                 "line_color": "red",
                 "deviation_color": "none"

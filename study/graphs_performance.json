@@ -1,0 +1,79 @@
+[
+    {
+        "graph_name": "performance_vs_error_rate",
+        "title": "Reconciliation processing time vs error rate (key size = 10,000)",
+        "x_axis": {
+            "title": "Error rate",
+            "variable": "requested_bit_error_rate",
+            "range": [0.0, 0.1]
+        },
+        "y_axis": {
+            "title": "Process time per data point (seconds)",
+            "variable": "elapsed_process_time"
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
+                "legend": "original",
+                "line_color": "black",
+                "deviation_color": "lightgray"
+            },
+            {
+                "data_file": "data__algorithm=yanetal;key_size=10000;error_rate=vary",
+                "legend": "yanetal",
+                "line_color": "blue",
+                "deviation_color": "lightblue"
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
+                "legend": "biconf",
+                "line_color": "red",
+                "deviation_color": "lightsalmon"
+            },
+            {
+                "data_file": "data__algorithm=option7;key_size=10000;error_rate=vary",
+                "legend": "option7",
+                "line_color": "green",
+                "deviation_color": "lightgreen"
+            }
+       ]
+    },
+    {
+        "graph_name": "performance_vs_key_size",
+        "title": "Reconciliation processing time vs key size (error rate = 0.02)",
+        "x_axis": {
+            "title": "Key size",
+            "variable": "key_size"
+        },
+        "y_axis": {
+            "title": "Process time per data point (seconds)",
+            "variable": "elapsed_process_time"
+        },
+        "series": [
+            {
+                "data_file": "data__algorithm=original;key_size=vary;error_rate=0.02",
+                "legend": "original",
+                "line_color": "black",
+                "deviation_color": "lightgray"
+            },
+            {
+                "data_file": "data__algorithm=yanetal;key_size=vary;error_rate=0.02",
+                "legend": "yanetal",
+                "line_color": "blue",
+                "deviation_color": "lightblue"
+            },
+            {
+                "data_file": "data__algorithm=biconf;key_size=vary;error_rate=0.02",
+                "legend": "biconf",
+                "line_color": "red",
+                "deviation_color": "lightsalmon"
+            },
+            {
+                "data_file": "data__algorithm=option7;key_size=vary;error_rate=0.02",
+                "legend": "option7",
+                "line_color": "green",
+                "deviation_color": "lightgreen"
+            }
+       ]
+    }
+]

@@ -110,6 +110,5 @@ docs/source/_build/*
 # Open powerpoint file
 ~$*.pptx
 
-# Profile output
+# Profile output (but we do store the .png in version control)
 profile.out
-profile.png

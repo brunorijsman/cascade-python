@@ -3,7 +3,7 @@ export PYTHONPATH := $(PYTHONPATH):$(MAKE_FILE_DIR)
 
 clean:
 	rm -f .coverage*
-	rm -f profile.out profile.png
+	rm -f profile.out
 	rm -rf __pycache__
 	rm -rf htmlcov
 	rm -rf .pytest_cache

@@ -221,7 +221,7 @@ def _option8_block_size_function(estimated_bit_error_rate, key_size, iteration):
 
 _OPTION8_ALGORITHM = Algorithm(name="option8",
                                cascade_iterations=14,
-                               block_size_function=_option7_block_size_function,
+                               block_size_function=_option8_block_size_function,
                                biconf_iterations=0,
                                biconf_error_free_streak=False,
                                biconf_correct_complement=False,

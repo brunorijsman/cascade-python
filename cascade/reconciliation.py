@@ -435,7 +435,7 @@ class Reconciliation:
             if cascaded_block.get_error_parity() != Block.ERRORS_EVEN:
                 self._schedule_try_correct(cascaded_block)
                 # print(f"  {block.get_shuffle().get_identifier()} -> "
-                #       f"{cascaded_block.get_shuffle().get_identifier()}")
+                #       f"{cascaded_block.get_shuffle().get_idenztifier()}")
 
 
 

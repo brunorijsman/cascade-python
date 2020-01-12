@@ -119,13 +119,9 @@ class Reconciliation:
         if block.is_cascader:
             return
 
-        ###@@@ take TODO: self._algorithm.sub_block_reuse into account
-
-        ###@@@ For now, only top blocks
-        if not block.is_top_block:
-            return
-
-        self._register_as_cascader(block)
+        # Only register top-level blocks as cascaders, unless sub_block_reuse is enabled.
+        if self._algorithm.sub_block_reuse or block.is_top_block:
+            self._register_as_cascader(block)
 
     def _register_as_cascader(self, block):
 

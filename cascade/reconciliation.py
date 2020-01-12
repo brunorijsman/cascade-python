@@ -366,20 +366,64 @@ class Reconciliation:
 
     def _flip_key_bit_corresponding_to_single_bit_block(self, block, cascade):
 
+        # pylint:disable=protected-access
+        # print(f"[1] block={block.__str__()} parity={block._current_parity}")
+
+        # Part 1: Flip bit in key.
+
         flipped_shuffle_index = block.get_start_index()
         block.flip_bit(flipped_shuffle_index)
+
+
+        # Part 2: Update the current parity of every block that contains that key bit.
+        # Note - threat the block that was passed in special because it may or may not be registered
+        # as a cascader.
 
         # For every block that covers the key bit that was corrected...
         flipped_key_index = block.get_key_index(flipped_shuffle_index)
 
-
         block.flip_parity()
+        print(f"[3] block={block.__str__()} "
+              f"id={block._shuffle._identifier} "
+              f"parity={block._current_parity}")
+        self.sanity_check_parity(block)  ###@@@
 
-        for cascaded_block in self._get_cascaded_blocks_containing_key_index(flipped_key_index):
+        cascaded_blocks = self._get_cascaded_blocks_containing_key_index(flipped_key_index)
+
+        for cascaded_block in cascaded_blocks:
 
             if cascaded_block == block:
                 continue
 
             cascaded_block.flip_parity()
-            if cascade and cascaded_block.get_error_parity() != Block.ERRORS_EVEN:
+            self.sanity_check_parity(cascaded_block)  ###@@@
+
+
+
+        # Part 3: Cascade effect
+
+
+        if not cascade:
+            return
+
+        print("Cascade:")
+        for cascaded_block in cascaded_blocks:
+            if cascaded_block.get_error_parity() != Block.ERRORS_EVEN:
                 self._schedule_try_correct(cascaded_block)
+                print(f"  {block.get_shuffle().get_identifier()} -> "
+                      f"{cascaded_block.get_shuffle().get_identifier()}")
+
+
+
+    ###@@@
+    @staticmethod
+    def sanity_check_parity(block):
+        # pylint:disable=protected-access
+        stored_current_parity = block._current_parity
+        calculated_current_parity = block._shuffle.calculate_parity(
+            block._key, block._start_index, block._end_index)
+        if stored_current_parity != calculated_current_parity:
+            print(f"[2] block={block.__str__()} "
+                  f"stored_current_parity={stored_current_parity} "
+                  f"calculated_current_parity={calculated_current_parity}")
+            assert False

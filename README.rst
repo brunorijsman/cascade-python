@@ -13,6 +13,6 @@ cascade-python
 
 Cascade information reconciliation protocol for Quantum Key Distribution (QKD).
 
-See _documentation.
+See `documentation`_.
 
 .. _documentation: https://cascade-python.readthedocs.io/en/latest/

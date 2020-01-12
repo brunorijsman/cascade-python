@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 project = 'QKD Cascade'
 # pylint:disable=redefined-builtin
-copyright = '2019, Bruno Rijsman'
+copyright = '2020, Bruno Rijsman'
 author = 'Bruno Rijsman'
 release = '0.0.1'
 
@@ -42,6 +42,7 @@ def run_apidoc(_):
             apidoc = os.path.abspath(os.path.join(sys.prefix, 'bin', 'sphinx-apidoc'))
         exclude_pattern = f"`find {module} -name tests`"
         cmd = f"{apidoc} -f -e -o {output_dir} {module} {exclude_pattern}"
+        print(f"**** module={module} output_dir={output_dir} cmd={cmd}")
         subprocess.check_call(cmd, shell=True)
 
 def setup(app):

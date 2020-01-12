@@ -11,6 +11,7 @@ clean:
 	rm -rf cascade/.pytest_cache
 	rm -rf cascade/tests/__pycache__
 	rm -rf study/__pycache__
+	rm -rf docs/source/_build
 	rm -rf docs/source/_modules
 	rm -rf docs/build/*
 

@@ -1,5 +1,5 @@
 Welcome to Cascade's documentation!
-================================
+===================================
 
 .. toctree::
    :maxdepth: 2

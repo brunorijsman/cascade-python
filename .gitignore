@@ -104,8 +104,9 @@ venv.bak/
 .mypy_cache/
 
 # sphinx-apidoc generated files
-docs/source/_modules/*
 docs/source/_build/*
+docs/source/_modules/*
+docs/build/*
 
 # Open powerpoint file
 ~$*.pptx

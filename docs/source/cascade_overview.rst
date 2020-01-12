@@ -1,6 +1,6 @@
-************************************************************
-Overview of the Cascade information reconciliation protocol.
-************************************************************
+************************************************
+The Cascade information reconciliation protocol.
+************************************************
 
 What is an information reconciliation protocol?
 ===============================================

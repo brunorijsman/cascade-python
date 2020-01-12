@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 
-project = 'QKD Cascade'
+project = 'Cascade-Python'
 # pylint:disable=redefined-builtin
 copyright = '2020, Bruno Rijsman'
 author = 'Bruno Rijsman'

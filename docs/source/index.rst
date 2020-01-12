@@ -1,9 +1,13 @@
-Welcome to Cascade's documentation!
-===================================
+Welcome to Cascade-Python's documentation!
+==========================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   context.rst
+
+   cascade_overview.rst
 
    shuffle.rst
 

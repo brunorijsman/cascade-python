@@ -31,6 +31,7 @@ class Block:
         self._end_index = end_index
 
         self.is_top_block = False    ###@@@ Temporary while refactoring
+        self.is_cascader = False     ###@@@ Temporary while refactoring
 
         # The following information is only used in sub-blocks that are created by calling split.
         self._sibling_block = None

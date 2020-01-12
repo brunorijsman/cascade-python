@@ -35,7 +35,7 @@ class Reconciliation:
         self._reconciled_key = None
 
         # Map key indexes to blocks.
-        self._key_index_to_blocks = {}
+        self._key_index_to_cascader_blocks = {}
 
         # Keep track of statistics.
         self.stats = Stats()
@@ -113,17 +113,37 @@ class Reconciliation:
         # Return the probably, but not surely, corrected key.
         return self._reconciled_key
 
-    def _register_block_key_indexes(self, block):
-        # For every key bit covered by the block, append the block to the list of blocks that depend
-        # on that partical key bit.
-        for key_index in block.get_key_indexes():
-            if key_index in self._key_index_to_blocks:
-                self._key_index_to_blocks[key_index].append(block)
-            else:
-                self._key_index_to_blocks[key_index] = [block]
+    def _potentially_register_as_cascader(self, block):
 
-    def _get_blocks_containing_key_index(self, key_index):
-        return self._key_index_to_blocks.get(key_index, [])
+        # If block is already registered as a cascader, do nothing.
+        if block.is_cascader:
+            return
+
+        ###@@@ take TODO: self._algorithm.sub_block_reuse into account
+
+        ###@@@ For now, only top blocks
+        if not block.is_top_block:
+            return
+
+        self._register_as_cascader(block)
+
+    def _register_as_cascader(self, block):
+
+        # For every key bit covered by the block, append the block to the list of cascader blocks
+        # that depend on that partical key bit.
+        for key_index in block.get_key_indexes():
+            if key_index in self._key_index_to_cascader_blocks:
+                self._key_index_to_cascader_blocks[key_index].append(block)
+            else:
+                self._key_index_to_cascader_blocks[key_index] = [block]
+
+        # Avoid doing it all again if the block is registered again.
+        block.is_cascader = True
+
+
+
+    def _get_cascaded_blocks_containing_key_index(self, key_index):
+        return self._key_index_to_cascader_blocks.get(key_index, [])
 
     def _schedule_ask_correct_parity(self, block):
         self._pending_ask_correct_parity.append(block)
@@ -232,8 +252,8 @@ class Reconciliation:
         # For each top-level covering block...
         for block in blocks:
 
-            # Update the key index to block map.
-            self._register_block_key_indexes(block)
+            # Register this block as a cascader.
+            self._potentially_register_as_cascader(block)
 
             # We won't be able to do anything with the top-level covering blocks until we know what
             # the correct parity it.
@@ -274,7 +294,7 @@ class Reconciliation:
         # If we are not cascading during BICONF, clear the key indexes to blocks map to avoid
         # wasting time keeping it up to date as correct blocks during the BICONF phase.
         if not self._algorithm.biconf_cascade:
-            self._key_index_to_blocks = {}
+            self._key_index_to_cascader_blocks = {}
 
         # Do the required number of BICONF iterations, as determined by the protocol.
         iterations_to_go = self._algorithm.biconf_iterations
@@ -298,7 +318,7 @@ class Reconciliation:
         mid_index = key_size // 2
         chosen_block = Block(self._reconciled_key, shuffle, 0, mid_index)
         if cascade:
-            self._register_block_key_indexes(chosen_block)
+            self._potentially_register_as_cascader(chosen_block)
 
         # Ask Alice what the correct parity of the chosen block is.
         self._schedule_ask_correct_parity(chosen_block)
@@ -308,7 +328,7 @@ class Reconciliation:
         if self._algorithm.biconf_correct_complement:
             complement_block = Block(self._reconciled_key, shuffle, mid_index, key_size)
             if cascade:
-                self._register_block_key_indexes(complement_block)
+                self._potentially_register_as_cascader(complement_block)
             self._schedule_ask_correct_parity(complement_block)
 
         # Service all pending correction attempts (potentially including Cascaded ones) and ask
@@ -322,6 +342,9 @@ class Reconciliation:
         if block.get_or_infer_correct_parity() is None:
             self._schedule_ask_correct_parity(block)
             return 0
+
+        ###@@@
+        self._potentially_register_as_cascader(block)
 
         # If there is an even number of errors in this block, we don't attempt to fix any errors
         # in this block. But if the block has a right sibling, try to correct that one instead.
@@ -342,9 +365,7 @@ class Reconciliation:
 
         # Recurse to try to correct an error in the left sub-block first, and if there is no error
         # there, in the right sub-block alternatively.
-        (left_sub_block, right_sub_block) = block.split()
-        self._register_block_key_indexes(left_sub_block)        ###@@@ TODO
-        self._register_block_key_indexes(right_sub_block)
+        (left_sub_block, _right_sub_block) = block.split()
         return self._try_correct(left_sub_block, cascade)
 
     def _flip_key_bit_corresponding_to_single_bit_block(self, block, cascade):
@@ -355,13 +376,14 @@ class Reconciliation:
         # For every block that covers the key bit that was corrected...
         flipped_key_index = block.get_key_index(flipped_shuffle_index)
 
-        for affected_block in self._get_blocks_containing_key_index(flipped_key_index):
 
-            # Flip the parity of that block.
-            affected_block.flip_parity()
+        block.flip_parity()
 
-            # If asked to do cascading, do so for blocks with an odd number of errors.
-            if cascade and affected_block.get_error_parity() != Block.ERRORS_EVEN:
-                # If sub_block_reuse is disabled, then only cascade top-level blocks.
-                if self._algorithm.sub_block_reuse or affected_block.is_top_block:
-                    self._schedule_try_correct(affected_block)
+        for cascaded_block in self._get_cascaded_blocks_containing_key_index(flipped_key_index):
+
+            if cascaded_block == block:
+                continue
+
+            cascaded_block.flip_parity()
+            if cascade and cascaded_block.get_error_parity() != Block.ERRORS_EVEN:
+                self._schedule_try_correct(cascaded_block)

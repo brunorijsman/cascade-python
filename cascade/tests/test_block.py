@@ -11,17 +11,17 @@ def test_create_block():
     assert key.__repr__() == "Key: 10111010"
     shuffle = Shuffle(key.get_size(), Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__repr__() == "Shuffle: 0->0 1->1 2->6 3->4 4->3 5->2 6->5 7->7"
-    block = Block(key, shuffle, 3, 6, None)
+    block = Block(key, shuffle, 3, 6)
     assert block.__repr__() == "Block: 3->4=1 4->3=1 5->2=1"
-    block = Block(key, shuffle, 0, 8, None)
+    block = Block(key, shuffle, 0, 8)
     assert block.__repr__() == "Block: 0->0=1 1->1=0 2->6=1 3->4=1 4->3=1 5->2=1 6->5=0 7->7=0"
 
     # Block covers part of the shuffle.
-    block = Block(key, shuffle, 1, 3, None)
+    block = Block(key, shuffle, 1, 3)
     assert block.__repr__() == "Block: 1->1=0 2->6=1"
 
     # Single bit block.
-    block = Block(key, shuffle, 2, 3, None)
+    block = Block(key, shuffle, 2, 3)
     assert block.__repr__() == "Block: 2->6=1"
 
 def test_create_covering_blocks():
@@ -124,17 +124,17 @@ def test_current_parity():
     assert block.__str__() == "111011100010"
     assert block.get_current_parity() == 1
 
-    # Split block into sub-blocks.
-    left_sub_block = block.create_left_sub_block()
-    right_sub_block = block.create_right_sub_block()
+    # # Split block into sub-blocks.
+    # left_sub_block = block.create_left_sub_block()
+    # right_sub_block = block.create_right_sub_block()
 
-    # Odd parity sub-block.
-    assert left_sub_block.__str__() == "111011"
-    assert left_sub_block.get_current_parity() == 1
+    # # Odd parity sub-block.
+    # assert left_sub_block.__str__() == "111011"
+    # assert left_sub_block.get_current_parity() == 1
 
-    # Even parity sub-block.
-    assert right_sub_block.__str__() == "100010"
-    assert right_sub_block.get_current_parity() == 0
+    # # Even parity sub-block.
+    # assert right_sub_block.__str__() == "100010"
+    # assert right_sub_block.get_current_parity() == 0
 
 def test_create_sub_blocks():
 
@@ -150,41 +150,41 @@ def test_create_sub_blocks():
     block = blocks[0]
     assert block.__str__() == "1110100000"
 
-    # Get the left sub-block; it does not yet exist.
-    left_sub_block = block.get_left_sub_block()
-    assert left_sub_block is None
+    # # Get the left sub-block; it does not yet exist.
+    # left_sub_block = block.get_left_sub_block()
+    # assert left_sub_block is None
 
-    # Create the left sub-block.
-    left_sub_block = block.create_left_sub_block()
-    assert left_sub_block.__str__() == "11101"
+    # # Create the left sub-block.
+    # left_sub_block = block.create_left_sub_block()
+    # assert left_sub_block.__str__() == "11101"
 
-    # Get the left sub-block again; now it exists.
-    left_sub_block = block.get_left_sub_block()
-    assert left_sub_block.__str__() == "11101"
+    # # Get the left sub-block again; now it exists.
+    # left_sub_block = block.get_left_sub_block()
+    # assert left_sub_block.__str__() == "11101"
 
-    # Get the right sub-block; it does not yet exist.
-    right_sub_block = block.get_right_sub_block()
-    assert right_sub_block is None
+    # # Get the right sub-block; it does not yet exist.
+    # right_sub_block = block.get_right_sub_block()
+    # assert right_sub_block is None
 
-    # Create the right sub-block.
-    right_sub_block = block.create_right_sub_block()
-    assert right_sub_block.__str__() == "00000"
+    # # Create the right sub-block.
+    # right_sub_block = block.create_right_sub_block()
+    # assert right_sub_block.__str__() == "00000"
 
-    # Get the right sub-block again; now it exists.
-    right_sub_block = block.get_right_sub_block()
-    assert right_sub_block.__str__() == "00000"
+    # # Get the right sub-block again; now it exists.
+    # right_sub_block = block.get_right_sub_block()
+    # assert right_sub_block.__str__() == "00000"
 
-    # Split right sub-block with odd number of bits into sub-sub-blocks.
-    left_sub_sub_block = right_sub_block.create_left_sub_block()
-    right_sub_sub_block = right_sub_block.create_right_sub_block()
-    assert left_sub_sub_block.__str__() == "000"
-    assert right_sub_sub_block.__str__() == "00"
+    # # Split right sub-block with odd number of bits into sub-sub-blocks.
+    # left_sub_sub_block = right_sub_block.create_left_sub_block()
+    # right_sub_sub_block = right_sub_block.create_right_sub_block()
+    # assert left_sub_sub_block.__str__() == "000"
+    # assert right_sub_sub_block.__str__() == "00"
 
-    # Split left sub-sub-block with odd number of bits into sub-sub-sub-blocks.
-    left_sub_sub_sub_block = left_sub_sub_block.create_left_sub_block()
-    right_sub_sub_sub_block = left_sub_sub_block.create_right_sub_block()
-    assert left_sub_sub_sub_block.__str__() == "00"
-    assert right_sub_sub_sub_block.__str__() == "0"
+    # # Split left sub-sub-block with odd number of bits into sub-sub-sub-blocks.
+    # left_sub_sub_sub_block = left_sub_sub_block.create_left_sub_block()
+    # right_sub_sub_sub_block = left_sub_sub_block.create_right_sub_block()
+    # assert left_sub_sub_sub_block.__str__() == "00"
+    # assert right_sub_sub_sub_block.__str__() == "0"
 
 def test_error_parity():
 

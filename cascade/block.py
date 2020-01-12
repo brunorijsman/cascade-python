@@ -10,7 +10,7 @@ class Block:
     ERRORS_UNKNOWN = 3
     """We don't know whether the block contains an even or an odd number of errors."""
 
-    def __init__(self, key, shuffle, start_index, end_index, parent_block):
+    def __init__(self, key, shuffle, start_index, end_index):
         """
         Create a block, which is a contiguous subset of bits in a shuffled key.
 
@@ -22,8 +22,6 @@ class Block:
             end_index (int): The shuffle index, exclusive, at which the block end. Must be in range
                 [0, shuffle._size]. The range must encompass at least 1 bit, i.e.
                 end_index > start_index.
-            parent_block (Block): The parent block. None if there is no parent, i.e. if this is a
-                top-level block.
         """
 
         # Store block attributes.
@@ -32,17 +30,18 @@ class Block:
         self._start_index = start_index
         self._end_index = end_index
 
-        # Keep track of parent block. None if there is no parent, i.e. if this is a top-level block.
-        self._parent_block = parent_block
+        self.is_top_block = False    ###@@@ Temporary while refactoring
 
-        # Keep track of left and right sub-block to avoid creating them more then once.
-        self._left_sub_block = None
-        self._right_sub_block = None
+        # The following information is only used in sub-blocks that are created by calling split.
+        self._sibling_block = None
+        self._is_left_half = False
+        self._is_right_half = False
 
         # Calculate the current parity for this block.
         self._current_parity = shuffle.calculate_parity(key, start_index, end_index)
 
-        # We don't yet know the correct parity for this block.
+        # We don't yet know the correct parity for this block, nor for the parent block.
+        self._parent_correct_parity = None
         self._correct_parity = None
 
     @staticmethod
@@ -68,11 +67,33 @@ class Block:
         while remaining_bits > 0:
             actual_block_size = min(block_size, remaining_bits)
             end_index = start_index + actual_block_size
-            block = Block(key, shuffle, start_index, end_index, None)
+            block = Block(key, shuffle, start_index, end_index)
+            block.is_top_block = True    ###@@@ Temporary
             blocks.append(block)
             start_index += actual_block_size
             remaining_bits -= actual_block_size
         return blocks
+
+    def split(self):
+
+        # Determine where to split the block.
+        middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
+
+        # Create the left and the right sub-block.
+        left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index)
+        right_sub_block = Block(self._key, self._shuffle, middle_index, self._end_index)
+
+        # Tie the two sub-blocks together as siblings.
+        # pylint:disable=protected-access
+        left_sub_block._parent_correct_parity = self._correct_parity
+        left_sub_block._sibling_block = right_sub_block
+        left_sub_block._is_left_half = True
+        right_sub_block._parent_correct_parity = self._correct_parity
+        right_sub_block._sibling_block = left_sub_block
+        right_sub_block._is_right_half = True
+
+        # Return the left and right sub-block.
+        return (left_sub_block, right_sub_block)
 
     def __repr__(self):
         """
@@ -137,6 +158,7 @@ class Block:
         """
         return self._end_index - self._start_index
 
+    ###@@@ Do we need this?
     def get_key_indexes(self):
         """
         Get a list of key indexes for this block.
@@ -161,6 +183,52 @@ class Block:
         """
         return self._current_parity
 
+    def get_or_infer_correct_parity(self):
+
+        # If we know the correct parity, return it.
+        if self._correct_parity is not None:
+            return self._correct_parity
+
+        # We don't know the correct parity... try to infer it based on what we know (if anything)
+        # about the correct parity of the sibling block and the parent block.
+
+        # Can't infer if we don't have a sibling.
+        if self._sibling_block is None:
+            return None
+
+        # Can't infer if we don't know the correct parity for the sibling.
+        # pylint:disable=protected-access
+        if self._sibling_block._correct_parity is None:
+            return None
+
+        # Can't infer if we don't know the correct parity for the parent.
+        if self._parent_correct_parity is None:
+            if self._sibling_block._parent_correct_parity is None:
+                return False
+            parent_correct_parity = self._sibling_block._parent_correct_parity
+        else:
+            if self._sibling_block._parent_correct_parity is not None:
+                assert self._sibling_block._parent_correct_parity == self._parent_correct_parity
+            parent_correct_parity = self._parent_correct_parity
+
+        # We know the parent and the sibling correct parity, so we can infer the correct parity
+        # for this block.
+        if parent_correct_parity == self._sibling_block._correct_parity:
+            self._correct_parity = 0
+        else:
+            self._correct_parity = 1
+        return self._correct_parity
+
+    def get_right_sibling(self):
+        if self._sibling_block is None:
+            return None
+        if not self._is_left_half:
+            return None
+        right_sibling_block = self._sibling_block
+        # pylint:disable=protected-access
+        assert right_sibling_block._is_right_half   # TODO: remove
+        return right_sibling_block
+
     def get_correct_parity(self):
         """
         Get the correct parity of the block, if we know it.
@@ -170,6 +238,15 @@ class Block:
         """
         return self._correct_parity
 
+    def get_parent_correct_parity(self):
+        """
+        Get the correct parity of the parent block, if we know it.
+
+        Returns:
+            The current parity (0 or 1) of the parent block, or None if we don't know it.
+        """
+        return self._parent_correct_parity
+
     def set_correct_parity(self, correct_parity):
         """
         Set the correct parity of the block.
@@ -178,63 +255,6 @@ class Block:
             correct_parity (int): The current parity (0 or 1).
         """
         self._correct_parity = correct_parity
-
-    def is_top_block(self):
-        # TODO: Add unit test
-        """
-        Is this block a top-level block?
-
-        Returns:
-            True if the block was created by splitting a shuffled key into blocks. False if the
-            block was created by splitting a block into sub-blocks.
-        """
-        return self._parent_block is None
-
-    def get_left_sub_block(self):
-        """
-        Return the left sub-block of this block, if it has one.
-
-        Returns:
-            The left sub-block, or None if there is no left sub-block.
-        """
-        return self._left_sub_block
-
-    def create_left_sub_block(self):
-        middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
-        self._left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index,
-                                     self)
-        return self._left_sub_block
-
-    def get_parent_block(self):
-        """
-        Return the parent block of this block, if it has one.
-
-        Returns:
-            The parent block, or None if there is no parent block.
-        """
-        return self._parent_block
-
-    def get_right_sub_block(self):
-        """
-        Return the right sub-block of this block, if it has one.
-
-        Returns:
-            The right sub-block, or None if there is no right sub-block.
-        """
-        return self._right_sub_block
-
-    def create_right_sub_block(self):
-        """
-        Create the right sub-block of this block. If the block has an odd size, the left sub-block
-        will be one bit larger than the right sub-block. If the size of this block is less than 2
-        then it is not allowed to ask for any sub-block.
-
-        Returns:
-            The right sub-block.
-        """
-        middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
-        self._right_sub_block = Block(self._key, self._shuffle, middle_index, self._end_index, self)
-        return self._right_sub_block
 
     def get_error_parity(self):
         """
@@ -249,6 +269,7 @@ class Block:
         """
         if self._correct_parity is None:
             return Block.ERRORS_UNKNOWN
+        assert self._current_parity is not None   # Always known; is set in constructor
         if self._current_parity == self._correct_parity:
             return Block.ERRORS_EVEN
         return Block.ERRORS_ODD

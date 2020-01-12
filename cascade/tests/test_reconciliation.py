@@ -87,7 +87,7 @@ def test_get_blocks_containing_key_index():
 
     # Create a block that covers the middle four bits (bits 2, 3, 4, 5) of the shuffled key,
     # which are bits 0, 7, 3, and 1 of the unshuffled key.
-    block1 = Block(noisy_key, shuffle1, 2, 6, None)
+    block1 = Block(noisy_key, shuffle1, 2, 6)
     assert block1.__str__() == "0111"
 
     # Update the key bit index to block mapping.
@@ -110,7 +110,7 @@ def test_get_blocks_containing_key_index():
 
     # Create another block that covers the last four bits (bits 4, 5, 6, 7) of the second shuffled
     # key, which are bits 3, 2, 5, and 4 of the unshuffled key.
-    block2 = Block(noisy_key, shuffle2, 4, 8, None)
+    block2 = Block(noisy_key, shuffle2, 4, 8,)
     assert block2.__str__() == "1001"
 
     # Update the key bit index to block mapping for the second block.
@@ -127,9 +127,8 @@ def test_get_blocks_containing_key_index():
     assert reconciliation._get_blocks_containing_key_index(7) == [block1]
 
     # Create sub-blocks for block2
-    left_sub_block = block2.create_left_sub_block()
+    (left_sub_block, right_sub_block) = block2.split()
     assert left_sub_block.__str__() == "10"
-    right_sub_block = block2.create_right_sub_block()
     assert right_sub_block.__str__() == "01"
 
     # Update the key bit index to block mapping for the sub blocks.

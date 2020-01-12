@@ -2,8 +2,9 @@ import copy
 import heapq
 import math
 import time
-from cascade.block import Block
+
 from cascade.algorithm import get_algorithm_by_name
+from cascade.block import Block
 from cascade.shuffle import Shuffle
 from cascade.stats import Stats
 
@@ -124,49 +125,8 @@ class Reconciliation:
     def _get_blocks_containing_key_index(self, key_index):
         return self._key_index_to_blocks.get(key_index, [])
 
-    def _correct_parity_is_known_or_can_be_inferred(self, block):
-
-        # Is the parity of the block already known?
-        if block.get_correct_parity() is not None:
-            return True
-
-        # Try to do a very limited type of inference, using only the parity of the parent block and
-        # the sibling block.
-
-        # Cannot infer if there is no parent block.
-        parent_block = block.get_parent_block()
-        if parent_block is None:
-            return False
-
-        # Cannot infer if there is no sibling block (yet).
-        if parent_block.get_left_sub_block() == block:
-            sibling_block = parent_block.get_right_sub_block()
-        else:
-            sibling_block = parent_block.get_left_sub_block()
-        if sibling_block is None:
-            return False
-
-        # Cannot infer if the correct parity of the parent or sibling block are unknown.
-        correct_parent_parity = parent_block.get_correct_parity()
-        if correct_parent_parity is None:
-            return False
-        correct_sibling_parity = sibling_block.get_correct_parity()
-        if correct_sibling_parity is None:
-            return False
-
-        # We have everything we need. Infer the correct parity.
-        if correct_parent_parity == 1:
-            correct_block_parity = 1 - correct_sibling_parity
-        else:
-            correct_block_parity = correct_sibling_parity
-        block.set_correct_parity(correct_block_parity)
-        self.stats.infer_parity_blocks += 1
-        return True
-
-    def _schedule_ask_correct_parity(self, block, correct_right_sibling):
-        # Adding an item to the end (not the start!) of a list is an efficient O(1) operation.
-        entry = (block, correct_right_sibling)
-        self._pending_ask_correct_parity.append(entry)
+    def _schedule_ask_correct_parity(self, block):
+        self._pending_ask_correct_parity.append(block)
 
     def _have_pending_ask_correct_parity(self):
         return self._pending_ask_correct_parity != []
@@ -198,8 +158,7 @@ class Reconciliation:
         # Prepare the question for Alice, i.e. the list of shuffle ranges over which we want Alice
         # to compute the correct parity.
         ask_parity_blocks = []
-        for entry in self._pending_ask_correct_parity:
-            (block, _correct_right_sibling) = entry
+        for block in self._pending_ask_correct_parity:
             ask_parity_blocks.append(block)
             self.stats.ask_parity_bits += self._bits_in_block_ask_parity(block)
 
@@ -212,20 +171,18 @@ class Reconciliation:
 
         # Process the answer from Alice. IMPORTANT: Alice is required to send the list of parities
         # in the exact same order as the ranges in the question; this allows us to zip.
-        for (correct_parity, entry) in zip(correct_parities, self._pending_ask_correct_parity):
+        for (correct_parity, block) in zip(correct_parities, self._pending_ask_correct_parity):
             self.stats.reply_parity_bits += 1
-            (block, correct_right_sibling) = entry
             block.set_correct_parity(correct_parity)
-            self._schedule_try_correct(block, correct_right_sibling)
+            self._schedule_try_correct(block)
 
         # Clear the list of pending questions.
         self._pending_ask_correct_parity = []
 
-    def _schedule_try_correct(self, block, correct_right_sibling):
+    def _schedule_try_correct(self, block):
         # Push the error block onto the heap. It is pushed as a tuple (block.size, block) to allow
         # us to correct the error blocks in order of shortest blocks first.
-        entry = (block, correct_right_sibling)
-        heapq.heappush(self._pending_try_correct, (block.get_size(), entry))
+        heapq.heappush(self._pending_try_correct, (block.get_size(), block))
 
     def _have_pending_try_correct(self):
         return self._pending_try_correct != []
@@ -233,9 +190,8 @@ class Reconciliation:
     def _service_pending_try_correct(self, cascade):
         errors_corrected = 0
         while self._pending_try_correct:
-            (_, entry) = heapq.heappop(self._pending_try_correct)
-            (block, correct_right_sibling) = entry
-            errors_corrected += self._try_correct(block, correct_right_sibling, cascade)
+            (_, block) = heapq.heappop(self._pending_try_correct)
+            errors_corrected += self._try_correct(block, cascade)
         return errors_corrected
 
     def _compute_efficiency(self, reconciliation_bits):
@@ -281,7 +237,7 @@ class Reconciliation:
 
             # We won't be able to do anything with the top-level covering blocks until we know what
             # the correct parity it.
-            self._schedule_ask_correct_parity(block, False)
+            self._schedule_ask_correct_parity(block)
 
         # Service all pending correction attempts (including Cascaded ones) and ask parity
         # messages.
@@ -340,40 +296,39 @@ class Reconciliation:
         key_size = self._reconciled_key.get_size()
         shuffle = Shuffle(key_size, Shuffle.SHUFFLE_RANDOM)
         mid_index = key_size // 2
-        chosen_block = Block(self._reconciled_key, shuffle, 0, mid_index, None)
+        chosen_block = Block(self._reconciled_key, shuffle, 0, mid_index)
         if cascade:
             self._register_block_key_indexes(chosen_block)
 
         # Ask Alice what the correct parity of the chosen block is.
-        self._schedule_ask_correct_parity(chosen_block, False)
+        self._schedule_ask_correct_parity(chosen_block)
 
         # If the algorithm wants it, also ask Alice what the correct parity of the complementary
         # block is.
         if self._algorithm.biconf_correct_complement:
-            complement_block = Block(self._reconciled_key, shuffle, mid_index, key_size, None)
+            complement_block = Block(self._reconciled_key, shuffle, mid_index, key_size)
             if cascade:
                 self._register_block_key_indexes(complement_block)
-            self._schedule_ask_correct_parity(complement_block, False)
+            self._schedule_ask_correct_parity(complement_block)
 
         # Service all pending correction attempts (potentially including Cascaded ones) and ask
         # parity messages.
         errors_corrected = self._service_all_pending_work(cascade)
         return errors_corrected
 
-    def _try_correct(self, block, correct_right_sibling, cascade):
+    def _try_correct(self, block, cascade):
 
-        # If we don't know the correct parity of the block, we cannot make progress on this block
-        # until Alice has told us what the correct parity is.
-        if not self._correct_parity_is_known_or_can_be_inferred(block):
-            self._schedule_ask_correct_parity(block, correct_right_sibling)
+        # If we don't know or can infer what the correct parity is, schedule asking Alice.
+        if block.get_or_infer_correct_parity() is None:
+            self._schedule_ask_correct_parity(block)
             return 0
 
         # If there is an even number of errors in this block, we don't attempt to fix any errors
-        # in this block. But if asked to do so, we will attempt to fix an error in the right
-        # sibling block.
+        # in this block. But if the block has a right sibling, try to correct that one instead.
         if block.get_error_parity() == Block.ERRORS_EVEN:
-            if correct_right_sibling:
-                return self._try_correct_right_sibling_block(block, cascade)
+            right_sibling_block = block.get_right_sibling()
+            if right_sibling_block is not None:
+                return self._try_correct(right_sibling_block, cascade)
             return 0
 
         # If this block contains a single bit, we have finished the recursion and found an error.
@@ -387,19 +342,10 @@ class Reconciliation:
 
         # Recurse to try to correct an error in the left sub-block first, and if there is no error
         # there, in the right sub-block alternatively.
-        left_sub_block = block.get_left_sub_block()
-        if  left_sub_block is None:
-            left_sub_block = block.create_left_sub_block()
-            self._register_block_key_indexes(left_sub_block)
-        return self._try_correct(left_sub_block, True, cascade)
-
-    def _try_correct_right_sibling_block(self, block, cascade):
-        parent_block = block.get_parent_block()
-        right_sibling_block = parent_block.get_right_sub_block()
-        if right_sibling_block is None:
-            right_sibling_block = parent_block.create_right_sub_block()
-            self._register_block_key_indexes(right_sibling_block)
-        return self._try_correct(right_sibling_block, False, cascade)
+        (left_sub_block, right_sub_block) = block.split()
+        self._register_block_key_indexes(left_sub_block)        ###@@@ TODO
+        self._register_block_key_indexes(right_sub_block)
+        return self._try_correct(left_sub_block, cascade)
 
     def _flip_key_bit_corresponding_to_single_bit_block(self, block, cascade):
 
@@ -417,5 +363,5 @@ class Reconciliation:
             # If asked to do cascading, do so for blocks with an odd number of errors.
             if cascade and affected_block.get_error_parity() != Block.ERRORS_EVEN:
                 # If sub_block_reuse is disabled, then only cascade top-level blocks.
-                if self._algorithm.sub_block_reuse or affected_block.is_top_block():
-                    self._schedule_try_correct(affected_block, False)
+                if self._algorithm.sub_block_reuse or affected_block.is_top_block:
+                    self._schedule_try_correct(affected_block)

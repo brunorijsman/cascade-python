@@ -14,10 +14,10 @@ class Reconciliation:
 
     def __init__(self, algorithm_name, classical_channel, noisy_key, estimated_bit_error_rate):
         """
-        Create a Cascade reconciliation.
+        Create a cascade reconciliation.
 
         Args:
-            algorithm_name (str): The name of the Cascade algorithm.
+            algorithm_name (str): The name of the cascade algorithm.
             classical_channel (subclass of ClassicalChannel): The classical channel over which
                 Bob communicates with Alice.
             noisy_key (Key): The noisy key as Bob received it from Alice that needs to be
@@ -33,8 +33,14 @@ class Reconciliation:
         self._noisy_key = noisy_key
         self._reconciled_key = None
 
-        # Map key indexes to blocks.
-        self._key_index_to_blocks = {}
+        # Keep one "cascade" map for each iteration. A cascade map maps the key index to the block
+        # that needs to be cascaded when that particular key index is corrected. There is a separate
+        # cascade map for each iteration, pointing to blocks that were created in that iteration.
+        # For each key index there is always exactly one cascaded block. If sub_block_reuse is
+        # False, then the cascaded block is always a top-level block. If sub_block_reuse is True
+        # then the block is always the smallest block created during the iteration for that key
+        # index.
+        self._iteration_to_cascade_map = {}
 
         # Keep track of statistics.
         self.stats = Stats()
@@ -73,7 +79,7 @@ class Reconciliation:
 
     def reconcile(self):
         """
-        Run the Cascade algorithm to reconciliate our ("Bob's") noisy key with the server's
+        Run the cascade algorithm to reconciliate our ("Bob's") noisy key with the server's
         ("Alice's") correct key.
 
         Returns:
@@ -91,10 +97,10 @@ class Reconciliation:
         # Inform Alice that we are starting a new reconciliation.
         self._classical_channel.start_reconciliation()
 
-        # Do as many normal Cascade iterations as demanded by this particular Cascade algorithm.
+        # Do as many normal cascade iterations as demanded by this particular cascade algorithm.
         self._all_normal_cascade_iterations()
 
-        # Do as many normal BICONF iterations as demanded by this particular Cascade algorithm.
+        # Do as many normal BICONF iterations as demanded by this particular cascade algorithm.
         self._all_biconf_iterations()
 
         # Inform Alice that we have finished the reconciliation.
@@ -112,17 +118,29 @@ class Reconciliation:
         # Return the probably, but not surely, corrected key.
         return self._reconciled_key
 
-    def _register_block_key_indexes(self, block):
-        # For every key bit covered by the block, append the block to the list of blocks that depend
-        # on that partical key bit.
+    def _cascade_map_add_top_level_block(self, iteration_nr, block):
+        cascade_map = self._iteration_to_cascade_map[iteration_nr]
         for key_index in block.get_key_indexes():
-            if key_index in self._key_index_to_blocks:
-                self._key_index_to_blocks[key_index].append(block)
-            else:
-                self._key_index_to_blocks[key_index] = [block]
+            cascade_map[key_index] = block
 
-    def _get_blocks_containing_key_index(self, key_index):
-        return self._key_index_to_blocks.get(key_index, [])
+    def _cascade_map_update_sub_block(self, iteration_nr, block):
+
+        # Only store sub blocks in the cascade map is sub_block_reuse is enabled.
+        if not self._algorithm.sub_block_reuse:
+            return
+
+        # For each key index, keep track of the shortest block.
+        cascade_map = self._iteration_to_cascade_map[iteration_nr]
+        for key_index in block.get_key_indexes():
+            if key_index in cascade_map:
+                current_cascaded_block = cascade_map[key_index]
+                if block.get_size() < current_cascaded_block.get_size():
+                    cascade_map[key_index] = block
+            else:
+                # This never happens during normal cascade iterations, but it does happen during
+                # BICONF iterations if BICONF cascading is enabled and sub_block_reuse is enabled.
+                # This is because BICONF doesn't have top-level blocks, only sub-blocks.
+                cascade_map[key_index] = block
 
     def _correct_parity_is_known_or_can_be_inferred(self, block):
 
@@ -210,7 +228,7 @@ class Reconciliation:
         self.stats.ask_parity_blocks += len(ask_parity_blocks)
         correct_parities = self._classical_channel.ask_parities(ask_parity_blocks)
 
-        # Process the answer from Alice. IMPORTANT: Alice is required to send the list of parities
+        # Process the answer from Alice. Important: Alice is required to send the list of parities
         # in the exact same order as the ranges in the question; this allows us to zip.
         for (correct_parity, entry) in zip(correct_parities, self._pending_ask_correct_parity):
             self.stats.reply_parity_bits += 1
@@ -230,12 +248,13 @@ class Reconciliation:
     def _have_pending_try_correct(self):
         return self._pending_try_correct != []
 
-    def _service_pending_try_correct(self, cascade):
+    def _service_pending_try_correct(self, iteration_nr, cascade):
         errors_corrected = 0
         while self._pending_try_correct:
             (_, entry) = heapq.heappop(self._pending_try_correct)
             (block, correct_right_sibling) = entry
-            errors_corrected += self._try_correct(block, correct_right_sibling, cascade)
+            errors_corrected += self._try_correct(iteration_nr, block, correct_right_sibling,
+                                                  cascade)
         return errors_corrected
 
     def _compute_efficiency(self, reconciliation_bits):
@@ -255,10 +274,10 @@ class Reconciliation:
 
     def _one_normal_cascade_iteration(self, iteration_nr):
 
-        self.stats.normal_iterations += 1
+        self.stats.cascade_iterations += 1
 
         # Determine the block size to be used for this iteration, using the rules for this
-        # particular algorithm of the Cascade algorithm.
+        # particular algorithm of the cascade algorithm.
         block_size = self._algorithm.block_size_function(self._estimated_bit_error_rate,
                                                          self._reconciled_key.get_size(),
                                                          iteration_nr)
@@ -273,11 +292,16 @@ class Reconciliation:
         # Split the shuffled key into blocks, using the block size that we chose.
         blocks = Block.create_covering_blocks(self._reconciled_key, shuffle, block_size)
 
+        # Create a new cascade map for this iteration.
+        cascade_map = {}
+        self._iteration_to_cascade_map[iteration_nr] = cascade_map
+
         # For each top-level covering block...
         for block in blocks:
 
-            # Update the key index to block map.
-            self._register_block_key_indexes(block)
+            # By default, we cascade into top-level blocks. If sub-block reuse is enabled, we
+            # may override this to cascade into smaller sub-blocks.
+            self._cascade_map_add_top_level_block(iteration_nr, block)
 
             # We won't be able to do anything with the top-level covering blocks until we know what
             # the correct parity it.
@@ -285,9 +309,70 @@ class Reconciliation:
 
         # Service all pending correction attempts (including Cascaded ones) and ask parity
         # messages.
-        self._service_all_pending_work(True)
+        self._service_all_pending_work(iteration_nr, True)
 
-    def _service_all_pending_work(self, cascade):
+    def _all_biconf_iterations(self):
+
+        # Do nothing if BICONF is disabled.
+        if not self._algorithm.biconf_iterations:
+            return
+
+        ###@@@ get rid of this?
+        # # If we are not cascading during BICONF, get rid of all cascade maps, so we we don't waste
+        # # time keeping them up to date.
+        # if not self._algorithm.biconf_cascade:
+        #     self._iteration_to_cascade_map = {}
+
+        # The BICONF iterations are counted, started where we left off with the normal cascade
+        # iterations. For example, if there are 4 normal cascade iterations, the first BICONF
+        # iteration is counted as iteration number 5. This allows us to continue having a separate
+        # cascade block map for each iteration if cascading is enabled during BICONF.
+        iteration_nr = self._algorithm.cascade_iterations
+
+        # Do the required number of BICONF iterations, as determined by the protocol.
+        iterations_to_go = self._algorithm.biconf_iterations
+        while iterations_to_go > 0:
+            iteration_nr += 1
+            errors_corrected = self._one_biconf_iteration(iteration_nr)
+            if self._algorithm.biconf_error_free_streak and errors_corrected > 0:
+                iterations_to_go = self._algorithm.biconf_iterations
+            else:
+                iterations_to_go -= 1
+
+    def _one_biconf_iteration(self, iteration_nr):
+
+        self.stats.biconf_iterations += 1
+
+        # Randomly select half of the bits in the key. This is exactly the same as doing a new
+        # random shuffle of the key and selecting the first half of newly shuffled key.
+        key_size = self._reconciled_key.get_size()
+        shuffle = Shuffle(key_size, Shuffle.SHUFFLE_RANDOM)
+        mid_index = key_size // 2
+        chosen_block = Block(self._reconciled_key, shuffle, 0, mid_index, None)
+
+        # Only spend time updating the cascade map if we are doing cascading during BICONF.
+        self._iteration_to_cascade_map[iteration_nr] = {}
+        cascade = self._algorithm.biconf_cascade
+        if cascade:
+            self._cascade_map_update_sub_block(iteration_nr, chosen_block)
+
+        # Ask Alice what the correct parity of the chosen block is.
+        self._schedule_ask_correct_parity(chosen_block, False)
+
+        # If the algorithm wants it, also ask Alice what the correct parity of the complementary
+        # block is.
+        if self._algorithm.biconf_correct_complement:
+            complement_block = Block(self._reconciled_key, shuffle, mid_index, key_size, None)
+            if cascade:
+                self._cascade_map_update_sub_block(iteration_nr, complement_block)
+            self._schedule_ask_correct_parity(complement_block, False)
+
+        # Service all pending correction attempts (potentially including cascaded ones) and ask
+        # parity messages.
+        errors_corrected = self._service_all_pending_work(iteration_nr, cascade)
+        return errors_corrected
+
+    def _service_all_pending_work(self, iteration_nr, cascade):
 
         # Keep track of how many errors were actually corrected in this call.
         errors_corrected = 0
@@ -299,7 +384,7 @@ class Reconciliation:
             # attempt. If we don't know the correct parity of the block, we won't be able to finish
             # the attempted correction yet. In that case the block will end up on the "pending ask
             # parity" list.
-            errors_corrected += self._service_pending_try_correct(cascade)
+            errors_corrected += self._service_pending_try_correct(iteration_nr, cascade)
 
             # Now, ask Alice for the correct parity of the blocks that ended up on the "ask parity
             # list" in the above loop. When we get the answer from Alice, we may discover that the
@@ -309,58 +394,7 @@ class Reconciliation:
 
         return errors_corrected
 
-    def _all_biconf_iterations(self):
-
-        # Do nothing if BICONF is disabled.
-        if not self._algorithm.biconf_iterations:
-            return
-
-        # If we are not cascading during BICONF, clear the key indexes to blocks map to avoid
-        # wasting time keeping it up to date as correct blocks during the BICONF phase.
-        if not self._algorithm.biconf_cascade:
-            self._key_index_to_blocks = {}
-
-        # Do the required number of BICONF iterations, as determined by the protocol.
-        iterations_to_go = self._algorithm.biconf_iterations
-        while iterations_to_go > 0:
-            errors_corrected = self._one_biconf_iteration()
-            if self._algorithm.biconf_error_free_streak and errors_corrected > 0:
-                iterations_to_go = self._algorithm.biconf_iterations
-            else:
-                iterations_to_go -= 1
-
-    def _one_biconf_iteration(self):
-
-        self.stats.biconf_iterations += 1
-
-        cascade = self._algorithm.biconf_cascade
-
-        # Randomly select half of the bits in the key. This is exactly the same as doing a new
-        # random shuffle of the key and selecting the first half of newly shuffled key.
-        key_size = self._reconciled_key.get_size()
-        shuffle = Shuffle(key_size, Shuffle.SHUFFLE_RANDOM)
-        mid_index = key_size // 2
-        chosen_block = Block(self._reconciled_key, shuffle, 0, mid_index, None)
-        if cascade:
-            self._register_block_key_indexes(chosen_block)
-
-        # Ask Alice what the correct parity of the chosen block is.
-        self._schedule_ask_correct_parity(chosen_block, False)
-
-        # If the algorithm wants it, also ask Alice what the correct parity of the complementary
-        # block is.
-        if self._algorithm.biconf_correct_complement:
-            complement_block = Block(self._reconciled_key, shuffle, mid_index, key_size, None)
-            if cascade:
-                self._register_block_key_indexes(complement_block)
-            self._schedule_ask_correct_parity(complement_block, False)
-
-        # Service all pending correction attempts (potentially including Cascaded ones) and ask
-        # parity messages.
-        errors_corrected = self._service_all_pending_work(cascade)
-        return errors_corrected
-
-    def _try_correct(self, block, correct_right_sibling, cascade):
+    def _try_correct(self, iteration_nr, block, correct_right_sibling, cascade):
 
         # If we don't know the correct parity of the block, we cannot make progress on this block
         # until Alice has told us what the correct parity is.
@@ -373,13 +407,13 @@ class Reconciliation:
         # sibling block.
         if block.get_error_parity() == Block.ERRORS_EVEN:
             if correct_right_sibling:
-                return self._try_correct_right_sibling_block(block, cascade)
+                return self._try_correct_right_sibling_block(iteration_nr, block, cascade)
             return 0
 
         # If this block contains a single bit, we have finished the recursion and found an error.
         # Correct the error by flipping the key bit that corresponds to this block.
         if block.get_size() == 1:
-            self._flip_key_bit_corresponding_to_single_bit_block(block, cascade)
+            self._flip_key_bit_corresponding_to_single_bit_block(iteration_nr, block, cascade)
             return 1
 
         # If we get here, it means that there is an odd number of errors in this block and that
@@ -390,32 +424,48 @@ class Reconciliation:
         left_sub_block = block.get_left_sub_block()
         if  left_sub_block is None:
             left_sub_block = block.create_left_sub_block()
-            self._register_block_key_indexes(left_sub_block)
-        return self._try_correct(left_sub_block, True, cascade)
+            self._cascade_map_update_sub_block(iteration_nr, left_sub_block)
+        return self._try_correct(iteration_nr, left_sub_block, True, cascade)
 
-    def _try_correct_right_sibling_block(self, block, cascade):
+    def _try_correct_right_sibling_block(self, iteration_nr, block, cascade):
         parent_block = block.get_parent_block()
         right_sibling_block = parent_block.get_right_sub_block()
         if right_sibling_block is None:
             right_sibling_block = parent_block.create_right_sub_block()
-            self._register_block_key_indexes(right_sibling_block)
-        return self._try_correct(right_sibling_block, False, cascade)
+            self._cascade_map_update_sub_block(iteration_nr, right_sibling_block)
+        return self._try_correct(iteration_nr, right_sibling_block, False, cascade)
 
-    def _flip_key_bit_corresponding_to_single_bit_block(self, block, cascade):
+    def _flip_key_bit_corresponding_to_single_bit_block(self, iteration_nr, block, cascade):
 
+        # Step 1: Flip the correct bit in the underlying noisy key that underlies all blocks.
         flipped_shuffle_index = block.get_start_index()
         block.flip_bit(flipped_shuffle_index)
 
-        # For every block that covers the key bit that was corrected...
-        flipped_key_index = block.get_key_index(flipped_shuffle_index)
-
-        for affected_block in self._get_blocks_containing_key_index(flipped_key_index):
-
-            # Flip the parity of that block.
+        # Step 2: Update the current parity for every affected block in this iteration (i.e. this
+        # block and all its ancestor blocks).
+        affected_block = block
+        while affected_block:
             affected_block.flip_parity()
+            affected_block = affected_block.get_parent_block()
 
-            # If asked to do cascading, do so for blocks with an odd number of errors.
-            if cascade and affected_block.get_error_parity() != Block.ERRORS_EVEN:
-                # If sub_block_reuse is disabled, then only cascade top-level blocks.
-                if self._algorithm.sub_block_reuse or affected_block.is_top_block():
-                    self._schedule_try_correct(affected_block, False)
+        # Step 3: For every previous iteration, update the current parity for the cascade block
+        # and all its ancestor blocks.
+        flipped_key_index = block.get_key_index(flipped_shuffle_index)
+        for previous_iteration_nr in range(1, iteration_nr):
+            cascade_map = self._iteration_to_cascade_map[previous_iteration_nr]
+            if cascade_map:
+                affected_block = cascade_map[flipped_key_index]
+                while affected_block:
+                    affected_block.flip_parity()
+                    affected_block = affected_block.get_parent_block()
+
+        # Step 4: Trigger the cascading effect. For every cascaded block from some previous
+        # iteration that got an odd number of errors as a result of this bit flip, schedule a
+        # correction attempt.
+        if cascade:
+            for previous_iteration_nr in range(1, iteration_nr):
+                cascade_map = self._iteration_to_cascade_map[previous_iteration_nr]
+                if cascade_map:
+                    cascaded_block = cascade_map[flipped_key_index]
+                    if cascaded_block and cascaded_block.get_error_parity() != Block.ERRORS_EVEN:
+                        self._schedule_try_correct(cascaded_block, False)

@@ -15,7 +15,7 @@ class DataPoint:
         self.actual_bit_error_rate = AggregateStats()
         self.elapsed_process_time = AggregateStats()
         self.elapsed_real_time = AggregateStats()
-        self.normal_iterations = AggregateStats()
+        self.cascade_iterations = AggregateStats()
         self.biconf_iterations = AggregateStats()
         self.ask_parity_messages = AggregateStats()
         self.ask_parity_blocks = AggregateStats()
@@ -32,7 +32,7 @@ class DataPoint:
         self.reconciliations += 1
         self.elapsed_process_time.record_value(stats.elapsed_process_time)
         self.elapsed_real_time.record_value(stats.elapsed_real_time)
-        self.normal_iterations.record_value(stats.normal_iterations)
+        self.cascade_iterations.record_value(stats.cascade_iterations)
         self.biconf_iterations.record_value(stats.biconf_iterations)
         self.ask_parity_messages.record_value(stats.ask_parity_messages)
         self.ask_parity_blocks.record_value(stats.ask_parity_blocks)

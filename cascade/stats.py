@@ -9,7 +9,7 @@ class Stats:
         """
         self.elapsed_process_time = None
         self.elapsed_real_time = None
-        self.normal_iterations = 0
+        self.cascade_iterations = 0
         self.biconf_iterations = 0
         self.ask_parity_messages = 0
         self.ask_parity_blocks = 0

@@ -1,6 +1,6 @@
-*****************
-The Shuffle class
-*****************
+******************************
+Cascade implementation Python.
+******************************
 
 A Shuffle object represents a specific permutation (i.e. re-ordering) of key bits.
 

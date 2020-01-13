@@ -5,11 +5,15 @@ Welcome to Cascade-Python's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   context.rst
+   intro.rst
 
-   cascade_overview.rst
+   cascade_protocol.rst
 
-   shuffle.rst
+   cascade_implementation.rst
+
+   reflections.rst
+
+   future.rst
 
 Indices and tables
 ==================

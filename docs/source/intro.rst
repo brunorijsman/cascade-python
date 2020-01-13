@@ -1,6 +1,6 @@
-*************************
-Context for this project.
-*************************
+*************
+Introduction.
+*************
 
 The pan-European quantum Internet hackathon.
 ============================================

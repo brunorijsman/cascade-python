@@ -149,17 +149,13 @@ class Reconciliation:
     def _triggered_cascaded_blocks(self, trigger_key_index, trigger_iteration):
         for iteration, cascaded_registry in self._iteration_to_cascaded_registry.items():
             if iteration == trigger_iteration:
-                print(f"... skip iteration {iteration}")  ###@@@
                 continue
             if trigger_key_index not in cascaded_registry:
-                print(f"... iter {iteration} no blocks for key index {trigger_key_index}")  ###@@@
                 continue
             priority_queue = cascaded_registry[trigger_key_index]
             if priority_queue == []:
-                print(f"... iter {iteration} empty priority queue ")  ###@@@
                 continue
             (_block_size, smallest_cascaded_block) = priority_queue[0]
-            print(f"... iter {iteration} have block size {smallest_cascaded_block.get_size()} ")  ###@@@
             yield smallest_cascaded_block
 
     def _schedule_ask_correct_parity(self, block):
@@ -248,8 +244,6 @@ class Reconciliation:
 
     def _one_normal_cascade_iteration(self, iteration):
 
-        print(f"*** cascade iteration {iteration} ***")  ###@@@
-
         self.stats.normal_iterations += 1
 
         # Determine the block size to be used for this iteration, using the rules for this
@@ -321,17 +315,14 @@ class Reconciliation:
         iteration = self._algorithm.cascade_iterations
 
         # Do the required number of BICONF iterations, as determined by the protocol.
-        cnt = 0 ###@@@
         iterations_to_go = self._algorithm.biconf_iterations
         while iterations_to_go > 0:
-            cnt += 1 ###@@@
             iteration += 1
             errors_corrected = self._one_biconf_iteration(iteration)
             if self._algorithm.biconf_error_free_streak and errors_corrected > 0:
                 iterations_to_go = self._algorithm.biconf_iterations
             else:
                 iterations_to_go -= 1
-        print(f"BICONF did {cnt} iterations")
 
     def _one_biconf_iteration(self, iteration):
 
@@ -371,48 +362,22 @@ class Reconciliation:
             self._schedule_ask_correct_parity(block)
             return 0
 
-        ###@@@
-        key_start = block._shuffle.get_key_index(block._start_index)
-        start_bit = block._shuffle.get_bit(block._key, 0)
-        print(f"try_correct: "
-              f"size {block.get_size()} "
-              f"dir {'left' if block._is_left_half else 'right'} "
-              f" start {block._start_index} "
-              f" key_start {key_start}"
-              f" end {block._end_index}"
-              f" start bit {start_bit}"
-              f" current_parity {block._current_parity} "
-              f" correct_parity {block._correct_parity}")
-
         # If sub_block_reuse is enabled, we may want to register this as a cascaded block.
         self._potentially_register_as_cascaded(block, iteration)
-
-        ###@@@
-        # pylint:disable=protected-access
-        # print(f"try correct block:")
-        # print(f"  top_block = {block.is_top_block}")
-        # print(f"  start_index = {block._start_index}")
-        # print(f"  end_index = {block._end_index}")
-        # print(f"  error_parity = {block.get_error_parity()}")
 
         # If there is an even number of errors in this block, we don't attempt to fix any errors
         # in this block. But if the block has a right sibling, try to correct that one instead.
         if block.get_error_parity() == Block.ERRORS_EVEN:
-            print("try_correct: abandoned (EVEN)")  ###@@@
             right_sibling_block = block.get_right_sibling()
             if right_sibling_block is not None:
-                print("try_correct: try right sibling")
                 return self._try_correct(right_sibling_block, iteration, cascade)
             return 0
 
         # If this block contains a single bit, we have finished the recursion and found an error.
         # Correct the error by flipping the key bit that corresponds to this block.
         if block.get_size() == 1:
-            print("try_correct fix (ODD)")  ###@@@
             self._correct_single_bit(block, iteration, cascade)
             return 1
-
-        print("try_correct recurse (ODD)")  ###@@@
 
         # If we get here, it means that there is an odd number of errors in this block and that
         # the block is bigger than 1 bit.
@@ -424,68 +389,20 @@ class Reconciliation:
 
     def _correct_single_bit(self, block, iteration, cascade):
 
-        # pylint:disable=protected-access
-        # print(f"[1] block={block.__str__()} parity={block._current_parity}")
-
         # Part 1: Flip bit in key.
-
         flipped_shuffle_index = block.get_start_index()
         block.flip_bit(flipped_shuffle_index)
 
         # Part 2: Update the current parity of every block that contains that key bit.
         # Threat the block that was passed in special because it may or may not be registered as
         # a cascaded block.
-
-        # For every block that covers the key bit that was corrected...
         flipped_key_index = block.get_key_index(flipped_shuffle_index)
-
-        print(f"### correct key index {flipped_key_index}")
-
-        cnt = 0
         for affected_block in Block.blocks_with_key_index(flipped_key_index):
             affected_block.flip_parity()
-            cnt += 1
-        print(f"Flipped {cnt} affected blocks")
-
-
-    
-        # print(f"[3] block={block.__str__()} "
-        #       f"id={block._shuffle._identifier} "
-        #       f"parity={block._current_parity}")
-        # self.sanity_check_parity(block)  ###@@@
 
         # Part 3: Cascade effect
-
-        ###@@@ Exclude "this" iteration
-        ###@@@ Single block for each of the "other" iterations
-
-        ###@@@ TODO: Use _smallest_cascaded_block_containing_key_index_for_iteration
         if not cascade:
             return
-
-        # print("Cascade:")
-        cnt1 = 0  ###@@@
-        cnt2 = 0  ###@@@
         for cascaded_block in self._triggered_cascaded_blocks(flipped_key_index, iteration):
-            cnt1 += 1
             if cascaded_block.get_error_parity() != Block.ERRORS_EVEN:
-                cnt2 += 1
                 self._schedule_try_correct(cascaded_block)
-                # print(f"  {block.get_shuffle().get_identifier()} -> "
-                #       f"{cascaded_block.get_shuffle().get_identifier()}")
-        print(f"{cnt1} triggered cascaded blocks, {cnt2} with odd errors")  ###@@@
-
-
-
-    ###@@@
-    @staticmethod
-    def sanity_check_parity(block):
-        # pylint:disable=protected-access
-        stored_current_parity = block._current_parity
-        calculated_current_parity = block._shuffle.calculate_parity(
-            block._key, block._start_index, block._end_index)
-        if stored_current_parity != calculated_current_parity:
-            print(f"[2] block={block.__str__()} "
-                  f"stored_current_parity={stored_current_parity} "
-                  f"calculated_current_parity={calculated_current_parity}")
-            assert False

@@ -183,21 +183,7 @@ def run_reconciliation(data_point, algorithm, key_size, error_method, error_rate
     # Key.set_random_seed(seed)
     # Shuffle.set_random_seed(seed+1)
     correct_key = Key.create_random_key(key_size)
-    print(f"correct_key = {correct_key}")   ###@@@
     noisy_key = correct_key.copy(error_rate, error_method)
-    print(f"noisy_key   = {noisy_key}")   ###@@@
-    ###@@@
-    diff = ""
-    indexes = []
-    for i in range(correct_key.get_size()):
-        if correct_key.get_bit(i) == noisy_key.get_bit(i):
-            diff += " "
-        else:
-            diff += "^"
-            indexes.append(i)
-    print(f"errors      = {diff}")
-    print(f"indexes = {indexes}")
-
     actual_bit_errors = correct_key.difference(noisy_key)
     data_point.actual_bit_errors.record_value(actual_bit_errors)
     actual_bit_error_rate = actual_bit_errors / key_size
@@ -210,9 +196,6 @@ def run_reconciliation(data_point, algorithm, key_size, error_method, error_rate
     data_point.remaining_bit_errors.record_value(remaining_bit_errors)
     remaining_bit_error_rate = remaining_bit_errors / key_size
     data_point.remaining_bit_error_rate.record_value(remaining_bit_error_rate)
-
-    print(f"remaining_bit_errors = {remaining_bit_errors}")  ###@@@
-
     if remaining_bit_errors > 0:
         data_point.remaining_frame_error_rate.record_value(1.0)
     else:

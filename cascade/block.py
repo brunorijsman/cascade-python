@@ -34,8 +34,8 @@ class Block:
         self._start_index = start_index
         self._end_index = end_index
 
-        self.is_top_block = False    ###@@@ Temporary while refactoring
-        self.is_cascaded = False     ###@@@ Temporary while refactoring
+        self.is_top_block = False    # TODO: Should not be a public member
+        self.is_cascaded = False     # TODO: Should not be a public member
 
         # The following information is only used in sub-blocks that are created by calling split.
         self._sibling_block = None
@@ -89,7 +89,7 @@ class Block:
             actual_block_size = min(block_size, remaining_bits)
             end_index = start_index + actual_block_size
             block = Block(key, shuffle, start_index, end_index)
-            block.is_top_block = True    ###@@@ Temporary
+            block.is_top_block = True
             blocks.append(block)
             start_index += actual_block_size
             remaining_bits -= actual_block_size
@@ -179,7 +179,6 @@ class Block:
         """
         return self._end_index - self._start_index
 
-    ###@@@ Do we need this?
     def key_indexes(self):
         for shuffle_index in range(self._start_index, self._end_index):
             yield self._shuffle.get_key_index(shuffle_index)

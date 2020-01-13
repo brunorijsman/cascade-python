@@ -1,0 +1,8 @@
+[
+    {
+        "algorithm": "original",
+        "error_rate": 0.05,
+        "key_size": 10000,
+        "runs": 1
+    }
+]

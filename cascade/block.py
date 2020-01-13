@@ -3,11 +3,11 @@ class Block:
     A block is a contiguous subset of bits in a potentially shuffled key.
     """
 
-    ERRORS_ODD = 0
-    """The block contains an even number of errors."""
-    ERRORS_EVEN = 1
+    ERRORS_EVEN = 0
     """The block contains an odd number of errors."""
-    ERRORS_UNKNOWN = 3
+    ERRORS_ODD = 1
+    """The block contains an even number of errors."""
+    ERRORS_UNKNOWN = None
     """We don't know whether the block contains an even or an odd number of errors."""
 
     def __init__(self, key, shuffle, start_index, end_index):

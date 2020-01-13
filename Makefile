@@ -33,6 +33,12 @@ data-performance:
 	python study/run_experiments.py study/experiments_performance.json \
 		--output-dir study/data/performance
 
+data-single:
+	mkdir -p study/data/single
+	rm -f study/data/single/data__*
+	python study/run_experiments.py study/experiments_single.json \
+		--output-dir study/data/single
+
 coverage-open:
 	open htmlcov/index.html
 

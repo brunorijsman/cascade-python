@@ -39,7 +39,9 @@ def experiments_to_series(experiments, max_runs):
         runs = experiment['runs']
         if max_runs is not None and runs > max_runs:
             runs = max_runs
-        if experiment['independent_variable'] == 'error_rate':
+        if 'independent_variable' not in experiment:
+            experiment_series = experiment_no_vary(experiment, runs)
+        elif experiment['independent_variable'] == 'error_rate':
             experiment_series = experiment_to_error_rate_series(experiment, runs)
         elif experiment['independent_variable'] == 'key_size':
             experiment_series = experiment_to_key_size_series(experiment, runs)
@@ -48,7 +50,7 @@ def experiments_to_series(experiments, max_runs):
         all_series += experiment_series
     return all_series
 
-def experiment_to_error_rate_series(experiment, runs):
+def experiment_no_vary(experiment, runs):
     series = []
     algorithms = make_list(experiment['algorithm'])
     if algorithms == ['all']:
@@ -61,6 +63,22 @@ def experiment_to_error_rate_series(experiment, runs):
                          error_rates=make_list(experiment['error_rate']),
                          runs=runs)
             series.append(serie)
+    return series
+
+def experiment_to_error_rate_series(experiment, runs):
+    series = []
+    algorithms = make_list(experiment['algorithm'])
+    if algorithms == ['all']:
+        algorithms = list(ALGORITHMS.keys())
+    for algorithm in algorithms:
+        for key_size in make_list(experiment['key_size']):
+            for error_rate in make_list(experiment['error_rate']):
+                serie = dict(name=f"algorithm={algorithm};key_size={key_size};error_rate=vary",
+                             algorithms=[algorithm],
+                             key_sizes=[key_size],
+                             error_rates=[error_rate],
+                             runs=runs)
+                series.append(serie)
     return series
 
 def experiment_to_key_size_series(experiment, runs):
@@ -165,7 +183,21 @@ def run_reconciliation(data_point, algorithm, key_size, error_method, error_rate
     # Key.set_random_seed(seed)
     # Shuffle.set_random_seed(seed+1)
     correct_key = Key.create_random_key(key_size)
+    print(f"correct_key = {correct_key}")   ###@@@
     noisy_key = correct_key.copy(error_rate, error_method)
+    print(f"noisy_key   = {noisy_key}")   ###@@@
+    ###@@@
+    diff = ""
+    indexes = []
+    for i in range(correct_key.get_size()):
+        if correct_key.get_bit(i) == noisy_key.get_bit(i):
+            diff += " "
+        else:
+            diff += "^"
+            indexes.append(i)
+    print(f"errors      = {diff}")
+    print(f"indexes = {indexes}")
+
     actual_bit_errors = correct_key.difference(noisy_key)
     data_point.actual_bit_errors.record_value(actual_bit_errors)
     actual_bit_error_rate = actual_bit_errors / key_size
@@ -178,6 +210,9 @@ def run_reconciliation(data_point, algorithm, key_size, error_method, error_rate
     data_point.remaining_bit_errors.record_value(remaining_bit_errors)
     remaining_bit_error_rate = remaining_bit_errors / key_size
     data_point.remaining_bit_error_rate.record_value(remaining_bit_error_rate)
+
+    print(f"remaining_bit_errors = {remaining_bit_errors}")  ###@@@
+
     if remaining_bit_errors > 0:
         data_point.remaining_frame_error_rate.record_value(1.0)
     else:

@@ -130,7 +130,7 @@ class Reconciliation:
 
         # For every key bit covered by the block, add the block to a priority queue (shortest block
         # first) of cascaded blocks that depend on that particular key bit.
-        for key_index in block.get_key_indexes():
+        for key_index in block.key_indexes():
             if key_index not in cascaded_registry:
                 cascaded_registry[key_index] = []
             priority_queue = cascaded_registry[key_index]
@@ -441,38 +441,18 @@ class Reconciliation:
 
         print(f"### correct key index {flipped_key_index}")
 
-        block.flip_parity()
+        cnt = 0
+        for affected_block in Block.blocks_with_key_index(flipped_key_index):
+            affected_block.flip_parity()
+            cnt += 1
+        print(f"Flipped {cnt} affected blocks")
+
+
+    
         # print(f"[3] block={block.__str__()} "
         #       f"id={block._shuffle._identifier} "
         #       f"parity={block._current_parity}")
         # self.sanity_check_parity(block)  ###@@@
-
-        cnt = 0   ###@@@
-        for cascaded_block in self._all_cascaded_blocks_containing_key_index(flipped_key_index):
-            cnt += 1
-            # print(f"****** {cascaded_block}")
-            if cascaded_block == block:
-                continue
-            cascaded_block.flip_parity()
-            # self.sanity_check_parity(cascaded_block)  ###@@@
-        print(f"{cnt} total cascaded blocks containing bit")
-
-
-        ###@@@ Also need to fixup current parity of blocks that are in a pending queue
-
-
-        ####@@@@
-        pending_non_cascaded_blocks = []
-        for pending_block in self._pending_ask_correct_parity:
-            if not pending_block.is_cascaded:
-                pending_non_cascaded_blocks.append(pending_block)
-        for (_size, pending_block) in self._pending_try_correct:
-            if not pending_block.is_cascaded:
-                if pending_block not in pending_non_cascaded_blocks:
-                    pending_non_cascaded_blocks.append(pending_block)
-        for pending_block in pending_non_cascaded_blocks:
-            if flipped_key_index in pending_block.get_key_indexes():
-                pending_block.flip_parity()
 
         # Part 3: Cascade effect
 

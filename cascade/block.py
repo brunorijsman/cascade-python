@@ -1,3 +1,5 @@
+from weakref import WeakSet
+
 class Block:
     """
     A block is a contiguous subset of bits in a potentially shuffled key.
@@ -9,6 +11,8 @@ class Block:
     """The block contains an even number of errors."""
     ERRORS_UNKNOWN = None
     """We don't know whether the block contains an even or an odd number of errors."""
+
+    _key_index_to_blocks = {}
 
     def __init__(self, key, shuffle, start_index, end_index):
         """
@@ -44,6 +48,22 @@ class Block:
         # We don't yet know the correct parity for this block, nor for the parent block.
         self._parent_correct_parity = None
         self._correct_parity = None
+
+        # Register a weak reference to this block in the key index to block mapping, so that we
+        # can find all "active" blocks that use a particular key index.
+        self._register_key_index_to_blocks()
+
+    def _register_key_index_to_blocks(self):
+        for key_index in self.key_indexes():
+            if key_index not in Block._key_index_to_blocks:
+                Block._key_index_to_blocks[key_index] = WeakSet()
+            Block._key_index_to_blocks[key_index].add(self)
+
+    @classmethod
+    def blocks_with_key_index(cls, key_index):
+        if key_index in cls._key_index_to_blocks:
+            for block in cls._key_index_to_blocks[key_index]:
+                yield block
 
     @staticmethod
     def create_covering_blocks(key, shuffle, block_size):
@@ -160,20 +180,9 @@ class Block:
         return self._end_index - self._start_index
 
     ###@@@ Do we need this?
-    def get_key_indexes(self):
-        """
-        Get a list of key indexes for this block.
-
-        Returns:
-            The key indexes for this block (the ordering of the list is undefined; in particular
-            don't assume that the key indexes are in increasing order.)
-        """
-        # TODO: Add unit test
-        key_indexes = []
+    def key_indexes(self):
         for shuffle_index in range(self._start_index, self._end_index):
-            key_index = self._shuffle.get_key_index(shuffle_index)
-            key_indexes.append(key_index)
-        return key_indexes
+            yield self._shuffle.get_key_index(shuffle_index)
 
     def get_current_parity(self):
         """

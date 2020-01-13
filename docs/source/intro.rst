@@ -2,10 +2,18 @@
 Introduction.
 *************
 
+This GitHub repository is a just small step in the grand plan of adding support for quantum key distribution (QKD) to OpenSSL.
+
+Once the OpenSSL library supports quantum key distribution, then many applications that use OpenSSL (such as for example web servers and web clients) can use quantum key distribution with little or no code changes to the application itself.
+
+The initial goal is to support simulated quantum networks using simulators such as SimulaQron or NetSquid.
+
+The longer term goal is to also support real quantum key distribution devices built by academic institutions or commercial vendors such as @@@.
+
 The pan-European quantum Internet hackathon.
 ============================================
 
-On 5 and 6 November 2019 I (`Bruno Rijsman <https://www.linkedin.com/in/brunorijsman/>`_) took part in the `Pan-European Quantum Internet Hackathon <https://labs.ripe.net/Members/ulka_athale_1/take-part-in-pan-european-quantum-internet-hackathon>`_ organized by `RIPE labs <https://labs.ripe.net/>`_.
+This project had its roots at the `Pan-European Quantum Internet Hackathon <https://labs.ripe.net/Members/ulka_athale_1/take-part-in-pan-european-quantum-internet-hackathon>`_ which took place on 5 and 6 November 2019 and which was organized by `RIPE labs <https://labs.ripe.net/>`_ .
 
 .. image:: figures/pan-european-quantum-internet-hackathon.png
     :align: center
@@ -34,8 +42,8 @@ The OpenSSL integration challenge consists of two parts:
 
 The end-goal of the challenge is to use an off-the-shelf browser (e.g. Chrome) and connect it to a secure HTTPS website hosted on an off-the-shelf web server (e.g. Apache), while using the BB84 quantum key distribution algorithm as the key agreement protocol (running a `SimulaQron <http://www.simulaqron.org/>`_ simulated quantum network), instead of the classical Diffie-Hellman protocol that is normally used in classical networks.
 
-Implementation of the "upper half."
-===================================
+Integration of OpenSSL with the stub ETSI QKD API.
+==================================================
 
 The following figure shows what was actually achieved soon after the end of the hackathon.
 
@@ -46,3 +54,18 @@ The following figure shows what was actually achieved soon after the end of the 
 This is called the "upper half" of the solution for the OpenSSL integration challenge.
 
 For more details on this so-called "upper half" of the implementation see @@@, and for the documentation see @@@.
+
+Python implementation of BB84 on SimulaQron.
+============================================
+
+TODO
+
+Python implementation of Cascade.
+=================================
+
+TODO
+
+The grand plan.
+===============
+
+TODO

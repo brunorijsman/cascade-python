@@ -418,6 +418,60 @@ Let's look at a detailed example to get a better feel for how this works in prac
     :align: center
     :alt: Binary algorithm recursion.
 
+Bob has received a noisy key from Alice, he has shuffled that key, and he has split the shuffled key into top-level blocks. The block labeled "noisy block at Bob" is one of those blocks. Let's just call it block N.
+
+For the sake of clarity we have show corresponding block in the correct key at Alice as well. This is the block labeled "correct block at Alice".
+
+As we can see, there are three bit errors in the noisy top-level block, namely the colored blocks at block indexes 2, 3 and 5.
+
+We will now show how the Binary algorithm will detect and correct exactly one of those errors, namely the red one at block index 5.
+
+The other two errors, the orange onces at block index 2 and 3, will neither be detected nor corrected by the Binary algorithm.
+
+Here are the steps:
+
+1. Bob splits top-level block N into two sub-blocks: the left sub-block N-L, and the right sub-block N-R.
+
+2. Bob determines the error parity for the blocks N-L and N-R as follows:
+
+   2a. Bob computes the current parity over block N-L and finds that it is 0.
+
+   2b. Bob asks Alice for the correct parity over block N-L and gets the answer that it is 0.
+
+   2c. Since the current parity and the correct parity for block N-L are the same, Bob concludes that the error parity must be even.
+
+   2d. Bob infers that block N-R must have odd error parity.
+
+3. Bob recurses in the to sub-block with odd error parity, which is block N-R.
+
+4. Bob splits sub-block N-R into two sub-sub-blocks: the left sub-sub-block N-R-L, and the right sub-sub-block N-R-R.
+
+5. Bob determines the error parity for the blocks N-R-L and N-R-R as follows:
+
+   5a. Bob computes the current parity over block N-R-L and finds that it is 0.
+
+   5b. Bob asks Alice for the correct parity over block N-R-L and gets the answer that it is 1.
+
+   5c. Since the current parity and the correct parity for block N-R-L are the different, Bob concludes that the error parity must be odd.
+
+   5d. Bob doesn't care about block N-R-R because he has already found his block to recurse into.
+
+6. Bob recurses in the to sub-sub-block with odd error parity, which is block N-R-L.
+
+7. Bob splits sub-sub-block N-R-L into two sub-sub-sub-blocks: the left sub-sub-sub-block N-R-L-L, and the right sub-sub-sub-block N-R-L-R.
+
+8. Bob determines the error parity for the blocks N-R-L-L and N-R-L-R as follows:
+
+   8a. Bob computes the current parity over block N-R-L-L and finds that it is 1.
+
+   8b. Bob asks Alice for the correct parity over block N-R-L-L and gets the answer that it is 1.
+
+   8c. Since the current parity and the correct parity for block N-R-L-L are the same, Bob concludes that the error parity must be even.
+
+   8d. Bob infers that block N-R-L-R must have odd error parity.
+
+9. Bob notices that block N-R-L-R has a size of only one bit. Bob has found an error and corrects that error by flipping the bit!
+
 What about the remaining errors after correcting a single bit error?
 ====================================================================
 

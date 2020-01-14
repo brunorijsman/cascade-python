@@ -359,7 +359,7 @@ During this iterations there is nothing more Bob can do to find or correct those
 The Binary algorithm.
 =====================
 
-The Binary algorithm takes as input a block that has an odd number of errors. It finds and corrects exactly one bit error, namely the left-most bit error.
+The Binary algorithm takes as input a block that has an odd number of errors. It finds and corrects exactly one bit error.
 
 Bob is only allowed to run the Binary algorithm on blocks that have an odd number of errors. Bob is not allowed to run the Binary algorithm on a block that has an even number of errors (it is a useful exercise to figure out why not).
 
@@ -386,13 +386,37 @@ Or the left sub-block has an even number of errors and the right sub-block has a
     :align: center
     :alt: Left even number of errors, right odd number of errors.
 
-
 It is simply not possible that both sub-blocks have an even number of errors and it is also not possible that both sub-blocks have an odd number of errors.
 
-But Bob doesn't know which it is. Bob doesn't know whether the left sub-block or the right sub-block has an odd number of errors. All Bob knows at this point is that the parent block has an odd number of errors.
+Determine error parity of sub-blocks.
+-------------------------------------
 
+Bob doesn't know which it is: Bob doesn't know whether the left sub-block or the right sub-block has an odd number of errors. All Bob knows at this point is that the parent block has an odd number of errors.
 
+In order to find out, Bon sends an *ask parity* message to Alice to ask the correct parity for the left sub-block (only the left sub-block, not the right sub-block). When Alice responds with the correct parity for the left sub-block, Bob can compute the error parity (odd or even) for the left sub-block: he just needs to combine the locally computed current parity with the correct parity provided by Alice.
 
+If the error parity of the left sub-block turns out to be odd, then Bob immediately knows that the error parity of the right sub-block must be even.
+
+On the other hand, if the error parity of the left sub-block turns out to be even, then Bob immediately knows that the error parity of the right sub-block must be odd.
+
+Either way, Bob knows the error parity of both the left sub-block and the right sub-block. Bob only asked Alice to give the correct parity for the left sub-block. Bob never asked Alice to provide the correct parity for the right sub-block. Bob can infer the correct parity and hence error parity for the right sub-block (and so can Eve, by the way).
+
+By the way, this inference trick only works if Bob knows for a fact that the error parity of the parent block is odd. That is why Bob is not allowed to run the Binary protocol on a block with even error parity.
+
+Recursion.
+----------
+
+Once Bob has determined whether the left sub-block or the right sub-block contains an odd number of errors, Bob can recursively apply the Binary algorithm to that sub-block.
+
+The Binary algorithm will keep recursing into smaller and smaller sub-blocks, until it finally reaches a sub-block that has a size of only a single bit.
+
+If we have a sub-block whose size is one single bit and we also know that that same sub-block has an odd number of errors, then we can conclude that the single bit must be in error. We have found our single error bit that we can correct!
+
+Let's look at a detailed example to get a better feel for how this works in practice:
+
+.. image:: figures/binary-recursion.png
+    :align: center
+    :alt: Binary algorithm recursion.
 
 What about the remaining errors after correcting a single bit error?
 ====================================================================

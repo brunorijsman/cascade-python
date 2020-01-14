@@ -163,21 +163,22 @@ The amount of leaked information may be used by the privacy amplification phase 
 
 Thus, the output of Cascade are the reconciliated key and the amount of leaked information.
 
-Variations of the Cascade protocol.
-===================================
-
-The Cascade protocol is actually not a single protocol; it is a whole family of protocols. The literature describes many (around 10) different variations.
-
-We start by describing the so-called original Cascade protocol that was described in @@@. We will describe the other variations at the end of this chapter.
-
 Cascade Iterations.
 ===================
 
+Now we are ready to start describing the guts of the Cascade protocol, i.e. to describe in detail how it actually works.
+
 Let's define a single run of the Cascade protocol as Alice and Bob reconciliating (i.e. attempting to correct) a single key.
 
-A single Cascade run consists of multiple iterations.
+A single Cascade run consists of multiple iterations (these are also known as passes). Different variations of the Cascade protocol use different numbers of iterations. But we start by describing the original version of the Cascade protocol which uses four iterations.
 
-The original Cascade protocol uses 4 iterations, but other variations use different numbers of iterations.
+Each Cascade iteration corrects some of the bit errors in the key. It is very probable (but not entirely certain) that all bit errors will have been corrected by the end of the last iteration.
+
+.. image:: figures/iterations.png
+    :align: center
+    :alt: Cascade iterations
+
+Note: for the sake of clarity, all of our diagrams show very small keys. In the above diagram, for example, we use 16-bit keys. In later diagrams we will use even smaller keys to make them fit in the diagram. In real life the keys can be much much larger: tens of thousands or even hundreds of thousands of bits.
 
 Key shuffling.
 ==============
@@ -288,8 +289,9 @@ Each time Bob asks Alice for the correct parity of some block, there is a delay 
 Variations on the Cascade Protocol.
 ===================================
 
-.
+The Cascade protocol is actually not a single protocol; it is a whole family of protocols. The literature describes many (around 10) different variations.
 
+What have described thus far is the "orginal" Cascade protocol.
 
 
 

@@ -517,28 +517,44 @@ Now Bob can make progress again: he can run the Binary algorithm on each block a
 The Cascade effect.
 ===================
 
-@@@
+Let's keep going with same example a little bit more.
 
-The so-called Cascade effect is actually the most important mechanism for correcting any remaining bit errors that end up in an even block. The Cascade effect is tricky to understand. Later we will have some diagrams that will hopefully clarify things more, but let me give a brief introduction here.
+If you go through the steps of the Binary protocol, you will see that Bob will end up correcting the two bits that are marked in red during iteration N+1:
 
-This first thing to realize is that at the end of an iteration, all top-level blocks in the iteration will have an even number of errors. Either the block already had an even number of errors at the beginning of the iteration. Or the block started out with an odd number of errors, and exactly one error was corrected in the iteration so that we ended with an even number of errors.
+.. image:: figures/cascade-effect-before.png
+    :align: center
+    :alt: Cascade effect (about to correct errors)
 
-Consider the situation that we correct a single bit error in iteration N. As we already pointed out, that block (which is part of iteration N) will end up with an even number of errors after the correct. Also, that correction will flip exactly one bit in the noisy key.
+If you follow the arrows from the red corrected bit in the shuffled blocks back to the top you can see which bits in the underlying unshuffled noisy key will end up being corrected (these are also marked in red).
 
-Now look at iteration N-1. We already know that all the blocks in iteration N-1 had an even parity at the end of iteration N-1.
+But wait! If are going to be flipping bits (correcting errors) on de underlying unshuffled noisy key, then this is going to have a ripple effect on the shuffled blocks from earlier iterations.
 
-When we flipped a single bit in the noisy key during iteration N, that single key bit was part of exactly one block in iteration N-1. Note that we are talking about two different blocks here. There is the block in iteration N where we did a single bit correct. That iteration N block ends up with an even number of errors. But then there is a different block in iteration N-1. That block was also affected by the key bit-flip in iteration N. The current parity the block in iteration N-1 flips. And hence the number of errors of the block in iteration N-1 becomes odd (it was even at the end of iteration N-1).
+In this particular example, we can see that flipping the red bits in iteration N+1 will cause the blue bits in iteration N to be flipped as a side-effect.
 
-Everything I said about iteration N-1 is also true for iteration N-2, N-3, etc. In other words, it is true for all earlier iterations. Thus, correcting a single bit in iteration N causes one block with an odd number of errors in each of the earlier iterations.
+After all the red and blue bit flipping is done, we end up with the following situation:
 
-Now that those blocks from earlier iterations have an odd number of errors, we can go back to them and correct a single bit error using the Binary protocol.
+.. image:: figures/cascade-effect-after.png
+    :align: center
+    :alt: Cascade effect (after correcting errors)
 
-But wait! It gets better. When we go back and correct an error in an iteration N-1 block, that again creates additional blocks with odd numbers of errors in blocks N-2, N-3, etc.
+As we discussed before, we have corrected two bit errors in iteration N+1, and now there are 4 bit errors remaining.
 
-This we can see that there is a sort of avalanche effect. Each bit correction creates opportunities for more bit corrections, which create even more opportunities for bit corrections, etc. This is the Cascade effect that the Cascade protocol is named after.
+And, as expected, we are now stuck as far as iteration N+1 is concerned. We can make no further progress in iteration N+1 because each block has an even number of errors.
+
+But look! Because of the ripple effect on the previous iteration N, we now have two blocks in iteration N that now have an odd number of errors! Bob can go back to those iteration N blocks and re-apply the Binary protocol to correct one more error in them.
+
+This ripple effect is what is called the cascade effect that gives the Cascade protocol its name.
+
+The cascade effect is very profound and much stronger than it seems from our simple example.
+
+Firstly, fixing an error in iteration N does not only affect iteration N, but also iterations N-1, N-2, ..., 1.
+
+Secondly, consider what happens when the cascade effect causes us to go back and revisit a block in an earlier iteration and fix another error there. Fixing that error in the earlier block with cause yet another cascade effect in other blocks. Thus, when we correct a single error, the cascade effect can cause a veritable avalanche of other cascaded error corrections.
 
 Parallelization.
 ================
+
+@@@
 
 In the BINARY protocol, whenever Bob wants to know whether a block contains an even or an odd number of errors, Bob must know the correct parity of the block.
 

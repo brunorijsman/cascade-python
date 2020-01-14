@@ -2,6 +2,8 @@
 The Cascade information reconciliation protocol.
 ************************************************
 
+Tutorial by Bruno Rijsman
+
 Quantum key distribution (QKD) protocols.
 =========================================
 

@@ -327,19 +327,9 @@ Can Bob determine which bits in the block are in error? Well, no, he cannot. Can
 
 What can Bob determine then? Well, Bob can determine whether there are an even or an odd number of errors in the block (the so-called error parity), by using the following table:
 
-.. tabularcolumns:: |c|c|c|
-
-+-----------------------+-------------------------+--------------------+
-| Current parity        | Correct parity          | Error parity       |
-+=======================+=========================+====================+
-| 0                     | 0                       | Even               |
-+-----------------------+-------------------------+--------------------+
-| 0                     | 1                       | Odd                |
-+-----------------------+-------------------------+--------------------+
-| 1                     | 0                       | Odd                |
-+-----------------------+-------------------------+--------------------+
-| 1                     | 1                       | Even               |
-+-----------------------+-------------------------+--------------------+
+.. image:: figures/error-parity-table.png
+    :align: center
+    :alt: Error parity table
 
 If the error parity is odd, then Bob knows that there is at least bit one error in the block. He doesn't know exactly how many bit errors there are: it could be 1 or 3 or 5 or 7 etc. And he certainly doesn't which which key bits are in error.
 
@@ -369,7 +359,40 @@ During this iterations there is nothing more Bob can do to find or correct those
 The Binary algorithm.
 =====================
 
-The Binary protocol takes as input a block that has an odd number of errors. It finds and corrects exactly one bit error, namely the left-most bit error.
+The Binary algorithm takes as input a block that has an odd number of errors. It finds and corrects exactly one bit error, namely the left-most bit error.
+
+Bob is only allowed to run the Binary algorithm on blocks that have an odd number of errors. Bob is not allowed to run the Binary algorithm on a block that has an even number of errors (it is a useful exercise to figure out why not).
+
+Split block.
+------------
+
+The first thing Binary does is to split the block into two sub-blocks of equal size. We call these sub-blocks the left sub-block and the right sub-block. And we call the block that was split the parent block. If the parent block has an odd size, then the left sub-block is one bit bigger than the right sub-block.
+
+.. image:: figures/split-block-plr.png
+    :align: center
+    :alt: Split block: parent, left, right
+
+Given the fact that we know for certain that the parent block has an odd number of errors, there are only two possibilities for the sub-blocks.
+
+Either the left sub-block has an odd number of errors and the right sub-block has an even number of errors, as in the following examples:
+
+.. image:: figures/left-odd-right-even.png
+    :align: center
+    :alt: Left odd number of errors, right even number of errors.
+
+Or the left sub-block has an even number of errors and the right sub-block has an odd number of errors, as in the following examples:
+
+.. image:: figures/left-even-right-odd.png
+    :align: center
+    :alt: Left even number of errors, right odd number of errors.
+
+
+It is simply not possible that both sub-blocks have an even number of errors and it is also not possible that both sub-blocks have an odd number of errors.
+
+But Bob doesn't know which it is. Bob doesn't know whether the left sub-block or the right sub-block has an odd number of errors. All Bob knows at this point is that the parent block has an odd number of errors.
+
+
+
 
 What about the remaining errors after correcting a single bit error?
 ====================================================================

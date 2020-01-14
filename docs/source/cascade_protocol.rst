@@ -127,34 +127,41 @@ In summary: while the topic of authenticating the classical channel is usually g
 Input and output of the Cascade protocol.
 =========================================
 
-Input: noisy key and quantum estimated bit error rate (QBER).
+Let's start by looking at the Cascade protocol as a black box algorithm, and let's consider what the input and the output of the Cascade protocol are.
+
+.. image:: figures/input-and-output.png
+    :align: center
+    :alt: Cascade as a black box, input and output
+
+Input: noisy key and estimated quantum bit error rate (QBER).
 -------------------------------------------------------------
 
 Bob initiates the Cascade protocol after the quantum phase of the quantum key distribution has been completed.
 
 At this point, Bob has the following information available to him,  which is the input to the Cascade protocol.
 
-Bob has the key that he has received from Alice. Although a quantum key distribution protocol was used to agree on this key, there is nothing quantum about the key at this point. It is just a string of classical bits of a certain length (the key size).
+Bob has the noisy key that he has received from Alice. Although a quantum key distribution protocol was used to agree on this key, there is nothing quantum about the key at this point. It is just a string of classical bits of a certain length (the key size).
 
 As we described earlier, the quantum key distribution protocol introduces some noise when it delivers this key to Bob. Thus, Bob has a noisy key which has some bit errors compared to Alice's correct key.
 
 Bob does not know exactly how many bit errors there are or which bits are in error, but the quantum key distribution protocol does provide an estimate of the bit error rate, which also known as the quantum bit error rate (QBER).
 
-Thus, we have two inputs to the Cascade protocol: the noisy key and the estimated error rate.
+Thus, we have two inputs to the Cascade protocol: the noisy key and the estimated quantum bit error rate (QBER).
 
 Output: reconciliated key and amount of leaked information.
 -----------------------------------------------------------
 
 Is the job of the Cascade protocol to determine which bits exactly are in error and to fix them.
-The Cascade information can also keep track of exactly how much information was leaked. Specifically, Cascade running on Bob can keep track of which parities he asked Alice to compute. We must assume that Eve will also know about those parities. We can express the amount of leaked information in terms of leaked key bits (this is a logical abstraction - it does not indicate which specific key bits were leaked, it only provides a measure of how much information was leaked).
-
-The amount of leaked information may be used by the privacy amplification phase that runs after the information reconciliation phase to determine how much amplification is needed.
-
-Thus, the output of Cascade are the reconciliated key and the amount of leaked information.
 
 It is important to understand that Cascade does not guarantee that all bit errors are corrected. In other words, Bob's reconciliated key is still not guaranteed to be the same as Alice's correct key. Even after the reconciliation is complete, there is still a remaining bit error rate. The remaining bit error rate is orders of magnitude smaller than the original bit error rate before Cascade was run. But it is not zero. That is why we prefer to use the term reconciliated key and not corrected key, although the latter is also often used.
 
 Cascade per-se does not contain any mechanism to detect and report whether the reconciliation was successful. It will neither detect nor report that there are any remaining bit errors after reconciliation. Some mechanism outside of Cascade is needed to validate whether the reconciliated key is correct or not.
+
+The Cascade protocol can also keep track of exactly how much information was leaked. Specifically, Cascade running at Bob can keep track of which parities he asked Alice to compute. We must assume that Eve will also know about those parities. We can express the amount of leaked information in terms of leaked key bits (this is a logical abstraction - it does not indicate which specific key bits were leaked, it only provides a measure of how much information was leaked).
+
+The amount of leaked information may be used by the privacy amplification phase that runs after the information reconciliation phase to determine how much amplification is needed.
+
+Thus, the output of Cascade are the reconciliated key and the amount of leaked information.
 
 Variations of the Cascade protocol.
 ===================================

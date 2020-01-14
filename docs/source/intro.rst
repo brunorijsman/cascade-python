@@ -34,7 +34,7 @@ The initial goal is to support simulated quantum networks using simulators such 
 The pan-European quantum Internet hackathon.
 ============================================
 
-This project had its roots at the `Pan-European Quantum Internet Hackathon <https://labs.ripe.net/Members/ulka_athale_1/take-part-in-pan-european-quantum-internet-hackathon>`_ which took place on 5 and 6 November 2019 and which was organized by `RIPE labs <https://labs.ripe.net/>`_ .
+This project has its roots in the `Pan-European Quantum Internet Hackathon <https://labs.ripe.net/Members/ulka_athale_1/take-part-in-pan-european-quantum-internet-hackathon>`_ which took place on 5 and 6 November 2019 and which was organized by `RIPE labs <https://labs.ripe.net/>`_ .
 
 .. image:: figures/pan-european-quantum-internet-hackathon.png
     :align: center

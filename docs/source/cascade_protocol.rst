@@ -272,14 +272,18 @@ Bob locally computes the current parity of each top-level block. This is a parit
 Asking Alice for the correct parity.
 ------------------------------------
 
-At this point Bob knows the parity of his own local copy of the block. This local copy of the local may contain some bit errors - after all this block is part of the shuffled noisy key.
+Next, Bob wants to know Alice's perspective on the block parity. He already knows the "current parity" of the block in his own noisy key, but now he wants to know the "correct parity" of the same block in the Alice's correct key.
 
-In order to get some idea about whether or not there are actually any bit errors in the local copy of the block, Bob wants to need the parity over the same block in the correct key (i.e. before any noise was added).
+There is no way (*) for Bob to compute the correct parity himself. Bob does not have access to the correct key, only Alice does.
 
-(In just a little bit it will become clear why I use the vague expression "to get some idea" instead of something more concrete like "to determine".)
+The solution is simple: Bob simply sends an *ask parity* message to Alice. The purpose of this message is to ask Alice to compute the correct parity. In the message Bob provides all the necessary information to allow Alice to reconstruct the same block over her own correct key.
+
+In the example below we have included the full shuffle permutation and the start and the length of the block in the *ask parity* message. The full shuffle permutation can be very large; it is essentially an array of N numbers, where N is the key size. There are various optimizations that can be done in the Cascade implementation to greatly reduce the size of the *ask parity* message. These optimizations are described in the `implementation guide <cascade_implementation.rst>`_.
 
 
 Bob asks Alice to compute the correct parity over the same top-level blocks. Thus, Bob sends a message to Alice to ask her "please compute the correct parity" over such-and-such blocks. This message only contains enough information to identify over what blocks the parity needs to be computed. It does not expose any information about the value of the key bits in that block.
+
+(*) Actually, that statement is a little bit too strong. It turns out that there is an exception to this statement. Hold on until we discuss Bit Parity Inference (BPI) near the end of this tutorial.
 
 Computing the correct parity.
 -----------------------------
@@ -362,7 +366,7 @@ Variations on the Cascade Protocol.
 
 The Cascade protocol is actually not a single protocol; it is a whole family of protocols. The literature describes many (around 10) different variations.
 
-What have described thus far is the "orginal" Cascade protocol.
+What have described thus far is the "original" Cascade protocol.
 
 
 

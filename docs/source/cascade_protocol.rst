@@ -325,7 +325,7 @@ At this point Bob knows both the correct parity and the current parity of the bl
 
 Can Bob determine which bits in the block are in error? Well, no, he cannot. Can Bob at least determine whether there are any errors in the block or not? Well, no, he cannot determine even that.
 
-What can Bob determine then? Well, Bob can determine whether there are an even or an odd number of errors in the block, by using the following table:
+What can Bob determine then? Well, Bob can determine whether there are an even or an odd number of errors in the block (the so-called error parity), by using the following table:
 
 .. tabularcolumns:: |c|c|c|
 
@@ -341,22 +341,38 @@ What can Bob determine then? Well, Bob can determine whether there are an even o
 | 1                     | 1                       | Even               |
 +-----------------------+-------------------------+--------------------+
 
+If the error parity is odd, then Bob knows that there is at least bit one error in the block. He doesn't know exactly how many bit errors there are: it could be 1 or 3 or 5 or 7 etc. And he certainly doesn't which which key bits are in error.
 
-Correcting a single it in top-level blocks with odd error parity.
-=================================================================
+If the error parity is even, then Bob knows even less. Remember that zero is an even number. So, there could be no (zero) errors, or there could be some (2, 4, 6, etc.) errors.
 
-Treatment of blocks with even error parity.
--------------------------------------------
+Correcting a single bit error in top-level blocks with an odd number of bits.
+=============================================================================
 
-If the number of errors is even, Bob cannot know whether there are any bit errors in the block or whether there are no bit errors in the block. This is because zero errors is considered to be an even number of errors. For such a block, there is nothing more Bob can do.
+When Bob finds a block with an even number of errors, Bob does nothing with that block (for now).
 
-Treatment of blocks with odd error parity.
-------------------------------------------
+But when Bob finds a block with an odd number of errors, Bob knows that there is at least one remaining bit error in the block. Bob doesn't know whether there is 1 or 3 or 5 etc. bit errors, but he does now there is at least one bit error and that the number is odd. For such a block, Bob executes the Binary algorithm. We will describe the Binary algorithm in the next section. For now, suffice it to say that the Binary algorithm finds and corrects exactly one bit error in the block.
 
-If the number of errors is odd, Bob knows that there is at least one remaining bit error in the block. Bob doesn't know whether there is 1 or 3 or 5 or whatever remaining bit errors, but he does now there is at least one and that the number is odd. For such a block, Bob will correct exactly one remaining bit error. Bob uses the Binary protocol to correct a single bit error in a block; we describe the Binary protocol separately below. The Binary protocol itself is rather complex and we would interrupt the flow of reasoning if we described it here. For now, just think of the Binary protocol that guarantees that it corrects exactly one bit error if we start with a block that contains an odd number of bit errors.
+Let's summarize what we have done so far.
+
+In each iteration (except the first) Bob first shuffles the noisy key. Then he takes the shuffled key and breaks it up into blocks. Then he visits every block and determines the error parity for that block. If the error parity is even, he does nothing. If the error parity is odd, then he runs the Binary algorithm to correct exactly one bit errors.
+
+So, at the end of the iteration, Bob ends up with a list of blocks that all have an even error parity.
+
+Some blocks already had an even error parity at the beginning of the iteration and Bob did not touch them.
+
+Some blocks had an odd error parity at the beginning of the iteration and Bob ran the Binary algorithm to correct exactly one bit error. If you start with a block with an odd number of bit errors, and you correct exactly one bit error, then you end up with a block with an even number of bit errors.
+
+Does this mean that we have removed all errors during this iteration? No it does, not. We only know that each block now contains an even number of errors. It could be zero errors. But it could also be 2, 4, 6, etc. errors.
+
+During this iterations there is nothing more Bob can do to find or correct those remaining errors. But that doesn't mean those remaining error won't get corrected. Later we will see how a combination of reshuffling in later iterations and the so-called cascading effect will (with high probability) find and correct those remaining errors.
+
+The Binary algorithm.
+=====================
+
+The Binary protocol takes as input a block that has an odd number of errors. It finds and corrects exactly one bit error, namely the left-most bit error.
 
 What about the remaining errors after correcting a single bit error?
---------------------------------------------------------------------
+====================================================================
 
 Now consider what happens after Bob corrected a single bit error in a block. Before the correction the block had an odd number of errors, which means that after the correction the block will contain an even number of errors. It may contain 0 remaining errors, but it may also contain 2 or 4 or 6 etc. remaining errors. As we saw in step 9, Bob cannot know which it is and Bob cannot do anything more to correct the remaining errors (if any). At least not during this iteration. There are two mechanisms that will likely correct these remaining even errors. The first mechanism is shuffling and the second mechanism is the cascading effect. We will describe each of these in turn.
 

@@ -183,24 +183,72 @@ Note: for the sake of clarity, all of our diagrams show very small keys. In the 
 Key shuffling.
 ==============
 
-During each iteration, except the first one, Bob randomly shuffles the bits in the noisy key:
+At the beginning of each iteration, except the first one, Bob randomly shuffles the bits in the noisy key. Shuffling means randomly reordering the bits in the key.
 
-[FIGURE]
+.. image:: figures/shuffle-key.png
+    :align: center
+    :alt: Shuffling a key
 
-As a result, @@@
+Later we will find out what the purpose of shuffling the key is. For now, we just point out that the shuffling is not intended to obfuscate the key for Eve. It is perfectly okay if the shuffling is only pseudo-random or even deterministic.
 
-Bob informs Alice how the bits were shuffled without exposing any information about the key bit values themselves, for example as follows:
+It is even okay if Eve knows what the shuffling permutation is (shown as the "Shuffle" in the above diagram) as long as the actual key values before ("Key") or after the shuffling ("Shuffled key") are not divulged. In fact, Bob needs to inform Alice what the shuffle permutation for each Cascade iteration is. It is no problem if the information about the shuffle permutation is sent in the clear and Eve can observe it.
 
-[FIGURE]
+As we mentioned, Bob re-shuffles his noisy key at the beginning of each iteration except the first one:
+
+.. image:: figures/shuffle-per-iteration.png
+    :align: center
+    :alt: Shuffle per iteration
+
+We put the word "shuffled" in quotes for the first iteration because they key is not really shuffled for the first iteration.
+
+The important thing to observe is that any given bit in the original unshuffled key (for example bit number 2 which is marked in yellow) ends up in a different position in the shuffled key during each iteration.
 
 Creation of the top-level blocks.
 =================================
 
-After
+During each iteration, right after shuffling the key, Bob divides the shuffled key into equally sized blocks (the last block may be a smaller size if the key is not an exact multiple of the block size).
 
-Bob divides the shuffled key into blocks. The number of blocks depends on the iteration. Early iterations have more blocks than late iterations. These blocks are called top-level blocks (as opposed to sub-blocks that we will see later).
+We will call these blocks top-level blocks to distinguish them from other types of blocks (the so-called sub-blocks) that will appear later in the protocol as a result of block splitting.
 
-For each top-level block Bob does the following.
+The size of the top-level blocks depends on two things:
+
+* The iteration number :emphasis:`i`. Early iterations have smaller block sizes (and hence more blocks) than later iterations.
+
+* The estimated quantum bit error rate :emphasis:`Q`. The higher the quantum bitter error rate, the smaller the block size.
+
+.. image:: figures/top-level-blocks.png
+    :align: center
+    :alt: Top-level blocks
+
+Note: to make things fit on a page the block sizes are extremely small in this diagram. In real life, top-level blocks are much larger. Specifically, we would never see a single-bit top-level block.
+
+There are many variations of the Cascade protocol, and one of the main differences between these variations is the exact formula for the block size :emphasis:`k`\ :subscript:`i` as a function of the iteration number :emphasis:`i` and the quantum bit error rate :emphasis:`Q`.
+
+For the original version of the Cascade protocol the formula is as follows:
+
+:emphasis:`k`\ :subscript:`1`\ = 0.73 / :emphasis:`Q`
+
+:emphasis:`k`\ :subscript:`2`\ = 2 * :emphasis:`k`\ :subscript:`1`
+
+:emphasis:`k`\ :subscript:`3`\ = 2 * :emphasis:`k`\ :subscript:`2`
+
+:emphasis:`k`\ :subscript:`4`\ = 2 * :emphasis:`k`\ :subscript:`3`
+
+Without getting into the mathematical details behind this formula, we can build up some intuition about the reasons behind it.
+
+Later on, we will see that Cascade is able to correct a single bit error in a block but is not able to correct a double bit error in a block.
+
+If we pick a block size 1/:emphasis:`Q` for the first iteration, then each block will is expected to contain a single bit error on average. That is just the definition of bit error rate. If the bit error rate is 1 error per 100 bits, then a block of 100 bits will contain on average one error.
+
+Now, if we use 0.73/:emphasis:`Q` instead of 1/:emphasis:`Q` then we will have slightly smaller blocks than that. As a result we will have more blocks with zero errors (which are harmless) and fewer blocks with two errors (which are bad because they cannot be corrected).
+
+On the other hand, we don't want to make the blocks too small, because the smaller we make the blocks, the more information is leaked to Eve. Knowing the parity over more smaller blocks allows Eve know more about the key.
+
+So, that explains the formula 0.73/:emphasis:`Q` for the first iteration. What about the doubling of the block size in each iteration?
+
+Well, during each iteration Cascade corrects some number of errors. Thus the remaining quantum bit error rate for the next iteration is lower (i.e. fewer error bits). This allows us to use a bigger block size for the next iteration, and still have a low probability of two (uncorrectable) errors in a single block.
+
+
 
 Computing the error parity for each top-level block: even or odd.
 =================================================================

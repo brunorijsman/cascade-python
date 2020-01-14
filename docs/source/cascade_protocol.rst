@@ -269,35 +269,54 @@ Bob locally computes the current parity of each top-level block. This is a parit
     :align: center
     :alt: Bob computes current parity for each top-level block.
 
-Asking Alice for the correct parity.
-------------------------------------
-
-Next, Bob wants to know Alice's perspective on the block parity. He already knows the "current parity" of the block in his own noisy key, but now he wants to know the "correct parity" of the same block in the Alice's correct key.
-
-There is no way (*) for Bob to compute the correct parity himself. Bob does not have access to the correct key, only Alice does.
-
-The solution is simple: Bob simply sends an *ask parity* message to Alice. The purpose of this message is to ask Alice to compute the correct parity. In the message Bob provides all the necessary information to allow Alice to reconstruct the same block over her own correct key.
-
-In the example below we have included the full shuffle permutation and the start and the length of the block in the *ask parity* message. The full shuffle permutation can be very large; it is essentially an array of N numbers, where N is the key size. There are various optimizations that can be done in the Cascade implementation to greatly reduce the size of the *ask parity* message. These optimizations are described in the `implementation guide <cascade_implementation>`_.
-
-
-Bob asks Alice to compute the correct parity over the same top-level blocks. Thus, Bob sends a message to Alice to ask her "please compute the correct parity" over such-and-such blocks. This message only contains enough information to identify over what blocks the parity needs to be computed. It does not expose any information about the value of the key bits in that block.
-
-(*) Actually, that statement is a little bit too strong. It turns out that there is an exception to this statement. Hold on until we discuss Bit Parity Inference (BPI) near the end of this tutorial.
-
 Computing the correct parity.
 -----------------------------
 
+Next, Bob wants to know Alice's perspective on the block parity. He already knows the "current parity" of the block in his own noisy key, but now he wants to know the "correct parity" of the same block in the Alice's correct key.
 
-Divulging the correct parity.
------------------------------
+There is no way for Bob to compute the correct parity himself. Bob does not have access to the correct key, only Alice does. Actually, that statement is a little bit too strong. It turns out that there is an exception to this statement. Hold on until we discuss block parity inference (BPI) near the end of this tutorial.
 
-Alice sends a response back to Bob containing the computed correct parity. Alice has computed this correct parity over the correct key (which only Alice has). The parity that Bob computed earlier what the current parity that was computed over the noisy key (which only Bob has).
+The solution is simple: Bob simply sends an *ask parity* message to Alice. The purpose of this message is to ask Alice to compute the correct parity.
 
-Divulging the correct parity constitutes information leakage.
--------------------------------------------------------------
+Let's first look at a very naive way of implementing the *ask parity* message, which is very inefficient but which makes the concept very clear:
 
-Although neither Alice nor Bob ever divulge any actual key bits, the divulgence of the parity leaks a little bit of information to Eve. This is easy to understand if we look at the number of values Eve has to try out in a brute force attack. If Eve knows nothing about N bits, she has to try out 2N values in a brute force attack. But if she knows the parity of those N bits, she only has to try out 2N-1 values.
+.. image:: figures/ask-parity-message-naive.png
+    :align: center
+    :alt: Naive ask parity message.
+
+In this implementation Bob literally provides all the information that Alice needs to reconstruct the block and compute the correct parity:
+
+.. image:: figures/compute-correct-parity-naive.png
+    :align: center
+    :alt: Alice computes correct parity for block (naive way).
+
+This is an inefficient way of computing the correct the parity. For one, the *ask shuffle* message can get very large because the shuffle permutation can get very large: here it is N numbers, where N is the key size (but it is easy to see that we could reduce N to the block size). Secondly, it requires Alice to spend processing time on reconstructing the shuffled key and the block.
+
+An obvious optimization is for Bob to just cut to the chase and list the actual unshuffled key indexes over which Alice must compute the parity:
+
+.. image:: figures/compute-current-parity-highlighted.png
+    :align: center
+    :alt: The actual key bits over which the parity is computed.
+
+This allows Alice to just compute the correct parity without wasting CPU cyles on reconstructing the shuffled key and block:
+
+.. image:: figures/compute-correct-parity-better.png
+    :align: center
+    :alt: Alice computes correct parity for block (better way).
+
+In both cases the *ask parity* message does not leak any information about the key (yet): it does not contain the value of any key bit or any other information about the key bits themselves.
+
+It turns out that there are even more efficient ways of implementing the *ask parity* message. These rely on the fact that the key is only shuffled once per iteration and we ask for block parities many times per iteration. These optimizations are described in the `implementation guide <cascade_implementation>`_.
+
+The only thing left to do is for Alice to send the correct parity back to Bob in a *reply parity* message:
+
+.. image:: figures/reply-parity-message.png
+    :align: center
+    :alt: Reply parity message:
+
+In any real implementation there would be additional fields in the *reply message* to associate the reply parity message with the corresponding ask parity message, but we gloss over those details here.
+
+Although neither Alice nor Bob ever divulge any actual key bits, the divulgence of the correct parity in the *reply parity* message does leak a little bit of information to Eve. This is easy to understand if we look at the number of values Eve has to try out in a brute force attack. If Eve knows nothing about N bits, she has to try out 2N values in a brute force attack. But if she knows the parity of those N bits, she only has to try out 2N-1 values.
 
 Inference the error parity from current parity and the correct parity.
 ----------------------------------------------------------------------

@@ -85,11 +85,15 @@ Alice takes the role of the server. As far as Cascade is concerned, her role is 
 
 We will describe the Cascade protocol from the perspective of the client, i.e. from the perspective of Bob.
 
-An interesting observation is that the Cascade protocol puts most of the complexity and most of the computational burden on the client. The server doesn't do much except compute simple parities when asked to do so by the client. This is a very nice property for a client-server protocol. The server will have many (thousands) of sessions to clients, to it is very desirable that each session is simple and light-weight. The client will typically have only a few sessions to a few servers, so it is okay if the sessions are more complex and heavy-weight.
+An interesting observation is that the Cascade protocol puts most of the complexity and most of the computational burden on the client. The server doesn't do much except compute simple parities when asked to do so by the client. This is a very nice property for a client-server protocol. The server could have many (thousands) of sessions to clients, so it is very desirable that each session is simple and light-weight. The client will typically have only a few sessions to a few servers, so it is okay if the sessions are more complex and heavy-weight.
 
 It is fair to say that quantum key distribution is currently often (almost always, perhaps) used to secure point-to-point links with a quantum key distribution device on either end of the link. From that perspective it is natural to think of Cascade as a peer-to-peer protocol.
 
-That said, quantum key distribution in general and Cascade in particular could very well be deployed in true client-server scenarios. One example scenario is secure web traffic where a web server (e.g. Apache) has many session to many different web clients (e.g. Chrome web browsers) using the HTTPS protocol. Under the hood, HTTPS currently uses classical protocols such as Diffie-Hellman for key agreement. But one could imagine quantum key distribution protocols being used here as well.
+That said, quantum key distribution in general and Cascade in particular could very well be deployed in true client-server scenarios. One example scenario is secure web traffic where a web server (e.g. Apache) has many session to many different web clients (e.g. Chrome web browsers) using the HTTPS protocol.
+
+.. image:: figures/peer-to-peer-vs-client-server.png
+    :align: center
+    :alt: Peer-to-peer versus client-server
 
 The classical channel.
 ======================

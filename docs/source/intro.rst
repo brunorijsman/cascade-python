@@ -2,13 +2,34 @@
 Introduction.
 *************
 
-This GitHub repository is a just small step in the grand plan of adding support for quantum key distribution (QKD) to OpenSSL.
+What is in this GitHub repository?
+==================================
 
-Once the OpenSSL library supports quantum key distribution, then many applications that use OpenSSL (such as for example web servers and web clients) can use quantum key distribution with little or no code changes to the application itself.
+This GitHub repository contains a Python implementation of the Cascade information reconciliation protocol. Information reconciliation protocols in general, and the Cascade protocol in particular, are a small but important and complex step in quantum key distribution (QKD) protocols. They are intended to detect and correct inevitable bit errors in the distributed key.
 
-The initial goal is to support simulated quantum networks using simulators such as SimulaQron or NetSquid.
+This repository also contains Python scripts that analyze the Cascade protocol and reproduce the analysis results that were previously reported in the following academic papers:
 
-The longer term goal is to also support real quantum key distribution devices built by academic institutions or commercial vendors such as @@@.
+* Jesus Martinez-Mateo, Christoph Pacher, Momtchil Peev, Alex Ciurana, and Vicente Martin. `Demystifying the Information Reconciliation Protocol Cascade. <https://arxiv.org/pdf/1407.3257.pdf>`_ arXiv:1407.3257 [quant-ph], Jul 2014.
+
+* André Reis. `Quantum Key Distribution Post Processing - A Study on the Information Reconciliation Cascade Protocol. <https://repositorio-aberto.up.pt/bitstream/10216/121965/2/347567.pdf>`_ Master's Thesis, Faculdade de Engenharia, Universidade do Porto. Jul 2019.
+
+Finally, this repository contains extensive documentation describing the Cascade protocol, our implementation of the Cascade protocol, the findings of reproducing the Cascade analysis results from the academic literature, and lessons learned.
+
+The broader context.
+====================
+
+The code in this GitHub repository is just a small step in the larger project of adding full support for quantum key distribution (QKD) to OpenSSL. This larger project includes other GitHub repositories:
+
+* The `openssl-qkd <https://github.com/brunorijsman/openssl-qkd>`_ GitHub repository contains a C implementation of a dynamically loaded engine for OpenSSL. This engine replace a classic Diffie-Hellman key exchange with a quantum key distribution (QKD) mechanism. The actual quantum key distribution protocol is not part of this repository. Instead, the engine invokes a stub implementation of `application programmer interface (API) <https://www.etsi.org/deliver/etsi_gs/QKD/001_099/004/01.01.01_60/gs_qkd004v010101p.pdf>`_ defined by European telecommunications standards institute (ETSI).
+
+* The `simulaqron-bb84-python <https://github.com/brunorijsman/simulaqron-bb84-python>`_ GitHub repository contains a Python implementation of the BB84 quantum key distribution (QKD) protocol. It runs on top of the `SimulaQron <http://www.simulaqron.org/>`_ quantum network simulator.
+
+All of these repositories are also just small steps working towards the overall goal adding full support for quantum key distribution to OpenSSL. Much work remains to be done, which is summarized at the end of this chapter.
+
+Once the OpenSSL library supports quantum key distribution, then many applications that use OpenSSL (such as for example web servers and web clients) will be able to use quantum key distribution with little or no code changes to the application itself.
+
+The initial goal is to support simulated quantum networks using simulators such as `SimulaQron <http://www.simulaqron.org/>`_ or `NetSquid <https://netsquid.org/>`_, both developed at `QuTech <https://netsquid.org/>`_. But by building on top of a well-defined application programming interface (namely the `ETSI QKD API <https://www.etsi.org/deliver/etsi_gs/QKD/001_099/004/01.01.01_60/gs_qkd004v010101p.pdf>`_) it is conceivable that our code will be able to interoperate with real quantum key distribution devices that are being developed in academia and by commercial vendors.
+
 
 The pan-European quantum Internet hackathon.
 ============================================
@@ -64,6 +85,8 @@ Python implementation of Cascade.
 =================================
 
 TODO
+
+.. _grand_plan:
 
 The grand plan.
 ===============

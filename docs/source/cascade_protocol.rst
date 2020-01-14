@@ -25,7 +25,7 @@ The classical post-processing phase only uses the classical channel. The classic
 
 In this document we only discuss one specific information reconciliation protocol, namely the Cascade protocol.
 
-We won't discuss privacy enhancement nor the quantum phase. Those interested in more details on the quantum phase can have a look at our `simulaqron-bb84-python <https://github.com/brunorijsman/simulaqron-bb84-python>`_ GitHub repository that contains a Python implementation of the quantum phase in the BB84 quantum key distribution protocol.
+We won't discuss privacy enhancement nor the quantum phase. Those interested in more details on the quantum phase can have a look at our `simulaqron-bb84-python <https://github.com/brunorijsman/simulaqron-bb84-python>`_ GitHub repository that contains our Python implementation of the quantum phase in the BB84 quantum key distribution protocol.
 
 Key bit errors (noise).
 =======================

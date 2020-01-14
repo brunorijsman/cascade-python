@@ -45,7 +45,7 @@ Classical post-processing.
 
 If the estimated bit error rate is above some threshold we conclude that Eve is observing the traffic trying to determine the secret key. In that case, we abandon the key distribution attempt.
 
-If the estimated bit error rate is below the threshold we perform classical post-processing, which consist of two steps. Both of these steps are classical protocols in the sense that they only involve classical communications and not any quantum communications
+If the estimated bit error rate is below the threshold we perform classical post-processing, which consist of the two steps that we mentioned earlier. Both of these steps are classical protocols in the sense that they only involve classical communications and not any quantum communications
 
 .. image:: figures/qkd-phases-and-steps.png
     :align: center

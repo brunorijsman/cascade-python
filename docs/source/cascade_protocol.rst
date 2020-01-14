@@ -248,8 +248,6 @@ So, that explains the formula 0.73/:emphasis:`Q` for the first iteration. What a
 
 Well, during each iteration Cascade corrects some number of errors. Thus the remaining quantum bit error rate for the next iteration is lower (i.e. fewer error bits). This allows us to use a bigger block size for the next iteration, and still have a low probability of two (uncorrectable) errors in a single block.
 
-
-
 Computing the error parity for each top-level block: even or odd.
 =================================================================
 
@@ -258,14 +256,25 @@ During each iteration, after having split the shuffled key for that iteration in
 Computing the current parity.
 -----------------------------
 
-Bob locally computes the actual parity of each top-level block. This is a parity over some subset of bits in the shuffled noisy key that Bob has received from Alice.
+Bob locally computes the current parity of each top-level block. This is a parity over some subset of bits in the shuffled noisy key that Bob has received from Alice. In the following example, Bob computes the parity of the 2nd top-level block in the 2nd iteration. That block has value 01 so its current parity is 1.
+
+.. image:: figures/compute-current-parity.png
+    :align: center
+    :alt: Bob computes current parity for each top-level block.
 
 Asking Alice for the correct parity.
 ------------------------------------
 
 Bob asks Alice to compute the correct parity over the same top-level blocks. Thus, Bob sends a message to Alice to ask her "please compute the correct parity" over such-and-such blocks. This message only contains enough information to identify over what blocks the parity needs to be computed. It does not expose any information about the value of the key bits in that block.
 
-Alice sends a response back to Bob containing the computed correct parity. Alice has computed this correct parity over the correct key (which only Alice has). The parity that Bob computed earlier what the actual parity that was computed over the noisy key (which only Bob has).
+Computing the correct parity.
+-----------------------------
+
+
+Divulging the correct parity.
+-----------------------------
+
+Alice sends a response back to Bob containing the computed correct parity. Alice has computed this correct parity over the correct key (which only Alice has). The parity that Bob computed earlier what the current parity that was computed over the noisy key (which only Bob has).
 
 Divulging the correct parity constitutes information leakage.
 -------------------------------------------------------------
@@ -275,7 +284,7 @@ Although neither Alice nor Bob ever divulge any actual key bits, the divulgence 
 Inference the error parity from current parity and the correct parity.
 ----------------------------------------------------------------------
 
-At this point Bob knows both the correct parity and the actual parity of the block. Based on those two pieces of information, Bob can determine whether there is an even number of errors or an odd number of errors in the block.
+At this point Bob knows both the correct parity and the current parity of the block. Based on those two pieces of information, Bob can determine whether there is an even number of errors or an odd number of errors in the block.
 
 Correcting a single it in top-level blocks with odd error parity.
 =================================================================

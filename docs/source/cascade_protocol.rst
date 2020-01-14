@@ -477,11 +477,9 @@ What about the remaining errors after correcting a single bit error?
 
 Now consider what happens after Bob has used the Binary protocol to correct a single bit error in a block.
 
-Before the correction the block had an odd number of errors, which means that after the correction the block will contain an even number of errors. It may contain be error free (0 remaining errors), or it may have more errors (2, 4, 6, etc. remaining errors).
+Before the correction the block had an odd number of errors, which means that after the correction the block will contain an even number of errors. It may be error-free (have 0 remaining errors), or it it may not yet be error-free (have 2, 4, 6, etc. remaining errors).
 
-There is no way for Bob to know whether there are any errors left, and even if he did, Bob could not run the Binary algorithm on the same block again since it contains an even number of errors and Binary is only allowed on blocks with an odd number of errors.
-
-So there is nothing left for Bob to do with the block, at least nothing during this iteration.
+There is no way for Bob to know whether there are any errors left, and even if he did, Bob could not run the Binary algorithm on the same block again since the Binary algorithm can only be run on blocks with odd error parity. There is nothing left for Bob to do with the block, at least not during this iteration.
 
 So what about the remaining errors in the block (if any)? How will they get corrected? There are two mechanisms:
 

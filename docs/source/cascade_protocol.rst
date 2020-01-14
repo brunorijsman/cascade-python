@@ -321,7 +321,26 @@ Although neither Alice nor Bob ever divulge any actual key bits, the divulgence 
 Inference the error parity from current parity and the correct parity.
 ----------------------------------------------------------------------
 
-At this point Bob knows both the correct parity and the current parity of the block. Based on those two pieces of information, Bob can determine whether there is an even number of errors or an odd number of errors in the block.
+At this point Bob knows both the correct parity and the current parity of the block.
+
+Can Bob determine which bits in the block are in error? Well, no, he cannot. Can Bob at least determine whether there are any errors in the block or not? Well, no, he cannot determine even that.
+
+What can Bob determine then? Well, Bob can determine whether there are an even or an odd number of errors in the block, by using the following table:
+
+.. tabularcolumns:: |c|c|c|
+
++-----------------------+-------------------------+--------------------+
+| Current parity        | Correct parity          | Error parity       |
++=======================+=========================+====================+
+| 0                     | 0                       | Even               |
++-----------------------+-------------------------+--------------------+
+| 0                     | 1                       | Odd                |
++-----------------------+-------------------------+--------------------+
+| 1                     | 0                       | Odd                |
++-----------------------+-------------------------+--------------------+
+| 1                     | 1                       | Even               |
++-----------------------+-------------------------+--------------------+
+
 
 Correcting a single it in top-level blocks with odd error parity.
 =================================================================

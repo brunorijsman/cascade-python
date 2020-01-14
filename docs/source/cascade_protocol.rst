@@ -45,16 +45,20 @@ If the estimated bit error rate is above some threshold we conclude that Eve is 
 
 If the estimated bit error rate is below the threshold we perform classical post-processing, which consist of two steps. Both of these steps are classical protocols in the sense that they only involve classical communications and not any quantum communications
 
+.. image:: figures/qkd-phases-and-steps.png
+    :align: center
+    :alt: QKD phases and steps
+
 Information reconciliation.
 ---------------------------
 
-The first classical post-processing step is information reconciliation. Even if the bit error rate is below the threshold, it is not zero. There is still some noise: there are still bit errors in the noisy key that Bob received as compared to the correct key that Alice sent. The purpose of the information reconciliation phase is to detect and correct these remaining bit errors.
+The first classical post-processing step is information reconciliation. Even if the bit error rate is below the threshold, it is not zero. There is still some noise: there are still bit errors in the noisy key that Bob received as compared to the correct key that Alice sent. The purpose of the information reconciliation step is to detect and correct these remaining bit errors.
 
 There are multiple information reconciliation protocols. In this document we discuss only one specific protocol, namely the Cascade protocol.
 
-The tricky part to information reconciliation is to avoid leaking (i.e. exposing) too much information about the key. Eve, the eavesdropper, can learn any information that we leak during the information reconciliation key. Even if she does not learn the entire key, learning any leaked partial information about the key simplifies her task of decrypting the encrypted traffic. Every bit of leaked key information halves the number of keys that Eve has to try during a brute force attack.
+The tricky part to information reconciliation is to avoid leaking (i.e. exposing) too much information about the key. Eve, the eavesdropper, can learn any information that we leak during the information reconciliation step. Even if she does not learn the entire key, learning any leaked partial information about the key simplifies her task of decrypting the encrypted traffic. Every bit of leaked key information halves the number of keys that Eve has to try during a brute force attack.
 
-That said, it is unavoidable that the information reconciliation protocol leaks some limited of information. This is okay as long as the amount of leaked information is bounded and known, so that we can compensate for it.
+That said, it is unavoidable that the information reconciliation protocol leaks some limited amount of information. This is okay as long as the amount of leaked information is bounded and known, so that we can compensate for it.
 
 Privacy amplification.
 ----------------------

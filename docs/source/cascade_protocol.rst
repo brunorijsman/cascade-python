@@ -5,9 +5,27 @@ The Cascade information reconciliation protocol.
 Quantum key distribution (QKD) protocols.
 =========================================
 
-All quantum key distribution (QKD) protocols involve using quantum communications to allow two parties Alice and Bob to agree on a secret key in such a way that our nefarious eavesdropper Eve cannot observe what the secret key is without being detected by Alice and Bob.
+All quantum key distribution (QKD) protocols involve using a combination of quantum communications (qubits) and classical communications (classical bits) to allow two parties Alice and Bob to agree on a secret key in such a way that our nefarious eavesdropper Eve cannot observe what the secret key is without being detected by Alice and Bob.
 
-There are multiple quantum key distribution protocols, including for example BB84 and B92. In this document we don't discuss the details of quantum key distribution protocols. Those interested in more details can have a look at our GitHub repository that contains a Python implementation of the BB84 quantum key distribution protocol.
+.. image:: figures/qkd-alice-bob-eve.png
+    :align: center
+    :alt: Quantum key distribution protocol
+
+There are multiple quantum key distribution protocols, including for example BB84 and B92. All of these protocols consist of both a quantum phase and a classical post-processing phase.
+
+The quantum phase uses both the quantum channel and the classical channel to actually exchange the key.
+
+The classical post-processing phase only uses the classical channel. The classical post-processing phases is further sub-divided into two parts:
+
+* Information reconciliation, which is responsible for detecting and correcting inevitable bit errors (noise) in the key that was exchanged during the quantum phase.
+
+* Privacy enhancement, which is responsible for mitigating the information leakage during the information reconciliation step.
+
+In this document we only discuss one specific information reconciliation protocol, namely the Cascade protocol.
+
+We won't discuss privacy enhancement nor the quantum phase. Those interested in more details on the quantum phase can have a look at our `simulaqron-bb84-python <https://github.com/brunorijsman/simulaqron-bb84-python>`_ GitHub repository that contains a Python implementation of the quantum phase in the BB84 quantum key distribution protocol.
+
+
 
 Key bit errors (noise).
 =======================

@@ -2,7 +2,7 @@
 The Cascade information reconciliation protocol.
 ************************************************
 
-Tutorial by Bruno Rijsman
+Tutorial by `Bruno Rijsman <https://www.linkedin.com/in/brunorijsman/>`_
 
 Quantum key distribution (QKD) protocols.
 =========================================
@@ -250,10 +250,15 @@ So, that explains the formula 0.73/:emphasis:`Q` for the first iteration. What a
 
 Well, during each iteration Cascade corrects some number of errors. Thus the remaining quantum bit error rate for the next iteration is lower (i.e. fewer error bits). This allows us to use a bigger block size for the next iteration, and still have a low probability of two (uncorrectable) errors in a single block.
 
+Detecting and correcting bit errors in each block.
+==================================================
+
+After having shuffled the key and after having split the key into blocks for a given iteration, Bob sets out on the task of determining, for each block, whether or not there are any bit errors in that block and, if so, to correct those bit errors.
+
+The process of doing so is a bit complex because Bob needs to do it in such a way that he leaks a minimum of information to eavesdropper Eve who is watching his every move.
+
 Computing the error parity for each top-level block: even or odd.
 =================================================================
-
-During each iteration, after having split the shuffled key for that iteration into blocks, Bob performs the following step to determine whether each block has an even or an odd number of remaining bit errors (this is called the error parity).
 
 Computing the current parity.
 -----------------------------
@@ -266,6 +271,13 @@ Bob locally computes the current parity of each top-level block. This is a parit
 
 Asking Alice for the correct parity.
 ------------------------------------
+
+At this point Bob knows the parity of his own local copy of the block. This local copy of the local may contain some bit errors - after all this block is part of the shuffled noisy key.
+
+In order to get some idea about whether or not there are actually any bit errors in the local copy of the block, Bob wants to need the parity over the same block in the correct key (i.e. before any noise was added).
+
+(In just a little bit it will become clear why I use the vague expression "to get some idea" instead of something more concrete like "to determine".)
+
 
 Bob asks Alice to compute the correct parity over the same top-level blocks. Thus, Bob sends a message to Alice to ask her "please compute the correct parity" over such-and-such blocks. This message only contains enough information to identify over what blocks the parity needs to be computed. It does not expose any information about the value of the key bits in that block.
 

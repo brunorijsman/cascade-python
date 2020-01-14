@@ -492,12 +492,32 @@ We will now discuss each of these mechanisms in turn.
 The role of shuffling in error correction.
 ==========================================
 
-@@@ a-probabilistic-analysis-of-binary-and-cascade
+The following diagram show the situation that Bob might find himself in at the end of some iteration, say iteration number N:
 
-Once a block reaches a point that it has an even number of errors, there is nothing more we can do to correct the remaining errors in that block. At least not in the current iteration. But in later iterations the remaining bit errors will end up in different blocks. This is because (a) the key will be shuffled into a different order in the alter iteration and (b) the later iteration will use a different block size. Thus even when a remaining bit error ends up in an even block during some iteration, it is quite likely that it will end up in an odd block during some later iteration.
+.. image:: figures/end-of-iteration-n.png
+    :align: center
+    :alt: Situation at the end of iteration N
+
+Maybe Bob already corrected a bunch of errors, but there are still six remaining errors left to correct.
+
+Unfortunately, every top-level block contains an even number of remaining errors, so Bob is not able to make any progress during this iteration.
+
+Bob has no choice but to move on to the next iteration N+1. In the next iteration, Bon reshuffles the keys (using a different shuffling order). Then he breaks up the reshuffled key into top-level blocks again, but using bigger blocks this time.It i
+
+We might up with something like this at the beginning of iteration N+1:
+
+.. image:: figures/end-of-iteration-n-plus-1.png
+    :align: center
+    :alt: Situation at the beginning of iteration N+1
+
+It is possible that at the beginning of iteration N+1 Bob ends up with some blocks that have an odd number of errors. Indeed, in this example Bob is quite lucky both remaining blocks have an odd number of errors (3 errors in each block).
+
+Now Bob can make progress again: he can run the Binary algorithm on each block and remove exactly one error in each block. At the end of iteration N+1 there will be 4 errors remaining (2 in each block).
 
 The Cascade effect.
 ===================
+
+@@@
 
 The so-called Cascade effect is actually the most important mechanism for correcting any remaining bit errors that end up in an even block. The Cascade effect is tricky to understand. Later we will have some diagrams that will hopefully clarify things more, but let me give a brief introduction here.
 

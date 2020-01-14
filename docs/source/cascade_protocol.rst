@@ -475,10 +475,26 @@ Here are the steps:
 What about the remaining errors after correcting a single bit error?
 ====================================================================
 
-Now consider what happens after Bob corrected a single bit error in a block. Before the correction the block had an odd number of errors, which means that after the correction the block will contain an even number of errors. It may contain 0 remaining errors, but it may also contain 2 or 4 or 6 etc. remaining errors. As we saw in step 9, Bob cannot know which it is and Bob cannot do anything more to correct the remaining errors (if any). At least not during this iteration. There are two mechanisms that will likely correct these remaining even errors. The first mechanism is shuffling and the second mechanism is the cascading effect. We will describe each of these in turn.
+Now consider what happens after Bob has used the Binary protocol to correct a single bit error in a block.
+
+Before the correction the block had an odd number of errors, which means that after the correction the block will contain an even number of errors. It may contain be error free (0 remaining errors), or it may have more errors (2, 4, 6, etc. remaining errors).
+
+There is no way for Bob to know whether there are any errors left, and even if he did, Bob could not run the Binary algorithm on the same block again since it contains an even number of errors and Binary is only allowed on blocks with an odd number of errors.
+
+So there is nothing left for Bob to do with the block, at least nothing during this iteration.
+
+So what about the remaining errors in the block (if any)? How will they get corrected? There are two mechanisms:
+
+1. Reshuffling in later iterations.
+
+2. The cascading effect.
+
+We will now discuss each of these mechanisms in turn.
 
 The role of shuffling in error correction.
 ==========================================
+
+@@@ a-probabilistic-analysis-of-binary-and-cascade
 
 Once a block reaches a point that it has an even number of errors, there is nothing more we can do to correct the remaining errors in that block. At least not in the current iteration. But in later iterations the remaining bit errors will end up in different blocks. This is because (a) the key will be shuffled into a different order in the alter iteration and (b) the later iteration will use a different block size. Thus even when a remaining bit error ends up in an even block during some iteration, it is quite likely that it will end up in an odd block during some later iteration.
 

@@ -17,7 +17,7 @@ There are multiple quantum key distribution protocols, including for example BB8
 
 The quantum phase uses both the quantum channel and the classical channel to actually exchange the key.
 
-The classical post-processing phase only uses the classical channel. The classical post-processing phases is further sub-divided into two parts:
+The classical post-processing phase only uses the classical channel. The classical post-processing phase is further sub-divided into two parts:
 
 * Information reconciliation, which is responsible for detecting and correcting inevitable bit errors (noise) in the key that was exchanged during the quantum phase.
 

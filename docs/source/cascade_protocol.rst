@@ -278,7 +278,7 @@ There is no way (*) for Bob to compute the correct parity himself. Bob does not 
 
 The solution is simple: Bob simply sends an *ask parity* message to Alice. The purpose of this message is to ask Alice to compute the correct parity. In the message Bob provides all the necessary information to allow Alice to reconstruct the same block over her own correct key.
 
-In the example below we have included the full shuffle permutation and the start and the length of the block in the *ask parity* message. The full shuffle permutation can be very large; it is essentially an array of N numbers, where N is the key size. There are various optimizations that can be done in the Cascade implementation to greatly reduce the size of the *ask parity* message. These optimizations are described in the `implementation guide <cascade_implementation.rst>`_.
+In the example below we have included the full shuffle permutation and the start and the length of the block in the *ask parity* message. The full shuffle permutation can be very large; it is essentially an array of N numbers, where N is the key size. There are various optimizations that can be done in the Cascade implementation to greatly reduce the size of the *ask parity* message. These optimizations are described in the `implementation guide <cascade_implementation>`_.
 
 
 Bob asks Alice to compute the correct parity over the same top-level blocks. Thus, Bob sends a message to Alice to ask her "please compute the correct parity" over such-and-such blocks. This message only contains enough information to identify over what blocks the parity needs to be computed. It does not expose any information about the value of the key bits in that block.

@@ -25,18 +25,18 @@ In this document we only discuss one specific information reconciliation protoco
 
 We won't discuss privacy enhancement nor the quantum phase. Those interested in more details on the quantum phase can have a look at our `simulaqron-bb84-python <https://github.com/brunorijsman/simulaqron-bb84-python>`_ GitHub repository that contains a Python implementation of the quantum phase in the BB84 quantum key distribution protocol.
 
-
-
 Key bit errors (noise).
 =======================
 
-Key distribution protocols always introduce some noise in the key. The noisy key that Bob receives contains some noise (i.e. bit errors) as compared to the correct key that Alice sent.
+Key distribution protocols always introduce some noise in the key. The key that Bob receives contains some noise (i.e. bit errors) as compared to the key that Alice sent. For that reason we refer to the key that Alice sent as the correct key and to the key that Bob received as the noisy key.
 
-All quantum key distribution protocols provide an estimate of the noise level in the form of an estimated bit error rate. Bit error rate 0.0 means that no key bits have been flipped and bit error rate 1.0 means that all key bits have been flipped. The following figure shows an example.
-
-[@@@]
+.. image:: figures/correct-key-noisy-key.png
+    :align: center
+    :alt: Alice's correct key and Bob's noisy key
 
 The noise can be introduced by imperfections in the hardware and by random fluctuations in the environment. Or the noise can be introduced by eavesdropper Eve observing traffic. Remember: in quantum mechanics observing a photon causes the photon to change and hence introduces detectable noise.
+
+All quantum key distribution protocols provide an estimate of the noise level in the form of an estimated bit error rate. Bit error rate 0.0 means that no key bits have been flipped and bit error rate 1.0 means that all key bits have been flipped.
 
 Classical post-processing.
 ==========================

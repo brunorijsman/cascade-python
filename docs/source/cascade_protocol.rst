@@ -551,25 +551,35 @@ Firstly, fixing an error in iteration N does not only affect iteration N, but al
 
 Secondly, consider what happens when the cascade effect causes us to go back and revisit a block in an earlier iteration and fix another error there. Fixing that error in the earlier block with cause yet another cascade effect in other blocks. Thus, when we correct a single error, the cascade effect can cause a veritable avalanche of other cascaded error corrections.
 
-Parallelization.
-================
+Parallelization and bulking.
+============================
 
-@@@
+Every time Bob asks Alice to provide the correct parity for a block he sends an *ask parity* message and then waits for the *provide parity* response message.
 
-In the BINARY protocol, whenever Bob wants to know whether a block contains an even or an odd number of errors, Bob must know the correct parity of the block.
+If Alice is in Amsterdam and Bob is in Boston they are 5,500 km apart. The round-trip delay of the *ask parity* and *provide parity* messages will be 110 milliseconds (the speed of light in fiber is 200,000 km/sec) plus whatever time Alice needs to process the message.
 
-The only way to know the correct parity of the block is to ask Alice:
+During the reconciliation of a single large key Bob can ask Alice for many parities (hundreds of ask parities for a 10,000 bit key, for example).
 
-* Bob must send a message to Alice to ask for the correct parity, and that message must specify for which block the parity is being asked.
+If Bob processes all blocks serially, i.e. if Bob doesn't start working on the next block until he has completely finished the Binary algorithm for the previous block, then the total delay will be very slow. If we assume 200 *ask parity* messages, it will add up to at least a whopping 220 seconds. That is clearly too slow.
 
-* Alice must send a message back to Bob that contains the correct parity.
+Luckily Bob does not have to process all blocks sequentially; he can do some parallel processing of blocks.
 
-Each time Bob asks Alice for the correct parity of some block, there is a delay of at least one round trip time (RTT). For example if Alice and Bob are 100 km apart, the delay is at least 1 millisecond considering that the speed of light in fiber is 200,000 km/sec.
+The lowest hanging fruit to to parallelize the processing of the top-level blocks. At the beginning of each iteration, Bob shuffles the key and splits it up into top-level blocks. Bob can then send a single "bulked" *ask parities* (plural) message asking Alice for all the parities of all the top-level blocks in that iteration. Alice sends a single *provide parities* (plural) message with all correct parities. Then Bob can start processing all the top-level blocks.
+
+But to get the full effect of parallelization Bob must do more. When Bob, in the process of running the Binary algorithm, gets to the point that he needs to ask Alice for the parity of a sub-block, Bob should not block and do nothing, waiting for the answer from Alice. Instead, Bob should send the *ask parity* message and then go work on some other block that has an odd number of errors "in parallel" while waiting for the answer to the first message. Working on multiple sub-blocks "in parallel" greatly reduces the total latency for an iteration.
+
+If, in addition to reducing the latency, Bob also wants to reduce the number of *ask parity* messages, Bob can do "bulking" of messages. When Bob needs to ask Alice for the parity for some block B1, Bob can already start working on some other block B2. But instead of immediately sending the *ask parity* message for block B1, Bob can hold off for some time in anticipation of probably having to ask to parity for some other parities as well.
+
+Note that the bulking of messages reduces the number of messages bit it does very little to reduce the volume (i.e. total number of bytes) of messages.
+
+In the extreme case, Bob can hold off sending any *ask parities* message until he can absolutely positively not make any more progress before he gets an answer. But that would increase the latency again because it would force Bob to sit idle not doing anything.
+
+The sweet spot is probably to hold off sending *ask parity* messages for only a fixed delay (similar to what the Nagle algorithm does in TCP/IP).
 
 Information leakage.
 ====================
 
-TODO: Formula for computing information leakage.
+TODO: Quantitative discussion of information leakage.
 
 Variations on the Cascade Protocol.
 ===================================

@@ -1,6 +1,9 @@
 MAKE_FILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 export PYTHONPATH := $(PYTHONPATH):$(MAKE_FILE_DIR)
 
+pre-commit: lint test
+	@echo "OK"
+
 clean:
 	rm -f .coverage*
 	rm -f profile.out
@@ -65,9 +68,6 @@ profile:
 
 profile-open:
 	open profile.png
-
-pre-commit: lint test
-	@echo "OK"
 
 test:
 	rm -f .coverage*

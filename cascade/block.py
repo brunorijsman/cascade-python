@@ -3,11 +3,11 @@ class Block:
     A block is a contiguous subset of bits in a shuffled key.
     """
 
-    ERRORS_ODD = 0
-    """The block contains an even number of errors."""
-    ERRORS_EVEN = 1
+    ERRORS_EVEN = 0
     """The block contains an odd number of errors."""
-    ERRORS_UNKNOWN = 3
+    ERRORS_ODD = 1
+    """The block contains an even number of errors."""
+    ERRORS_UNKNOWN = None
     """We don't know whether the block contains an even or an odd number of errors."""
 
     def __init__(self, key, shuffle, start_index, end_index, parent_block):
@@ -201,6 +201,15 @@ class Block:
         """
         return self._parent_block is None
 
+    def get_parent_block(self):
+        """
+        Return the parent block of this block, if it has one.
+
+        Returns:
+            The parent block, or None if there is no parent block.
+        """
+        return self._parent_block
+
     def get_left_sub_block(self):
         """
         Return the left sub-block of this block, if it has one.
@@ -222,15 +231,6 @@ class Block:
         self._left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index,
                                      self)
         return self._left_sub_block
-
-    def get_parent_block(self):
-        """
-        Return the parent block of this block, if it has one.
-
-        Returns:
-            The parent block, or None if there is no parent block.
-        """
-        return self._parent_block
 
     def get_right_sub_block(self):
         """

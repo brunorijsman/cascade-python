@@ -45,7 +45,7 @@ Classical post-processing.
 
 If the estimated bit error rate is above some threshold we conclude that Eve is observing the traffic trying to determine the secret key. In that case, we abandon the key distribution attempt.
 
-If the estimated bit error rate is below the threshold we perform classical post-processing, which consist of the two steps that we mentioned earlier. Both of these steps are classical protocols in the sense that they only involve classical communications and not any quantum communications
+If the estimated bit error rate is below the threshold we perform classical post-processing, which consist of the two steps that we mentioned earlier. Both of these steps are classical protocols in the sense that they only involve classical communications and not any quantum communications.
 
 .. image:: figures/qkd-phases-and-steps.png
     :align: center
@@ -153,7 +153,7 @@ Thus, we have two inputs to the Cascade protocol: the noisy key and the estimate
 Output: reconciliated key and amount of leaked information.
 -----------------------------------------------------------
 
-Is the job of the Cascade protocol to determine which bits exactly are in error and to fix them.
+It is the job of the Cascade protocol to determine which bits exactly are in error and to fix them.
 
 It is important to understand that Cascade does not guarantee that all bit errors are corrected. In other words, Bob's reconciliated key is still not guaranteed to be the same as Alice's correct key. Even after the reconciliation is complete, there is still a remaining bit error rate. The remaining bit error rate is orders of magnitude smaller than the original bit error rate before Cascade was run. But it is not zero. That is why we prefer to use the term reconciliated key and not corrected key, although the latter is also often used.
 
@@ -290,7 +290,7 @@ In this implementation Bob literally provides all the information that Alice nee
     :align: center
     :alt: Alice computes correct parity for block (naive way).
 
-This is an inefficient way of computing the correct the parity. For one, the *ask shuffle* message can get very large because the shuffle permutation can get very large: here it is N numbers, where N is the key size (but it is easy to see that we could reduce N to the block size). Secondly, it requires Alice to spend processing time on reconstructing the shuffled key and the block.
+This is an inefficient way of computing the correct the parity. For one, the *ask parity* message can get very large because the shuffle permutation can get very large: here it is N numbers, where N is the key size (but it is easy to see that we could reduce N to the block size). Secondly, it requires Alice to spend processing time on reconstructing the shuffled key and the block.
 
 An obvious optimization is for Bob to just cut to the chase and list the actual unshuffled key indexes over which Alice must compute the parity:
 
@@ -502,7 +502,7 @@ Maybe Bob already corrected a bunch of errors, but there are still six remaining
 
 Unfortunately, every top-level block contains an even number of remaining errors, so Bob is not able to make any progress during this iteration.
 
-Bob has no choice but to move on to the next iteration N+1. In the next iteration, Bon reshuffles the keys (using a different shuffling order). Then he breaks up the reshuffled key into top-level blocks again, but using bigger blocks this time.It i
+Bob has no choice but to move on to the next iteration N+1. In the next iteration, Bon reshuffles the keys (using a different shuffling order). Then he breaks up the reshuffled key into top-level blocks again, but using bigger blocks this time.
 
 We might up with something like this at the beginning of iteration N+1:
 
@@ -554,17 +554,19 @@ Secondly, consider what happens when the cascade effect causes us to go back and
 Parallelization and bulking.
 ============================
 
-Every time Bob asks Alice to provide the correct parity for a block he sends an *ask parity* message and then waits for the *provide parity* response message.
+Every time Bob asks Alice to provide the correct parity for a block he sends an *ask parity* message and then waits for the *reply parity* response message.
 
-If Alice is in Amsterdam and Bob is in Boston they are 5,500 km apart. The round-trip delay of the *ask parity* and *provide parity* messages will be 110 milliseconds (the speed of light in fiber is 200,000 km/sec) plus whatever time Alice needs to process the message.
+If Alice is in Amsterdam and Bob is in Boston they are 5,500 km apart. The round-trip delay of the *ask parity* and *reply parity* messages will be 110 milliseconds (the speed of light in fiber is 200,000 km/sec) plus whatever time Alice needs to process the message.
 
 During the reconciliation of a single large key Bob can ask Alice for many parities (hundreds of ask parities for a 10,000 bit key, for example).
 
-If Bob processes all blocks serially, i.e. if Bob doesn't start working on the next block until he has completely finished the Binary algorithm for the previous block, then the total delay will be very slow. If we assume 200 *ask parity* messages, it will add up to at least a whopping 220 seconds. That is clearly too slow.
+If Bob processes all blocks serially, i.e. if Bob doesn't start working on the next block until he has completely finished the Binary algorithm for the previous block, then the total delay will be very long. If we assume 200 *ask parity* messages, it will add up to at least a whopping 22 seconds. That is clearly too slow.
+
+5,500 km was a bit extreme, just to make a point. But even for more realistic distances for quantum key distribution, say 50 km, the round-trip time delay is significant.
 
 Luckily Bob does not have to process all blocks sequentially; he can do some parallel processing of blocks.
 
-The lowest hanging fruit to to parallelize the processing of the top-level blocks. At the beginning of each iteration, Bob shuffles the key and splits it up into top-level blocks. Bob can then send a single "bulked" *ask parities* (plural) message asking Alice for all the parities of all the top-level blocks in that iteration. Alice sends a single *provide parities* (plural) message with all correct parities. Then Bob can start processing all the top-level blocks.
+The lowest hanging fruit to to parallelize the processing of the top-level blocks. At the beginning of each iteration, Bob shuffles the key and splits it up into top-level blocks. Bob can then send a single "bulked" *ask parities* (plural) message asking Alice for all the parities of all the top-level blocks in that iteration. Alice sends a single *reply parities* (plural) message with all correct parities. Then Bob can start processing all the top-level blocks.
 
 But to get the full effect of parallelization Bob must do more. When Bob, in the process of running the Binary algorithm, gets to the point that he needs to ask Alice for the parity of a sub-block, Bob should not block and do nothing, waiting for the answer from Alice. Instead, Bob should send the *ask parity* message and then go work on some other block that has an odd number of errors "in parallel" while waiting for the answer to the first message. Working on multiple sub-blocks "in parallel" greatly reduces the total latency for an iteration.
 

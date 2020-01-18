@@ -5,8 +5,6 @@ class Shuffle:
     A shuffling (i.e. re-ordering) of the bits in a key.
     """
 
-    # A random number generator that is used to randomly generate a seed value for another random
-    # number generator that is actually used to randomly shuffle the bits in a key.
     _shuffle_seed_random_generator = random.Random()
 
     SHUFFLE_KEEP_SAME = 0
@@ -18,48 +16,13 @@ class Shuffle:
     _MAX_ALGORITHM = 100
     _MAX_SHUFFLE_SEED = 1_000_000_000_000
 
-    @staticmethod
-    def set_random_seed(seed):
-        """
-        Set the seed for _shuffle_seed_random_generator, which is used to generate random seeds for
-        the _shuffle_seed_random_generator, which in turn generates the random key bit permutation.
-
-        Args:
-            seed (int): The seed value for the _shuffle_seed_random_generator.
-
-        Notes:
-            This function is intended to be used only by unit tests to make running unit tests
-            deterministic.
-        """
-        Shuffle._shuffle_seed_random_generator = random.Random(seed)
-
-    @staticmethod
-    def _encode_identifier(size, algorithm, shuffle_seed):
-        identifier = shuffle_seed
-        identifier *= Shuffle._MAX_ALGORITHM
-        identifier += algorithm
-        identifier *= Shuffle._MAX_KEY_SIZE
-        identifier += size
-        return identifier
-
-    @staticmethod
-    def _decode_identifier(identifier):
-        size = identifier % Shuffle._MAX_KEY_SIZE
-        identifier //= Shuffle._MAX_KEY_SIZE
-        algorithm = identifier % Shuffle._MAX_ALGORITHM
-        identifier //= Shuffle._MAX_ALGORITHM
-        shuffle_seed = identifier
-        return (size, algorithm, shuffle_seed)
-
     def __init__(self, size, algorithm, shuffle_seed=None):
         """
         Create a shuffle. A shuffle represents a permutation of the bits in a key. The shuffle
         can be random or deterministic depending on the shuffle algorithm. A Shuffle object is
         de-coupled from the Key objects: the same Shuffle object can be applied to multiple
         different Key objects, to permute (shuffle) the bits in those different keys according to
-        the same pattern. In practice this allows Alice to shuffle the original sent key according
-        to the same pattern as Bob shuffles the noisy received key when executing the Cascade
-        protocol.
+        the same pattern.
 
         Args:
             size (int): The size of the shuffle, i.e. the number of bits in the keys that this
@@ -71,8 +34,6 @@ class Shuffle:
                 generator that is used to generate the shuffling permutation. If shuffle_seed is
                 None, then a random shuffle_seed value will be generated.
         """
-
-        # Create a mapping from "shuffle indexes" to "key indexes".
         self._size = size
         self._shuffle_index_to_key_index = {}
         for shuffle_index in range(0, size):
@@ -103,6 +64,24 @@ class Shuffle:
         (size, algorithm, shuffle_seed) = Shuffle._decode_identifier(identifier)
         shuffle = Shuffle(size, algorithm, shuffle_seed)
         return shuffle
+
+    @staticmethod
+    def _encode_identifier(size, algorithm, shuffle_seed):
+        identifier = shuffle_seed
+        identifier *= Shuffle._MAX_ALGORITHM
+        identifier += algorithm
+        identifier *= Shuffle._MAX_KEY_SIZE
+        identifier += size
+        return identifier
+
+    @staticmethod
+    def _decode_identifier(identifier):
+        size = identifier % Shuffle._MAX_KEY_SIZE
+        identifier //= Shuffle._MAX_KEY_SIZE
+        algorithm = identifier % Shuffle._MAX_ALGORITHM
+        identifier //= Shuffle._MAX_ALGORITHM
+        shuffle_seed = identifier
+        return (size, algorithm, shuffle_seed)
 
     def __repr__(self):
         """
@@ -135,6 +114,20 @@ class Shuffle:
                 string += " "
             string += f"{shuffle_index}->{key_index}"
         return string
+
+    @staticmethod
+    def set_random_seed(seed):
+        """
+        Set the seed for the isolated random number generated that is used only in the shuffle
+        module and nowhere else. If two applications set the seed to the same value, the shuffle
+        module produces the exact same sequence of shuffles. This is used to make experiments
+        reproduceable.
+
+        Args:
+            seed (int): The seed value for the random number generator which is isolated to the
+                shuffle module.
+        """
+        Shuffle._shuffle_seed_random_generator = random.Random(seed)
 
     def get_size(self):
         """

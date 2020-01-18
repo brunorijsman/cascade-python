@@ -67,7 +67,7 @@ class Key:
 
         Args:
             seed (int): The seed value for the random number generator which is isolated to the
-                shuffle module.
+                key module.
         """
         Key._random = random.Random(seed)
 

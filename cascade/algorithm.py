@@ -118,28 +118,6 @@ _YANETAL_ALGORITHM = Algorithm(name="yanetal",
                                sub_block_reuse=False,
                                block_parity_inference=False)
 
-# Name in Demystifying paper: Cascade opt. (2)
-# Name in Andre Reis Thesis : yanetal (Yan et al.)
-
-def _yanetal_block_size_function(estimated_bit_error_rate, key_size, iteration):
-    if estimated_bit_error_rate < _MIN_ESTIMATED_BIT_ERROR_RATE:
-        estimated_bit_error_rate = _MIN_ESTIMATED_BIT_ERROR_RATE
-    if iteration == 1:
-        return math.ceil(0.80 / estimated_bit_error_rate)
-    if iteration == 2:
-        return 5 * _yanetal_block_size_function(estimated_bit_error_rate, key_size, iteration - 1)
-    return key_size // 2
-
-_YANETAL_ALGORITHM = Algorithm(name="yanetal",
-                               cascade_iterations=10,
-                               block_size_function=_yanetal_block_size_function,
-                               biconf_iterations=0,
-                               biconf_error_free_streak=False,
-                               biconf_correct_complement=False,
-                               biconf_cascade=False,
-                               sub_block_reuse=False,
-                               block_parity_inference=False)
-
 # Name in Demystifying paper: Cascade opt. (3)
 # Name in Andre Reis Thesis : -
 

@@ -1,6 +1,6 @@
 class Block:
     """
-    A block is a contiguous subset of bits in a potentially shuffled key.
+    A block is a contiguous subset of bits in a shuffled key.
     """
 
     ERRORS_ODD = 0
@@ -101,7 +101,6 @@ class Block:
         return string
 
     def __lt__(self, other):
-        # TODO: Add unit test code
         """
         Is this block "less than" the other block? This is needed to insert the blocks in a priority
         queue; for equal block sizes the priority queue want to order by increasing block size. We
@@ -114,9 +113,23 @@ class Block:
         return id(self) < id(other)
 
     def get_start_index(self):
+        """
+        Get the start index of the block, i.e. the shuffled key index for the first bit in the
+        block.
+
+        Returns:
+            The start index.
+        """
         return self._start_index
 
     def get_end_index(self):
+        """
+        Get the end index of the block, i.e. the shuffled key index for the first bit after the last
+        bit in the block.
+
+        Returns:
+            The end index.
+        """
         return self._end_index
 
     def get_shuffle(self):
@@ -145,7 +158,6 @@ class Block:
             The key indexes for this block (the ordering of the list is undefined; in particular
             don't assume that the key indexes are in increasing order.)
         """
-        # TODO: Add unit test
         key_indexes = []
         for shuffle_index in range(self._start_index, self._end_index):
             key_index = self._shuffle.get_key_index(shuffle_index)
@@ -180,7 +192,6 @@ class Block:
         self._correct_parity = correct_parity
 
     def is_top_block(self):
-        # TODO: Add unit test
         """
         Is this block a top-level block?
 
@@ -200,6 +211,13 @@ class Block:
         return self._left_sub_block
 
     def create_left_sub_block(self):
+        """
+        Create the left sub-block of this block. If the block has an odd size, the left sub-block
+        will be one bit larger than the right sub-block. The block must be at least 2 bits in size.
+
+        Returns:
+            The left sub-block.
+        """        
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
         self._left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index,
                                      self)
@@ -226,8 +244,7 @@ class Block:
     def create_right_sub_block(self):
         """
         Create the right sub-block of this block. If the block has an odd size, the left sub-block
-        will be one bit larger than the right sub-block. If the size of this block is less than 2
-        then it is not allowed to ask for any sub-block.
+        will be one bit larger than the right sub-block. The block must be at least 2 bits in size.
 
         Returns:
             The right sub-block.
@@ -254,9 +271,24 @@ class Block:
         return Block.ERRORS_ODD
 
     def get_key_index(self, shuffle_index):
+        """
+        The the key index that corresponds to a given shuffle index.
+
+        Params:
+            shuffle_index: The shuffle index.
+
+        Returns:
+            The key index.
+        """
         return self._shuffle.get_key_index(shuffle_index)
 
     def flip_bit(self, flipped_shuffle_index):
+        """
+        Flip a bit in the block.
+
+        Params:
+            flipped_shuffle_index: The shuffle index of the bit to flip.
+        """
         self._shuffle.flip_bit(self._key, flipped_shuffle_index)
 
     def flip_parity(self):
@@ -264,5 +296,4 @@ class Block:
         Flip the current parity of this block. This is needed when a single bit in the block is
         flipped as a result of a single bit error correction.
         """
-        # TODO: Add stand-alone unit test case
         self._current_parity = 1 - self._current_parity

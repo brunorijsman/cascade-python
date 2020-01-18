@@ -46,7 +46,7 @@ def test_set_random_seed():
     key = Key.create_random_key(16)
     assert key.__str__() == "1111101101010000"
 
-def test_size():
+def test_get_size():
     key = Key()
     assert key.get_size() == 0
     key = Key.create_random_key(7)

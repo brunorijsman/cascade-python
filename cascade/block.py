@@ -217,7 +217,7 @@ class Block:
 
         Returns:
             The left sub-block.
-        """        
+        """
         middle_index = self._start_index + (self._end_index - self._start_index + 1) // 2
         self._left_sub_block = Block(self._key, self._shuffle, self._start_index, middle_index,
                                      self)

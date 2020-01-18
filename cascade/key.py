@@ -3,11 +3,10 @@ import random
 
 class Key:
     """
-    A key that is used to symmetrically encrypt and decrypt messages.
+    A key that the Cascade protocol reconciles.
     """
     _random = random.Random()
 
-    # TODO: Is Bernoulli with one L or double L?
     ERROR_METHOD_BERNOULLI = "bernoulli"
     ERROR_METHOD_EXACT = "exact"
     ERROR_METHODS = [ERROR_METHOD_BERNOULLI, ERROR_METHOD_EXACT]
@@ -28,16 +27,13 @@ class Key:
             size (int): The size of the key in bits. Must be >= 0.
 
         Returns:
-            A new key of the specified size with random bits.
+            A random key of the specified size.
         """
-
-        # Create a new random key.
         # pylint:disable=protected-access
         key = Key()
         key._size = size
         for i in range(size):
             key._bits[i] = Key._random.randint(0, 1)
-
         return key
 
     def __repr__(self):
@@ -65,8 +61,9 @@ class Key:
     def set_random_seed(seed):
         """
         Set the seed for the isolated random number generated that is used only in the key
-        module and nowhere else. The application can set the seed to a specific value to make
-        experimental stats reproduceable.
+        module and nowhere else. If two applications set the seed to the same value, the key
+        module produces the exact same sequence of random keys. This is used to make experiments
+        reproduceable.
 
         Args:
             seed (int): The seed value for the random number generator which is isolated to the
@@ -120,13 +117,12 @@ class Key:
 
         Args:
             error_rate (float): The requested error rate.
-            error_method (str): The method for choosing errors.
+            error_method (str): The method for choosing errors. Must be one of the error methods in
+                ERROR_METHODS.
 
         Returns:
             A new Key instance, which is a copy of this key, with noise applied.
         """
-
-        # Create a new key which is a copy of this one.
         # pylint:disable=protected-access
         key = Key()
         key._size = self._size

@@ -356,4 +356,3 @@ def test_flip_parity():
     assert block.get_error_parity() == Block.ERRORS_ODD
     block.flip_parity()
     assert block.get_error_parity() == Block.ERRORS_EVEN
-

@@ -6,8 +6,6 @@ class MockClassicalChannel(ClassicalChannel):
     experiments.
     """
 
-    # TODO: Add unit test
-
     def __init__(self, correct_key):
         self._correct_key = correct_key
         self._id_to_shuffle = {}

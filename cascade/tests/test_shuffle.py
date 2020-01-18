@@ -1,18 +1,6 @@
 from cascade.key import Key
 from cascade.shuffle import Shuffle
 
-def test_encode_identifier():
-    # pylint:disable=protected-access
-    assert Shuffle._encode_identifier(0, 0, 0) == 0
-    assert Shuffle._encode_identifier(1, 2, 3) == 302000000001
-    assert Shuffle._encode_identifier(999999999, 99, 999999999999) == 99999999999999999999999
-
-def test_decode_identifier():
-    # pylint:disable=protected-access
-    assert Shuffle._decode_identifier(0) == (0, 0, 0)
-    assert Shuffle._decode_identifier(302000000001) == (1, 2, 3)
-    assert Shuffle._decode_identifier(99999999999999999999999) == (999999999, 99, 999999999999)
-
 def test_create_shuffle_keep_same():
     Key.set_random_seed(1111)
     Shuffle.set_random_seed(1112)
@@ -78,6 +66,18 @@ def test_create_shuffle_from_identifier():
     recreated_shuffle = Shuffle.create_shuffle_from_identifier(original_shuffle.get_identifier())
     assert original_shuffle.__repr__() == recreated_shuffle.__repr__()
 
+def test_encode_identifier():
+    # pylint:disable=protected-access
+    assert Shuffle._encode_identifier(0, 0, 0) == 0
+    assert Shuffle._encode_identifier(1, 2, 3) == 302000000001
+    assert Shuffle._encode_identifier(999999999, 99, 999999999999) == 99999999999999999999999
+
+def test_decode_identifier():
+    # pylint:disable=protected-access
+    assert Shuffle._decode_identifier(0) == (0, 0, 0)
+    assert Shuffle._decode_identifier(302000000001) == (1, 2, 3)
+    assert Shuffle._decode_identifier(99999999999999999999999) == (999999999, 99, 999999999999)
+
 def test_repr():
     Key.set_random_seed(2221)
     Shuffle.set_random_seed(2222)
@@ -103,17 +103,25 @@ def test_set_random_seed():
     shuffle = Shuffle(key.get_size(), Shuffle.SHUFFLE_RANDOM)
     assert shuffle.__str__() == "0->1 1->3 2->2 3->7 4->5 5->6 6->4 7->0"
 
-def test_size():
+def test_get_size():
     key = Key.create_random_key(19)
     shuffle = Shuffle(key.get_size(), Shuffle.SHUFFLE_KEEP_SAME)
     assert shuffle.get_size() == 19
 
-def test_identifier():
+def test_get_identifier():
     Key.set_random_seed(4441)
     Shuffle.set_random_seed(4442)
     key = Key.create_random_key(8)
     shuffle = Shuffle(key.get_size(), Shuffle.SHUFFLE_RANDOM)
     assert shuffle.get_identifier() == 18048933084901000000008
+
+def test_get_key_index():
+    Shuffle.set_random_seed(9992)
+    shuffle = Shuffle(6, Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == "Shuffle: 0->5 1->4 2->2 3->0 4->1 5->3"
+    assert shuffle.get_key_index(0) == 5
+    assert shuffle.get_key_index(1) == 4
+    assert shuffle.get_key_index(5) == 3
 
 def test_get_bit():
     Key.set_random_seed(5551)
@@ -152,10 +160,14 @@ def test_flip_bit():
     shuffle.flip_bit(key, 0)                    # Shuffle bit 0 -> Key bit 5 -> Bit value 1->0
     assert key.__repr__() == "Key: 010010"
 
-def test_get_key_index():
-    Shuffle.set_random_seed(9992)
-    shuffle = Shuffle(6, Shuffle.SHUFFLE_RANDOM)
-    assert shuffle.__repr__() == "Shuffle: 0->5 1->4 2->2 3->0 4->1 5->3"
-    assert shuffle.get_key_index(0) == 5
-    assert shuffle.get_key_index(1) == 4
-    assert shuffle.get_key_index(5) == 3
+def test_calculate_parity():
+    Key.set_random_seed(8881)
+    Shuffle.set_random_seed(8882)
+    key = Key.create_random_key(10)
+    assert key.__repr__() == "Key: 1011111100"
+    shuffle = Shuffle(key.get_size(), Shuffle.SHUFFLE_RANDOM)
+    assert shuffle.__repr__() == "Shuffle: 0->1 1->4 2->5 3->9 4->6 5->0 6->7 7->2 8->3 9->8"
+    assert shuffle.__str__() == "0->1 1->4 2->5 3->9 4->6 5->0 6->7 7->2 8->3 9->8"
+    assert shuffle.calculate_parity(key, 0, 10) == 1
+    assert shuffle.calculate_parity(key, 4, 8) == 0
+    assert shuffle.calculate_parity(key, 1, 2) == 1

@@ -7,9 +7,9 @@ Welcome to Cascade-Python's documentation.
 
    intro.rst
 
-   cascade_protocol.rst
+   protocol.rst
 
-   cascade_implementation.rst
+   references.rst
 
 Indices and tables
 ==================

@@ -61,3 +61,23 @@ def test_reconcile_option8():
     (reconciliation, correct_key) = create_reconciliation(8, "option8", 10000, 0.01)
     reconciliation.reconcile()
     assert reconciliation.get_reconciled_key().__str__() == correct_key.__str__()
+
+def test_reconcile_zero_errors():
+    (reconciliation, correct_key) = create_reconciliation(9, "original", 10000, 0.00)
+    reconciliation.reconcile()
+    assert reconciliation.get_reconciled_key().__str__() == correct_key.__str__()
+
+def test_reconcile_many_errors():
+    (reconciliation, correct_key) = create_reconciliation(10, "original", 10000, 0.1)
+    reconciliation.reconcile()
+    assert reconciliation.get_reconciled_key().__str__() == correct_key.__str__()
+
+def test_reconcile_tiny_key():
+    (reconciliation, correct_key) = create_reconciliation(11, "original", 1, 0.01)
+    reconciliation.reconcile()
+    assert reconciliation.get_reconciled_key().__str__() == correct_key.__str__()
+
+def test_reconcile_many_errors():
+    (reconciliation, correct_key) = create_reconciliation(12, "original", 10000, 0.99)
+    reconciliation.reconcile()
+    assert reconciliation.get_reconciled_key().__str__() == correct_key.__str__()

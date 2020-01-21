@@ -11,10 +11,6 @@ Welcome to Cascade-Python's documentation!
 
    cascade_implementation.rst
 
-   reflections.rst
-
-   future.rst
-
 Indices and tables
 ==================
 

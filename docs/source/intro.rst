@@ -5,7 +5,7 @@ Introduction.
 What is in this GitHub repository?
 ==================================
 
-This GitHub repository contains a Python implementation of the Cascade information reconciliation protocol. Information reconciliation protocols in general, and the Cascade protocol in particular, are a small but important and complex step in quantum key distribution (QKD) protocols. They are intended to detect and correct inevitable bit errors in the distributed key.
+This GitHub repository contains a Python implementation of the Cascade information reconciliation protocol. Information reconciliation protocols in general, and the Cascade protocol in particular, are a small but important and complex classical post-processing step in quantum key distribution (QKD) protocols. They are intended to detect and correct inevitable bit errors in the distributed key.
 
 This repository also contains Python scripts that analyze the Cascade protocol and reproduce the analysis results that were previously reported in the following academic papers:
 
@@ -26,10 +26,9 @@ The code in this GitHub repository is just a small step in the larger project of
 
 All of these repositories are also just small steps working towards the overall goal adding full support for quantum key distribution to OpenSSL. Much work remains to be done, which is summarized at the end of this chapter.
 
-Once the OpenSSL library supports quantum key distribution, then many applications that use OpenSSL (such as for example web servers and web clients) will be able to use quantum key distribution with little or no code changes to the application itself.
+Once the OpenSSL library supports quantum key distribution, many applications that use OpenSSL (such as for example web servers and web clients) will be able to use quantum key distribution with little or no code changes to the application itself.
 
 The initial goal is to support simulated quantum networks using simulators such as `SimulaQron <http://www.simulaqron.org/>`_ or `NetSquid <https://netsquid.org/>`_, both developed at `QuTech <https://netsquid.org/>`_. But by building on top of a well-defined application programming interface (namely the `ETSI QKD API <https://www.etsi.org/deliver/etsi_gs/QKD/001_099/004/01.01.01_60/gs_qkd004v010101p.pdf>`_) it is conceivable that our code will be able to interoperate with real quantum key distribution devices that are being developed in academia and by commercial vendors.
-
 
 The pan-European quantum Internet hackathon.
 ============================================
@@ -42,14 +41,14 @@ This project has its roots in the `Pan-European Quantum Internet Hackathon <http
 
 Participants from six geographically distributed locations (Delft, Dublin, Geneva, Padua, Paris, and Sarajevo) formed teams that worked on various projects related to the `Quantum Internet <https://qutech.nl/wp-content/uploads/2018/10/Quantum-internet-A-vision.pdf>`_.
 
-I participated in Delft where the hackathon was hosted by `QuTech <https://qutech.nl/>`_, a world-leading quantum technology research and development office within the `Delft University of Technology <https://www.tudelft.nl/>`_.
+I participated in Delft where the hackathon was hosted by QuTech, a world-leading quantum technology research and development office within the `Delft University of Technology <https://www.tudelft.nl/>`_.
 
 The OpenSSL integration challenge.
 ==================================
 
-In Delft, I joined `Yvo Keuter <https://www.linkedin.com/in/yvo-keuter-6794932>`_ and `Tim Janssen <https://www.linkedin.com/in/timjanssen89/>`_ to form a team working on one of the `challenges suggested by the hackathon organizers <https://github.com/PEQI19/challenges>`_, namely the `OpenSSL integration challenge <https://github.com/PEQI19/PEQI-OpenSSL>`_.
+In Delft, I joined a team working on one of the `challenges suggested by the hackathon organizers <https://github.com/PEQI19/challenges>`_, namely the `OpenSSL integration challenge <https://github.com/PEQI19/PEQI-OpenSSL>`_.
 
-This challenge was developed by `Wojciech Kozlowski <https://www.linkedin.com/in/wojciech-kozlowski/>`_, a postdoctoral researcher at `QuTech <https://qutech.nl/>`_ and one of the organizers of the Delft hackathon. He is also the main author of the `Architectural Principles of the Quantum Internet <https://datatracker.ietf.org/doc/draft-irtf-qirg-principles/>`_ document that is being developed in the `Quantum Internet Research Group (QIRG) <https://datatracker.ietf.org/rg/qirg/about/>`_ in the `Internet Research Task Force (IRTF) <https://irtf.org/>`_.
+This challenge was developed by `Wojciech Kozlowski <https://www.linkedin.com/in/wojciech-kozlowski/>`_, a postdoctoral researcher at QuTech and one of the organizers of the Delft hackathon. He is also the main author of the `Architectural Principles of the Quantum Internet <https://datatracker.ietf.org/doc/draft-irtf-qirg-principles/>`_ document that is being developed in the `Quantum Internet Research Group (QIRG) <https://datatracker.ietf.org/rg/qirg/about/>`_ in the `Internet Research Task Force (IRTF) <https://irtf.org/>`_.
 
 .. image:: figures/openssl-logo.png
     :align: center
@@ -72,23 +71,39 @@ The following figure shows what was actually achieved soon after the end of the 
     :align: center
     :alt: Architecture using engines and mock QKD
 
-This is called the "upper half" of the solution for the OpenSSL integration challenge.
+This is called the "upper half" of the solution for the OpenSSL integration challenge. The source code for this upper half implementation can be found in GitHub repository `openssl-qkd <https://github.com/brunorijsman/openssl-qkd>`_ and the documentation can be found on `this page <https://brunorijsman.github.io/openssl-qkd/>`_.
 
-For more details on this so-called "upper half" of the implementation see @@@, and for the documentation see @@@.
+At the hackathon there was another team working on the "lower half" of the OpenSSL challenge. They were working on an implementation of the BB84 protocol running on SimulaQron. This BB84 implementation would provide a north-bound interface in the form of the ETSI QKD API.
+
+The hope was that by the end of the hackathon the "upper half" (the OpenSSL engine that consumes the ETSI QKD API) could be integrated with the "lower half" (the BB84 implementation that provides the ETSI QKD API). We did not quite make that goal during the hackathon itself. We picked up the work where the hackathon left off.
 
 Python implementation of BB84 on SimulaQron.
 ============================================
 
-TODO
+The GitHub repository `simulaqron-bb84-python <https://github.com/brunorijsman/simulaqron-bb84-python>`_ contains our Python implementation of BB84 running on SimulaQron. We essentially re-did the work that was done by the other hackathon team.
+
+You can think of it as an exercise to get familiar with BB84 and with the CQC interface provided by SimulaQron. It is a fully functional implementation of BB84 that runs on SimulaQron. However, it is not very suitable as an implementation of the "lower half" that can be integrated with the "upper half" implementation in the `openssl-qkd <https://github.com/brunorijsman/openssl-qkd>`_ repository. This is because Python code can not easily be integrated with C code into a dynamically loaded library that can be used as an OpenSSL engine. Yes, it is technically possible, but we prefer to rewrite the Cascade code in C (or maybe C++ or Rust); we consider the Python code to be a prototype (we did prototyping in Python because it is much easier to experiment in Python than in C).
 
 Python implementation of Cascade.
 =================================
 
-TODO
+The openssl-qkd repository only contains code for the quantum phase of BB84; it does not contain any classical post-processing code: both the information reconciliation step and the privacy amplification step are missing.
 
-.. _grand_plan:
+This GitHub repository `cascade-python <https://github.com/brunorijsman/cascade-python>`_ contains a Python implementation of the information reconciliation step. Once again, it is a prototype and needs to be re-implementation in C or C++ or Rust to make it suiteable for integration into an OpenSSL engine in the form of a dynamically loaded library.
 
-The grand plan.
-===============
+Next steps.
+===========
 
-TODO
+These are the remaining work-items for completing the work of implementing an OpenSSL engine that uses BB84 running on SimulaQron:
+
+1. Implement a Python prototype for privacy amplification.
+
+2. Implement one or more Python prototypes for other information reconciliation protocols, such as Golay codes.
+
+3. Rewrite the Python implementation of BB84 into C or C++ or Rust and add a north-bound ETSI QKD API.
+
+4. Rewrite the Python implementation of Cascade and the other information reconciliation protocols into C or C++ or Rust and integrate with the BB84 code.
+
+5. Rewrite the Python implementation of privacy amplification into C or C++ or Rust and integrate with the BB84 code.
+
+6. Demonstrate running Chrome and Apache on top of the QKD OpenSSL engine.

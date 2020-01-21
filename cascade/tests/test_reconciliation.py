@@ -68,16 +68,11 @@ def test_reconcile_zero_errors():
     assert reconciliation.get_reconciled_key().__str__() == correct_key.__str__()
 
 def test_reconcile_many_errors():
-    (reconciliation, correct_key) = create_reconciliation(10, "original", 10000, 0.1)
+    (reconciliation, correct_key) = create_reconciliation(10, "original", 10000, 0.90)
     reconciliation.reconcile()
     assert reconciliation.get_reconciled_key().__str__() == correct_key.__str__()
 
 def test_reconcile_tiny_key():
     (reconciliation, correct_key) = create_reconciliation(11, "original", 1, 0.01)
-    reconciliation.reconcile()
-    assert reconciliation.get_reconciled_key().__str__() == correct_key.__str__()
-
-def test_reconcile_many_errors():
-    (reconciliation, correct_key) = create_reconciliation(12, "original", 10000, 0.99)
     reconciliation.reconcile()
     assert reconciliation.get_reconciled_key().__str__() == correct_key.__str__()

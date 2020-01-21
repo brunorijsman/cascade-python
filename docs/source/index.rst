@@ -1,4 +1,4 @@
-Welcome to Cascade-Python's documentation!
+Welcome to Cascade-Python's documentation.
 ==========================================
 
 .. toctree::

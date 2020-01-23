@@ -18,6 +18,8 @@ clean:
 	rm -rf docs/source/_modules
 	rm -rf docs/build/*
 
+data: data-papers data-performance data-zero-handling
+
 data-papers:
 	mkdir -p study/data/papers
 	rm -f study/data/papers/data__*
@@ -96,9 +98,16 @@ test:
 .PHONY: \
 	clean \
 	coverage-open \
-	data-profile \
+	data \
+	data-papers \
+	data-papers-subset \
+	data-performance \
+	data-zero-handling \
 	docs \
 	docs-open \
+	graphs-papers \
+	graphs-performance \
+	graphs-zero-handling \
 	install \
 	lint \
 	pre-commit \

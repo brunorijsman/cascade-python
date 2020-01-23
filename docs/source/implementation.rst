@@ -2,12 +2,9 @@
 Cascade implementation Python.
 ******************************
 
+TODO: Write documentation for implementation.
+
 A Shuffle object represents a specific permutation (i.e. re-ordering) of key bits.
-
-TODO: Add more detail here.
-
-
-TODO: Provide examples.
 
 Shuffle identifier
 ##################
@@ -45,8 +42,6 @@ The Shuffle module uses a rather complex arrangement with multiple separate and 
 
     2. To enable the unit tests to be deterministic: when we run the same unit test multiple times,
        the exact same sequence of random shuffle objects is created.
-
-TODO: Continue from here.
 
 You might wonder whether this arrangement still works when multiple different version of Python are involved, for example:
 

@@ -36,6 +36,12 @@ data-performance:
 	python study/run_experiments.py study/experiments_performance.json \
 		--output-dir study/data/performance
 
+data-zero-handling:
+	mkdir -p study/data/zero_handling
+	rm -f study/data/zero_handling/data__*
+	python study/run_experiments.py study/experiments_zero_handling.json \
+		--output-dir study/data/zero_handling
+
 coverage-open:
 	open htmlcov/index.html
 
@@ -45,11 +51,25 @@ docs:
 docs-open: docs
 	open docs/build/index.html
 
+graphs-papers:
+	mkdir -p study/graphs/papers
+	rm -f study/graphs/papers/*.png
+	python study/make_graphs.py study/graphs_demystifying.json \
+		--data-dir study/data/papers
+	python study/make_graphs.py study/graphs_andre_reis_thesis.json \
+		--data-dir study/data/papers
+
 graphs-performance:
 	mkdir -p study/graphs/performance
 	rm -f study/graphs/performance/*.png
 	python study/make_graphs.py study/graphs_performance.json \
 		--data-dir study/data/performance
+
+graphs-zero-handling:
+	mkdir -p study/graphs/zero_handling
+	rm -f study/graphs/zero_handling/*.png
+	python study/make_graphs.py study/graphs_zero_handling.json \
+		--data-dir study/data/zero_handling
 
 install:
 	pip install -r requirements.txt

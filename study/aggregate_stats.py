@@ -8,9 +8,10 @@ class AggregateStats:
         self._square_sum = 0
 
     def record_value(self, value):
-        self._count += 1
-        self._sum += value
-        self._square_sum += value * value
+        if value is not None:
+            self._count += 1
+            self._sum += value
+            self._square_sum += value * value
 
     def average(self):
         if self._count == 0:
@@ -36,4 +37,4 @@ class AggregateStats:
         return deviation
 
     def to_json_encodeable_object(self):
-        return {'average': self.average(), 'deviation': self.deviation()}
+        return {'average': self.average(), 'deviation': self.deviation(), 'count': self._count}

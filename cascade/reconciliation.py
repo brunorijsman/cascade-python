@@ -245,8 +245,7 @@ class Reconciliation:
             key_size = self._noisy_key.get_size()
             efficiency = reconciliation_bits / (key_size * shannon_efficiency)
         except (ValueError, ZeroDivisionError):
-            # TODO: Change this to NaN or None and do not plot in graph
-            efficiency = 1.0
+            efficiency = None
         return efficiency
 
     def _all_normal_cascade_iterations(self):

@@ -1,0 +1,13 @@
+[
+    {
+        "independent_variable": "error_rate",
+        "algorithm": ["original", "biconf"],
+        "error_rate": {
+            "start": 0.00,
+            "end": 0.005,
+            "step_size": 0.00005
+        },
+        "key_size": 1000,
+        "runs": 100
+    }
+]

@@ -13,4 +13,5 @@ disable=
     fixme,
     duplicate-code,
     wildcard-import,
-    unused-wildcard-import
+    unused-wildcard-import,
+    global-statement,

@@ -2,12 +2,11 @@
     {
         "independent_variable": "error_rate",
         "algorithm": ["original", "biconf"],
-        "error_rate": {
-            "start": 0.00,
-            "end": 0.005,
-            "step_size": 0.00005
-        },
-        "key_size": 1000,
+        "error_rate": [
+            {"start": 0.000, "end": 0.005, "step_size": 0.00005},
+            {"start": 0.005, "end": 0.050, "step_size": 0.00050}
+        ],
+        "key_size": 10000,
         "runs": 100
     }
 ]

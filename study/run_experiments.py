@@ -82,7 +82,10 @@ def make_list(value, do_round=False):
     if isinstance(value, (int, float, str)):
         return [value]
     if isinstance(value, list):
-        return value
+        result = []
+        for item in value:
+            result += make_list(item)
+        return result
     if isinstance(value, dict):
         start = value['start']
         end = value['end']
@@ -151,7 +154,7 @@ def report_data_point_done(data_point):
     print(f"data_point={DATA_POINTS_PROCESSED}/{TOTAL_NR_DATA_POINTS} "
           f"algorithm={data_point.algorithm_name} "
           f"key_size={data_point.key_size} "
-          f"error_rate={data_point.requested_bit_error_rate:.4f} "
+          f"error_rate={data_point.requested_bit_error_rate:.6f} "
           f"runs={data_point.reconciliations}")
 
 def produce_data_point(reconciliation_params):

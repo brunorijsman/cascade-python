@@ -2,13 +2,12 @@
     {
         "independent_variable": "error_rate",
         "algorithm": "all",
-        "error_rate": {
-            "start": 0.00,
-            "end": 0.11,
-            "step_size": 0.001
-        },
+        "error_rate": [
+            {"start": 0.0000, "end": 0.0050, "step_size": 0.00005},
+            {"start": 0.0050, "end": 0.1100, "step_size": 0.00050}
+        ],
         "key_size": [1000, 2000, 10000],
-        "runs": 100
+        "runs": 1000
     },
     {
         "independent_variable": "key_size",
@@ -17,9 +16,9 @@
         "key_size": {
             "start": 1e3,
             "end": 1e5,
-            "step_factor": 1.1
+            "step_factor": 1.05
         },
-        "runs": 100
+        "runs": 1000
     },
     {
         "independent_variable": "key_size",
@@ -28,8 +27,8 @@
         "key_size": {
             "start": 1e3,
             "end": 1e5,
-            "step_factor": 1.1
+            "step_factor": 1.05
         },
-        "runs": 100
+        "runs": 1000
     }
 ]

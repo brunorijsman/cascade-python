@@ -8,17 +8,18 @@
         },
         "y_axis": {
             "title": "Efficiency",
-            "variable": "unrealistic_efficiency"
+            "variable": "unrealistic_efficiency",
+            "range": [0.5, 2.0]
         },
         "series": [
             {
-                "data_file": "data__algorithm=original;key_size=1000;error_rate=vary",
+                "data_file": "data__algorithm=original;key_size=10000;error_rate=vary",
                 "legend": "original",
                 "line_color": "black",
                 "deviation_color": "lightgray"
             },
             {
-                "data_file": "data__algorithm=biconf;key_size=1000;error_rate=vary",
+                "data_file": "data__algorithm=biconf;key_size=10000;error_rate=vary",
                 "legend": "biconf",
                 "line_color": "red",
                 "deviation_color": "lightsalmon"

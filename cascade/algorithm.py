@@ -17,18 +17,18 @@ class Algorithm:
             name (str): A human-readable name that uniquely identifies the Cascade algorithm.
             cascade_iterations (int): The number of normal cascade iterations.
             block_size_function (function): A function that computes the block size given the
-                estimated error rate, the key size, and the Cascade iteration number.
+            estimated error rate, the key size, and the Cascade iteration number.
             biconf_iterations (int): The number of BICONF iterations to be run after the normal
-                Cascade iterations are completed. 0 means don't run BICONF.
+            Cascade iterations are completed. 0 means don't run BICONF.
             biconf_error_free_streak (bool): If False, run a fixed number of BICONF iterations as
-                indicated by biconf_iterations. If True, keep running BICONF until we see a streak
-                of biconf_iterations error-free iterations.
+            indicated by biconf_iterations. If True, keep running BICONF until we see a streak
+            of biconf_iterations error-free iterations.
             biconf_correct_complement (bool): If False, run BINARY only on the selected subset of
-                bits. If True, run BINARY both on the selected subset of bits as well as the
-                complementary set of bits.
+            bits. If True, run BINARY both on the selected subset of bits as well as the
+            complementary set of bits.
             biconf_cascade (bool): Correct cascading errors during BICONF iterations?
             sub_block_reuse (bool): If False, consider only top-level blocks for cascading errors.
-                If True, consider blocks of all sizes for cascading errors.
+            If True, consider blocks of all sizes for cascading errors.
             block_parity_inference (bool): TODO
         """
         self.name = name

@@ -9,6 +9,8 @@ Welcome to Cascade-Python's documentation.
 
    protocol.rst
 
+   comparison.rst
+
    references.rst
 
 Indices and tables

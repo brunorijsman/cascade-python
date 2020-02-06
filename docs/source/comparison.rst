@@ -18,6 +18,12 @@ Reproduced figure from this code:
 .. image:: figures/demystifying-figure-1-reproduced.png
     :align: center
 
+The original and the reproduced figure match very well.
+
+The original graph has more detail because they executed more runs per data point (this is true for all graphs, so we won't repeat this point.)
+
+The original graph does not have any indication of the standard deviation (this is true for all graphs, so we won't repeat this point).
+
 Figure 2
 --------
 

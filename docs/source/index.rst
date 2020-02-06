@@ -11,6 +11,8 @@ Welcome to Cascade-Python's documentation.
 
    comparison.rst
 
+   comparison-conclusions.rst
+
    references.rst
 
 Indices and tables

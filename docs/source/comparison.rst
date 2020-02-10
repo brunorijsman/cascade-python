@@ -5,6 +5,10 @@ Raw Comparison of Results with Literature.
 Comparison with "Demystifying the Information Reconciliation Protocol Cascade"
 ==============================================================================
 
+Here we compare the results of our Python Cascade implementatin with the results reported in the following paper:
+
+`Demystifying the Information Reconciliation Protocol Cascade. <https://arxiv.org/abs/1407.3257>`_ *Jesus Martinez-Mateo, Christoph Pacher, Momtchil Peev, Alex Ciurana, and Vicente Martin.* arXiv:1407.3257 [quant-ph], Jul 2014.
+
 Figure 1
 --------
 
@@ -24,6 +28,8 @@ The original graph has more detail because they executed more runs per data poin
 
 The original graph does not have any indication of the standard deviation (this is true for all graphs, so we won't repeat this point).
 
+In order to get my results to match well with the results reported in the literature, I had to use a very unrealistic definition of reconciliation efficiency. This is discussed in more detail in the comparison conclusions section.
+
 Figure 2
 --------
 
@@ -36,6 +42,12 @@ Reproduced figure from this code:
 
 .. image:: figures/demystifying-figure-2-reproduced.png
     :align: center
+
+At first blush the original and the reproduced figure match are quite similar.
+
+However, both the original algorithm (black line) and the modified algorithm (blue) line have a more distinct drop-off towards the right side of the figure.
+
+For example, in the figure from the original paper, as the x-axis increases from bit error rate 0.03 to 1.10, the jigsaw shape of the blue line starts to have bigger "jigsaws" and also distinctly slopes down. In the reproduced graph, we do see the bigger "jigsaws" but we don't see the downward slope: the line stays essentially flat. I currently have no explanation for this difference.
 
 Figure 3
 --------

@@ -62,6 +62,12 @@ Reproduced figure from this code:
 .. image:: figures/demystifying-figure-3-reproduced.png
     :align: center
 
+In the original figure, the frame length (the x-axis) ranges from 10^3 to 10^7. In the reproduced figure the frame length only ranges from 10^3 to 10^5. This is because my Python code was too slow to run many iterations for key lengths 10^6 or 10^7.
+
+In the original figure, the lines are perfectly straight. In the reproduced figure the lines are very slightly curved.
+
+Other than those minor differences, the original and reproduced figure match very well: they shapes are very similar and the lines cross over at the same points.
+
 Figure 4
 --------
 
@@ -74,6 +80,10 @@ Reproduced figure from this code:
 
 .. image:: figures/demystifying-figure-4-reproduced.png
     :align: center
+
+The reproduced figure is mostly useless: for small frame error rates (below 10^-3) the reproduced figure falls apart. This is because I only did 1,000 iterations per data point. The Python code was too slow to do more iterations per data point. To detect frame errors below 10^-n we need to do at least 10^n iterations. Hence, running only 1,000 iterations it is only to be expected that we cannot detect frame error rates below 10^-3.
+
+Hopefully, when we have a faster C++ implementation we will be able to study lower error rates.
 
 Figure 5
 --------

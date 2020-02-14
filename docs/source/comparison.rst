@@ -98,6 +98,14 @@ Reproduced figure from this code:
 .. image:: figures/demystifying-figure-5-reproduced.png
     :align: center
 
+Once again, the reproduced figure is mostly useless, for similar reasons to figure 4.
+
+Due to the slow Python code, we only did 1,000 (10^3) iterations per data point. For key size 1,000 (10^3) this means we cannot bit error rates below 10^-6. And for key siz 10,000 (10^4) this means we cannot detect bit error rate below 10^-7.
+
+As expected, the reproduced figure 5 falls apart below these 10^-6 (black line) and 10^-7 (blue line) bit error rates.
+
+Again, hopefully, when we have a faster C++ implementation we will be able to run more iterations per data point and hence study lower error rates.
+
 Figure 6
 --------
 
@@ -131,6 +139,10 @@ Reproduced figure from this code:
 .. image:: figures/demystifying-figure-8-reproduced.png
     :align: center
 
+The original and the reproduced figure match very well.
+
+Once again, the original graph has more detail because they executed more runs per data point.
+
 Figure 9
 --------
 
@@ -143,6 +155,21 @@ Reproduced figure from this code:
 
 .. image:: figures/demystifying-figure-9-reproduced.png
     :align: center
+
+There are few noticeable differences between the original figure and the reproduced figure.
+
+There is of course the fact that the original figure has more detail than the reproduced figure, because we run fewer iterations per data point.
+
+The black, green, and blue graphs match reasonably well in the original and the int reproduced figure. They have very similar values and similar shapes including the obvious saw-teeth. There are a few differences in the details though.
+
+We already observed the first difference in figure 2. In the original graph the blue graph clearly slopes down towards the end. In the reproduced graph the blue line saw-tooths around a flat trend instead of trend that slopes down.
+
+In the green and the black graphs, we also see a difference. In the original graph we see a lower frequency secondary wave pattern on top of the higher frequency saw-teeth. For example, there are 6 "waves" in the green graph and lots of saw-teeth within each "wave". In the reproduced green and black graphs, we do not see these "waves".
+
+
+The last and biggest difference is in the red graph. This graph is completely different in the original vs reproduced figure. In the original figure the red graph is much higher (above the blue graph) and has much bigger saw-teeth.
+
+I currently do not have an explanation for any of these observed differences.
 
 Figure 10
 ---------

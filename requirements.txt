@@ -25,7 +25,7 @@ pbr==5.4.4
 plotly==4.4.1
 pluggy==0.13.1
 py==1.8.1
-Pygments==2.5.2
+Pygments==2.7.4
 pylint==2.4.4
 pyparsing==2.4.6
 pytest==5.3.2

@@ -4,7 +4,7 @@ attrs==19.3.0
 Babel==2.8.0
 certifi==2019.11.28
 chardet==3.0.4
-codecov==2.0.15
+codecov==2.0.16
 coverage==5.0.1
 doc8==0.8.0
 docutils==0.15.2

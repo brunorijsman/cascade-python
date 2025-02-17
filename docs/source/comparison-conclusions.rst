@@ -4,12 +4,26 @@ Conclusions from Comparison of Results with Literature.
 
 Here we summarize some of the differences that we observed in the reproduced figures as compared to the literature.
 
-Unrealistic efficiency.
------------------------
+Efficiency.
+-----------
+
+I rewrote this section in 2025; it turns out that I had completely misunderstood the concept of Cascade efficiency when I originally wrote the code in 2019/2020.
+
+Originally, I thought that "efficiency" had something to do with how much data was exchanged over the classical channel (i.e. number of messages and size of the messages). The more data was exchanged, the less efficient the protocol.
+
+Hence ###
+
+
+
 
 My cascade-python code produced "efficiency vs bit error rate" graphs that matched the results in the literature very well.
 
-However, I could only obtain a good match between my results and the literature results if I used an extremely unrealistic definition of efficiency (this is called "unrealistic_efficiency" in the code).
+However, when I 
+
+
+every time Bob asks Alice to compute and reveal the correct parity of a block, I count that as a single bit of information exchanged. When I do that, my results and the results from the literature match almost perfectly.
+
+
 
 The "spirit" of the definition of "reconciliation efficiency" it to compare the actual number of bits exchanges between Alice and Bob during the reconciliation protocol and compare it with the theoretical minimum number of bits.
 

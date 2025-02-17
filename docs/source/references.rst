@@ -31,7 +31,7 @@ Thesis.
 
 `Quantum Key Distribution Data Post-Processing with Limited Resources: Towards Satellite-Based Quantum Communication. <https://uwspace.uwaterloo.ca/bitstream/handle/10012/7244/Gigov_Nikolay.pdf>`_ *Nikolay Gigov.* Master's Thesis, University of Waterloo, 2013.
 
-`An Empirical Analysis of the Cascade Secret Key Reconciliation Protocol for Quantum Key Distribution. <https://apps.dtic.mil/dtic/tr/fulltext/u2/a549804.pdf>`_ *Timothy I. Calver, Captain, USAF.* Master's Thesis, Department of the Air Force, Air University, Air Force Institute of Technology.
+`An Empirical Analysis of the Cascade Secret Key Reconciliation Protocol for Quantum Key Distribution. <https://scholar.afit.edu/cgi/viewcontent.cgi?article=2524&context=etd>`_ *Timothy I. Calver, Captain, USAF.* Master's Thesis, Department of the Air Force, Air University, Air Force Institute of Technology.
 
 Implementations.
 ================

@@ -89,7 +89,16 @@ Python implementation of Cascade.
 
 The openssl-qkd repository only contains code for the quantum phase of BB84; it does not contain any classical post-processing code: both the information reconciliation step and the privacy amplification step are missing.
 
-This GitHub repository `cascade-python <https://github.com/brunorijsman/cascade-python>`_ contains a Python implementation of the information reconciliation step. Once again, it is a prototype and needs to be re-implementation in C or C++ or Rust to make it suiteable for integration into an OpenSSL engine in the form of a dynamically loaded library.
+This GitHub repository `cascade-python <https://github.com/brunorijsman/cascade-python>`_ contains a Python implementation of the information reconciliation step.
+
+C++ implementation of Cascade.
+==============================
+
+Soon after implementing Cascade in Python (this repository), I reimplemented it in C++ (GitHub repository `cascade-cpp <https://github.com/brunorijsman/cascade-cpp>`_).
+
+The main reason for reimplementing Cascade in C++ was that the Python code was too slow. The "make data-papers" target in the Python code does 1,000 Cascade iterations per data point and takes more than 5 days of continuous running on an AWS m5.2xlarge instance (120 hours x US$ 0.40 per hour = US$ 48 in compute cost). By contrast, the "make data-papers" target the C++ code does 10,000 Cascade iterations per data point (10x better accuracy) only takes ten hours to complete (US$ 4).
+
+Also, the C++ was more carefully debugged than the Python code and has some extra debugging functionality.
 
 Next steps.
 ===========
@@ -100,7 +109,7 @@ These are the remaining work-items for completing the work of implementing an Op
 
 2. Implement one or more Python prototypes for other information reconciliation protocols, such as Golay codes.
 
-3. Rewrite the Python implementation of BB84 into C or C++ or Rust and add a north-bound ETSI QKD API.
+3. Add a north-bound ETSI QKD API.
 
 4. Rewrite the Python implementation of Cascade and the other information reconciliation protocols into C or C++ or Rust and integrate with the BB84 code.
 

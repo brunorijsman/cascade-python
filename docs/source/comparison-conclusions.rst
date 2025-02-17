@@ -9,31 +9,41 @@ Efficiency.
 
 I rewrote this section in 2025; it turns out that I had completely misunderstood the concept of Cascade efficiency when I originally wrote the code in 2019/2020.
 
-Originally, I thought that "efficiency" had something to do with how much data was exchanged over the classical channel (i.e. number of messages and size of the messages). The more data was exchanged, the less efficient the protocol.
+Originally, I thought that the concept "efficiency" was a measure of how much data was exchanged over the classical channel (i.e. number of messages and size of the messages). The more data was exchanged, the "less efficient" the protocol.
 
-Hence ###
+The code estimates the number of bits that were exchanged over the classical channel, and plugs that into a formula (which I did not understand at the time) to compute what the code calls ``realistic_efficiency``. I found that when I plotted this ``realistic_efficiency``, the results did not match the results reported in literature.
 
+I have since come to understand that the concept of "efficiency" in information reconciliation protocols such as Cascade has a very specific meaning.
 
+Every time the Cascade protocol reports a parity bit over the classical channel (which is considered to be authenticated but public), eavesdropper Eve learns one bit of parity information about the secret key. When Eve does a brute force attack, knowing one parity bit value means that she only has to examine half of the possible keys (she can skip the keys with the wrong parity bit).
 
+Thus, for each exposed parity bit, the usable key size is reduced by one bit. If *N* parity bits are exposed in the information reconciliation step, then the privacy amplification step that follows will have to erase *N* bits of leaked information and reduce the final key size by *N* bits.
 
-My cascade-python code produced "efficiency vs bit error rate" graphs that matched the results in the literature very well.
+In information theory it has been proven that the minimum number of exposed bits needed to correct the errors in the produced noisy secret key is:
 
-However, when I 
+*n H(ε)* 
 
+where:
 
-every time Bob asks Alice to compute and reveal the correct parity of a block, I count that as a single bit of information exchanged. When I do that, my results and the results from the literature match almost perfectly.
+*n* is the length of the key,
 
+*ε* is the bit error rate in the key,
 
+*H(ε)* = *-ε* log\ :sub:`2`\ (*ε*) - (1-*ε*) log\ :sub:`2`\ (1-*ε*) is the binary entropy function.
 
-The "spirit" of the definition of "reconciliation efficiency" it to compare the actual number of bits exchanges between Alice and Bob during the reconciliation protocol and compare it with the theoretical minimum number of bits.
+An optimal information reconciliation protocol would achieve this minimum bound.
 
-For example, if the theoretical minimum is 200 bits and we actually exchanged 220 bits, then the reconciliation efficiency is 220/200 = 1.10, meaning that we used 10% more bits than the theoretical minimum.
+The efficiency *η* of the Cascade algorithm is then defined as:
 
-Every time Bob asks Alice to compute and reveal the correct parity for some block, some bits are exchanged. To compute the reconciliation efficiency we need to add up all these exchanged bits and compare the total number of exchanged bits with the theoretical minimum. This is what I call the "realistic_efficiency" in my code. However, if I do this, I end up with efficiencies that are way worse by several orders of magnitude than the ones reported in the literature.
+*η* = *N* / *n H(ε)*
 
-To accurately reproduce the results reported in the literature I had to make a very unrealistic assumption: every time Bob asks Alice to compute and reveal the correct parity of a block, I count that as a single bit of information exchanged. When I do that, my results and the results from the literature match almost perfectly.
+For example, if the efficiency of Cascade is 1.25 it means that it exposes 25% more parity bits than what an optimal information reconciliation protocol would achieve.
 
-Clearly, this is not realistic. Bob asking Alice for the correct parity actually uses much more than one bit: Bob has to identify the block and the shuffling order which takes way more than one bit. Hence, I call this "unrealistic_efficiency" in my code.
+The value *η* is called ``unrealistic_efficiency`` in the code.
+
+Now that I better understand the efficiency calculation, I should update the code to get rid of ``realistic_efficiency`` and rename ``unrealistic_efficiency`` to just ``efficiency``. I did not do that for the Python code in this repository because I did not want to spend another 5 days of running time to reproduce the results. But I did update the C++ implementation in GitHub repository  `cascade-cpp <https://github.com/brunorijsman/cascade-cpp>`_.
+
+Note that the updated C++ code still keeps track of the estimated number of bits that are exchanged over the classical channel. This is interesting for a completely different reason than efficiency: it is relevant to determine how much key material needs to be siphoned off from the produced keys to authenticate the messages on the classical channel.
 
 Less detail.
 ------------

@@ -43,7 +43,7 @@ class Shuffle:
                 shuffle_seed = \
                     Shuffle._shuffle_seed_random_generator.randint(1, Shuffle._MAX_SHUFFLE_SEED - 1)
             shuffle_random_generator = random.Random(shuffle_seed)
-            random.shuffle(self._shuffle_index_to_key_index, shuffle_random_generator.random)
+            shuffle_random_generator.shuffle(self._shuffle_index_to_key_index)
         else:
             shuffle_seed = 0
         self._identifier = Shuffle._encode_identifier(size, algorithm, shuffle_seed)
@@ -121,7 +121,7 @@ class Shuffle:
         Set the seed for the isolated random number generated that is used only in the shuffle
         module and nowhere else. If two applications set the seed to the same value, the shuffle
         module produces the exact same sequence of shuffles. This is used to make experiments
-        reproduceable.
+        reproducible.
 
         Args:
             seed (int): The seed value for the random number generator which is isolated to the

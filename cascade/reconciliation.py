@@ -114,7 +114,7 @@ class Reconciliation:
 
     def _register_block_key_indexes(self, block):
         # For every key bit covered by the block, append the block to the list of blocks that depend
-        # on that partical key bit.
+        # on that partial key bit.
         for key_index in block.get_key_indexes():
             if key_index in self._key_index_to_blocks:
                 self._key_index_to_blocks[key_index].append(block)

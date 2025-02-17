@@ -5,7 +5,7 @@ Raw Comparison of Results with Literature.
 Comparison with "Demystifying the Information Reconciliation Protocol Cascade"
 ==============================================================================
 
-Here we compare the results of our Python Cascade implementatin with the results reported in the following paper:
+Here we compare the results of our Python Cascade implementation with the results reported in the following paper:
 
 `Demystifying the Information Reconciliation Protocol Cascade. <https://arxiv.org/abs/1407.3257>`_ *Jesus Martinez-Mateo, Christoph Pacher, Momtchil Peev, Alex Ciurana, and Vicente Martin.* arXiv:1407.3257 [quant-ph], Jul 2014.
 

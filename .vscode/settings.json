@@ -18,6 +18,7 @@
         "cqclib",
         "dichotomic",
         "Diffie",
+        "dunder",
         "Engenharia",
         "Erven",
         "ETSI",
@@ -113,5 +114,6 @@
     "python.linting.enabled": true,
     "restructuredtext.confPath": "${workspaceFolder}/docs/source",
     "restructuredtext.builtDocumentationPath": "${workspaceFolder}/docs/build",
-    "editor.wordWrapColumn": 100
+    "editor.wordWrapColumn": 100,
+    "pylint.importStrategy": "fromEnvironment"
 }

@@ -4,6 +4,12 @@ The Cascade information reconciliation protocol.
 
 Tutorial by `Bruno Rijsman <https://www.linkedin.com/in/brunorijsman/>`_
 
+See also:
+
+* `Blogpost on Cascade <https://hikingandcoding.com/2020/01/15/a-cascade-information-reconciliation-tutorial/>`_
+
+* `C++ implementation of Cascade <https://github.com/brunorijsman/cascade-cpp>`_
+
 Quantum key distribution (QKD) protocols.
 =========================================
 

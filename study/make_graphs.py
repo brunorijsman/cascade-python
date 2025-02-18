@@ -10,14 +10,14 @@ def parse_command_line_arguments():
     parser.add_argument('graphs_file_name', metavar="graphs-file", type=str,
                         help="graphs definition file")
     parser.add_argument('-d', '--data-dir', type=str,
-                        help=f"directory where the data files are stored")
+                        help="directory where the data files are stored")
     parser.add_argument('-g', '--graph-name', type=str,
-                        help=f"name of graph to produce (default: produce all graphs)")
+                        help="name of graph to produce (default: produce all graphs)")
     args = parser.parse_args()
     return args
 
 def parse_graphs_file(graphs_file_name):
-    with open(graphs_file_name) as graphs_file:
+    with open(graphs_file_name, encoding="utf-8") as graphs_file:
         graphs = json.load(graphs_file)
     return graphs
 
@@ -123,7 +123,7 @@ def plot_deviation(figure, series, x_axis_variable, y_axis_variable, data_points
 
 def read_data_points(data_file_name):
     data_points = []
-    with open(data_file_name) as data_file:
+    with open(data_file_name, encoding="utc-8") as data_file:
         for line in data_file:
             data_point = json.loads(line)
             data_points.append(data_point)

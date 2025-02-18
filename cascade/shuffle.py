@@ -1,3 +1,4 @@
+import math
 import random
 
 class Shuffle:
@@ -43,10 +44,25 @@ class Shuffle:
                 shuffle_seed = \
                     Shuffle._shuffle_seed_random_generator.randint(1, Shuffle._MAX_SHUFFLE_SEED - 1)
             shuffle_random_generator = random.Random(shuffle_seed)
-            shuffle_random_generator.shuffle(self._shuffle_index_to_key_index)
+            Shuffle._shuffle(self._shuffle_index_to_key_index, shuffle_random_generator.random)
         else:
             shuffle_seed = 0
         self._identifier = Shuffle._encode_identifier(size, algorithm, shuffle_seed)
+
+    @staticmethod
+    def _shuffle(x, random):
+        """
+        The random argument in random.shuffle was deprecated in Python 3.9 and removed in 
+        Python 3.11. Instead you are expected to use random.Random.shuffle instead. However, this
+        produces a different shuffle order, even if the random number generator is seeded in the
+        same way. My test suite depends a specific deterministic shuffle order for a given 
+        hard-coded seed value. Since I don't want to reimplement my test suite to adjust to the new
+        shuffle order, I reimplement the order shuffle algorithm from Python 3.9 here.
+        """
+        for i in reversed(range(1, len(x))):
+            # pick an element in x[:i+1] with which to exchange x[i]
+            j = math.floor(random() * (i + 1))
+            x[i], x[j] = x[j], x[i]
 
     @staticmethod
     def create_shuffle_from_identifier(identifier):

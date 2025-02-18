@@ -29,7 +29,7 @@ def parse_command_line_arguments():
     return args
 
 def parse_experiments_file(file_name):
-    with open(file_name) as json_file:
+    with open(file_name, encoding="utf-8") as json_file:
         experiments = json.load(json_file)
     return experiments
 
@@ -125,14 +125,14 @@ def run_serie(serie, output_directory, disable_multi_processing):
     if output_directory:
         data_file_name = os.path.join(output_directory, data_file_name)
     if disable_multi_processing:
-        with open(data_file_name, mode="w") as data_file:
+        with open(data_file_name, mode="w", encoding="utf-8") as data_file:
             for param in reconciliation_params:
                 data_point = produce_data_point(param)
                 print(to_json(data_point), file=data_file)
                 report_data_point_done(data_point)
     else:
         pool = multiprocessing.Pool()
-        with open(data_file_name, mode="w") as data_file:
+        with open(data_file_name, mode="w", encoding="utf-8") as data_file:
             for data_point in pool.imap(produce_data_point, reconciliation_params):
                 print(to_json(data_point), file=data_file)
                 report_data_point_done(data_point)

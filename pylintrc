@@ -20,3 +20,6 @@ disable=
     use-implicit-booleaness-not-comparison,
     consider-using-max-builtin,
     unnecessary-dunder-call,
+    use-dict-literal,
+    global-variable-not-assigned,
+    consider-using-with,

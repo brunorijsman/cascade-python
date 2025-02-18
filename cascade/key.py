@@ -63,7 +63,7 @@ class Key:
         Set the seed for the isolated random number generated that is used only in the key
         module and nowhere else. If two applications set the seed to the same value, the key
         module produces the exact same sequence of random keys. This is used to make experiments
-        reproduceable.
+        reproducible.
 
         Args:
             seed (int): The seed value for the random number generator which is isolated to the
@@ -130,7 +130,8 @@ class Key:
 
         if error_method == self.ERROR_METHOD_EXACT:
             error_count = round(error_rate * self._size)
-            bits_to_flip = Key._random.sample(self._bits.keys(), error_count)
+            bits = list(self._bits.keys())
+            bits_to_flip = Key._random.sample(bits, error_count)
             for index in bits_to_flip:
                 key._bits[index] = 1 - key._bits[index]
 

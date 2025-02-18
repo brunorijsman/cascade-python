@@ -8,9 +8,9 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 project = 'Cascade-Python'
 # pylint:disable=redefined-builtin
-copyright = '2020, Bruno Rijsman'
+copyright = '2020-2025, Bruno Rijsman'
 author = 'Bruno Rijsman'
-release = '0.0.1'
+release = '0.0.2'
 
 extensions = [
     'sphinx.ext.napoleon',

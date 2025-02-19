@@ -123,7 +123,7 @@ def plot_deviation(figure, series, x_axis_variable, y_axis_variable, data_points
 
 def read_data_points(data_file_name):
     data_points = []
-    with open(data_file_name, encoding="utc-8") as data_file:
+    with open(data_file_name, encoding="utf-8") as data_file:
         for line in data_file:
             data_point = json.loads(line)
             data_points.append(data_point)

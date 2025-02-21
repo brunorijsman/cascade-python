@@ -104,10 +104,15 @@ class Reconciliation:
         self.stats.elapsed_process_time = time.process_time() - start_process_time
         self.stats.elapsed_real_time = time.perf_counter() - start_real_time
 
-        # Compute efficiencies.
-        self.stats.unrealistic_efficiency = self._compute_efficiency(self.stats.ask_parity_blocks)
-        realistic_reconciliation_bits = self.stats.ask_parity_bits + self.stats.reply_parity_bits
-        self.stats.realistic_efficiency = self._compute_efficiency(realistic_reconciliation_bits)
+        # Compute efficiency.
+        self.stats.efficiency = self._compute_efficiency(self.stats.ask_parity_blocks)
+
+        # Compute number of reconciliation message bits per key bit.
+        self.stats.reconciliation_bits = (self.stats.ask_parity_bits +
+                                          self.stats.reply_parity_bits)
+        key_size = self._noisy_key.get_size()
+        self.stats.reconciliation_bits_per_key_bit = (float(self.stats.reconciliation_bits) /
+                                                      float(key_size))
 
         # Return the probably, but not surely, corrected key.
         return self._reconciled_key

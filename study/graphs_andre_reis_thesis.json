@@ -9,7 +9,7 @@
         },
         "y_axis": {
             "title": "avg eff",
-            "variable": "unrealistic_efficiency",
+            "variable": "efficiency",
             "range": [1.00, 1.50]
         },
         "series": [
@@ -134,7 +134,7 @@
         },
         "y_axis": {
             "title": "avg eff",
-            "variable": "unrealistic_efficiency",
+            "variable": "efficiency",
             "range": [1.00, 1.50]
         },
         "series": [

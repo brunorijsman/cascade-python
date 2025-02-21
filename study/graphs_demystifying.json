@@ -8,7 +8,7 @@
         },
         "y_axis": {
             "title": "Reconciliation efficiency",
-            "variable": "unrealistic_efficiency",
+            "variable": "efficiency",
             "range": [1.0, 1.3]
         },
         "series": [
@@ -245,7 +245,7 @@
         },
         "y_axis": {
             "title": "Reconciliation efficiency",
-            "variable": "unrealistic_efficiency",
+            "variable": "efficiency",
             "range": [1.0, 1.3]
         },
         "series": [
@@ -395,7 +395,7 @@
         },
         "y_axis": {
             "title": "Reconciliation efficiency",
-            "variable": "unrealistic_efficiency",
+            "variable": "efficiency",
             "range": [1.0, 1.3]
         },
         "series": [
@@ -428,7 +428,7 @@
         },
         "y_axis": {
             "title": "Reconciliation efficiency",
-            "variable": "unrealistic_efficiency",
+            "variable": "efficiency",
             "range": [1.0, 1.3]
         },
         "series": [

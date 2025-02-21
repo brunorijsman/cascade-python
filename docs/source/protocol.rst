@@ -584,10 +584,47 @@ In the extreme case, Bob can hold off sending any *ask parities* message until h
 
 The sweet spot is probably to hold off sending *ask parity* messages for only a fixed delay (similar to what the Nagle algorithm does in TCP/IP).
 
-Information leakage.
-====================
+Information Leakage and Privacy Amplification.
+==============================================
 
-TODO: Quantitative discussion of information leakage.
+The goal of QKD is for Alice and Bob to agree on a shared secret key in such a manner that eavesdropper Eve cannot discover what the secret key is, even if Eve can monitor all communications between Alice and Bob, including the Cascade messages (which are assumed to be authenticated but public).
+
+Every time the Cascade protocol exposes a parity bit in a reply parity message, one bit of information about the key is leaked to Eve. Intuitively it is clear that if Eve knows one parity bit for the key, she would only have to consider ½ of the possible keys in a brute force attack; the other ½ would not have the correct parity. And if Eve knows two parity bits for the key, should would only have to consider ¼ of the possible keys; the other ¾ would not have the correct parity.
+
+Thus, we can see that for every exposed parity bit, the effective usable key length is reduced by one bit. The privacy amplification step, which takes part after the Cascade information reconciliation step in classical post-processing, takes care of reducing the key length and erasing any information that was exposed by the parity bits in the Cascade protocol.
+
+Efficiency.
+===========
+
+Cascade is not the only QKD information reconciliation protocol. For example, Low Density Parity Check (LDPC) codes are also quite popular, perhaps even more popular these days.
+
+A natural question to ask, then, is: which information reconciliation protocol is the best?
+
+There are different ways to evaluate the goodness of an information reconciliation protocol. For example, we already noted that the Cascade protocol is very interactive, requiring many back-and-forth message exchanges between Alice and Bob. This makes the protocol slow. LDPC, on the other hand, only requires a single message exchange.
+
+One goodness criterium that is often discussed is efficiency η. This is a measure of how much information is leaked. The less information is leaked, the less key material has to be sacrificed during privacy amplification and the better the information reconciliation protocol.
+
+In order to compute the efficiency η we consider a hypothetical perfect information reconciliation protocol, which leaks the least possible amount of information to Eve.
+
+In the field of information theory, it has been proven that there is a lower bound on the amount of information that must be leaked by any information reconciliation protocol, namely:
+
+Lower bound on number of leaked bits = K H(ε)
+
+where
+
+K is the key length,
+
+ε is the Quantum Bit Error Rate (QBER) in the key before information reconciliation,
+
+H(ε) = -ε log2(ε) - (1-ε) log2(1-ε) is the binary entropy function.
+
+The efficiency η of the Cascade protocol (or of any information reconciliation protocol, for that matter) is then computed as follows:
+
+η = N / K H(ε)
+
+where N is the number of leaked parity bits.
+
+The efficiency η is a number greater than 1. For example, efficiency 1.25 means that the Cascade protocol is leaking 25% more bits than the theoretical minimum.
 
 Variations on the Cascade Protocol.
 ===================================

@@ -15,6 +15,7 @@ class Stats:
         self.ask_parity_blocks = 0
         self.ask_parity_bits = 0
         self.reply_parity_bits = 0
-        self.unrealistic_efficiency = None
-        self.realistic_efficiency = None
+        self.reconciliation_bits = 0
+        self.reconciliation_bits_per_key_bit = None
+        self.efficiency = None
         self.infer_parity_blocks = 0

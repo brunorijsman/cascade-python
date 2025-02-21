@@ -28,8 +28,6 @@ The original graph has more detail because they executed more runs per data poin
 
 The original graph does not have any indication of the standard deviation (this is true for all graphs, so we won't repeat this point).
 
-In order to get my results to match well with the results reported in the literature, I had to use a very unrealistic definition of reconciliation efficiency. This is discussed in more detail in the comparison conclusions section.
-
 Figure 2
 --------
 

@@ -50,7 +50,7 @@ class Shuffle:
         self._identifier = Shuffle._encode_identifier(size, algorithm, shuffle_seed)
 
     @staticmethod
-    def _shuffle(x, random):
+    def _shuffle(x, random_function):
         """
         The random argument in random.shuffle was deprecated in Python 3.9 and removed in 
         Python 3.11. Instead you are expected to use random.Random.shuffle instead. However, this
@@ -61,7 +61,7 @@ class Shuffle:
         """
         for i in reversed(range(1, len(x))):
             # pick an element in x[:i+1] with which to exchange x[i]
-            j = math.floor(random() * (i + 1))
+            j = math.floor(random_function() * (i + 1))
             x[i], x[j] = x[j], x[i]
 
     @staticmethod

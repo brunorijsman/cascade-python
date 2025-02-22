@@ -600,9 +600,7 @@ Cascade is not the only QKD information reconciliation protocol. For example, Lo
 
 A natural question to ask, then, is: which information reconciliation protocol is the best?
 
-There are different ways to evaluate the goodness of an information reconciliation protocol. For example, we already noted that the Cascade protocol is very interactive, requiring many back-and-forth message exchanges between Alice and Bob. This makes the protocol slow. LDPC, on the other hand, only requires a single message exchange.
-
-One goodness criterium that is often discussed is efficiency η. This is a measure of how much information is leaked. The less information is leaked, the less key material has to be sacrificed during privacy amplification and the better the information reconciliation protocol.
+There are different ways to evaluate the goodness of an information reconciliation protocol. One criterium that is often discussed is efficiency η. This is a measure of how much information is leaked. The less information is leaked, the less key material has to be sacrificed during privacy amplification and the better the information reconciliation protocol.
 
 In order to compute the efficiency η we consider a hypothetical perfect information reconciliation protocol, which leaks the least possible amount of information to Eve.
 
@@ -625,6 +623,36 @@ The efficiency η of the Cascade protocol (or of any information reconciliation 
 where N is the number of leaked parity bits.
 
 The efficiency η is a number greater than 1. For example, efficiency 1.25 means that the Cascade protocol is leaking 25% more bits than the theoretical minimum.
+
+When we implemented the Cascade protocol in Python and C++, we ran many experiments with different Cascade algorithm variations, key lengths, and error rates. We computed the efficiency of the Cascade protocol for all these scenarios and compared the results with those reported in literature.
+
+For example, the following graphs show the efficiency of two variations of the Cascade protocol as a function to the noise (the bit error rate). The first graph is computed by our C++ implementation and the second graph is reported in literature.
+
+.. image:: figures/demystifying-figure-1-reproduced.png
+    :align: center
+
+.. image:: figures/demystifying-figure-1-original.png
+    :align: center
+
+For the standard Cascade protocol we get an efficiency of about 1.2, and for the modified Cascade protocol we get an efficiency of about 1.1. Both are considered to be very good. In other words, relatively little information (about 20% and 10% respectively) is leaked.
+
+Channel uses.
+=============
+
+Another criterium for evaluating the goodness of an information reconciliation protocol is the number of channel uses. This is the number of classical control plane messages that Alice sends to Bob or vice versa. In the case of Cascade, we could how many ask parity messages Bob sends to Alice and how many reply parity messages Alice sends back to Bob.
+
+What matters is that each ask-reply message pair incurs a round-trip delay. If we consider, for example, a QKD link of 200 km and we take the speed of light in fiber which is roughly 200,000 km/sec, then we see that each round-trip takes at least 1 ms. We have to add to this the processing times at Alice and Bob for each block.
+
+For example, the following graphs show the number of channel uses in Cascade protocol as a function of frame length (key size) for three different error rates. Again, the first graph is computed by our C++ implementation and the second graph is reported in literature.
+
+
+.. image:: figures/demystifying-figure-3-reproduced.png
+    :align: center
+
+.. image:: figures/demystifying-figure-3-original.png
+    :align: center
+
+We already noted that the Cascade protocol is very interactive, requiring many (between 20 and 120) back-and-forth message exchanges between Alice and Bob. Although our C++ implementation takes great care to do as much parallelization as possible (already start on the next block before the reply for the previous block has been received), this interactive nature can still make the Cascade protocol slow. Other information reconciliation protocols, such as Low Density Parity Check (LDPC) codes require only a single message exchange.
 
 Variations on the Cascade Protocol.
 ===================================

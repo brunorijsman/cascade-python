@@ -17,7 +17,7 @@ The graphs in the original papers do not have any indication of the standard dev
 Differences in the detailed shape of the channel use graph.
 -----------------------------------------------------------
 
-In many respects, most of my reproduced channel use figures match the figures in the original literature quite well. The overall shape matches quite well. The appearance of saw-tooth patterns matches quite well. The numerical value matches quite well. We always count a pair of a ask parity message and a ask parity reply as a single channel use; some papers count them separately doubling the values.
+In many respects, most of my reproduced channel use figures match the figures in the original literature quite well. The overall shape matches quite well. The appearance of saw-tooth patterns matches quite well. The numerical value matches quite well.
 
 In some other aspects, however, there are some striking differences between the original and reproduced channel use figures as well.
 

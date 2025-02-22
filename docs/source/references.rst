@@ -23,7 +23,7 @@ Papers.
 
 `Error Reconciliation in Quantum Key Distribution Protocols. <https://www.researchgate.net/publication/341361133_Error_Reconciliation_in_Quantum_Key_Distribution_Protocols>`_ *Miralem Mehic, Marcin Niemiec, Harun Šiljak, and Miroslav Vozňák.* Lecture Notes in Computer Science, 2020.
 
-`Using Cascade in Quantum Key Distribution. https://arxiv.org/abs/2307.00576`_ *Devashish Tupkary, Norbert Lütkenhaus.* arXiv:2307.00576 [quant-ph], Dec 2023.
+`Using Cascade in Quantum Key Distribution. <https://arxiv.org/abs/2307.00576>`_ *Devashish Tupkary, Norbert Lütkenhaus.* arXiv:2307.00576 [quant-ph], Dec 2023.
 
 `Cracking the Curious Case of the Cascade Protocol. <https://www.researchgate.net/publication/372972603_Cracking_the_Curious_Case_of_the_Cascade_Protocol>`_ *Anand Choudhary, Ajay Wasan.* IEEE Access. PP. 1-1. 10.1109/ACCESS.2023.3303392, 2023.
 

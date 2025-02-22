@@ -38,10 +38,12 @@ Thesis.
 Implementations.
 ================
 
-GitHub repository `brunorijsman/cascade-python <https://github.com/brunorijsman/cascade-python>`
+GitHub repository `brunorijsman/cascade-python <https://github.com/brunorijsman/cascade-python>`_.
 
-GitHub repository `brunorijsman/cascade-cpp <https://github.com/brunorijsman/cascade-cpp>`
+GitHub repository `brunorijsman/cascade-cpp <https://github.com/brunorijsman/cascade-cpp>`_.
 
 GitHub repository `andrebreis/cascade-study <https://github.com/andrebreis/cascade-study>`_.
 
 GitHub repository `mdskrzypczyk/QChat <https://github.com/mdskrzypczyk/QChat>`_.
+
+GitHub repository `gftea/cascade-protocol <https://github.com/gftea/cascade-protocol>`_.

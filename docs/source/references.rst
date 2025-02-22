@@ -21,7 +21,7 @@ Papers.
 
 `A Probabilistic Analysis of BINARY and CASCADE. <http://math.uchicago.edu/~may/REU2013/REUPapers/Ng.pdf>`_ *Ruth II-Yung Ng.* 2014.
 
-`Error Reconciliation in Quantum Key Distribution Protocols. <https://www.researchgate.net/publication/341361133_Error_Reconciliation_in_Quantum_Key_Distribution_Protocols>` *Miralem Mehic, Marcin Niemiec, Harun Šiljak, and Miroslav Vozňák.* Lecture Notes in Computer Science, 2020.
+`Error Reconciliation in Quantum Key Distribution Protocols. <https://www.researchgate.net/publication/341361133_Error_Reconciliation_in_Quantum_Key_Distribution_Protocols>`_ *Miralem Mehic, Marcin Niemiec, Harun Šiljak, and Miroslav Vozňák.* Lecture Notes in Computer Science, 2020.
 
 `Using Cascade in Quantum Key Distribution. https://arxiv.org/abs/2307.00576`_ *Devashish Tupkary, Norbert Lütkenhaus.* arXiv:2307.00576 [quant-ph], Dec 2023.
 

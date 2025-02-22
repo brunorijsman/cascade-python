@@ -21,6 +21,8 @@ Papers.
 
 `A Probabilistic Analysis of BINARY and CASCADE. <http://math.uchicago.edu/~may/REU2013/REUPapers/Ng.pdf>`_ *Ruth II-Yung Ng.* 2014.
 
+`Error Reconciliation in Quantum Key Distribution Protocols. <https://www.researchgate.net/publication/341361133_Error_Reconciliation_in_Quantum_Key_Distribution_Protocols>` *Miralem Mehic, Marcin Niemiec, Harun Šiljak, and Miroslav Vozňák.* Lecture Notes in Computer Science, 2020.
+
 Thesis.
 =======
 

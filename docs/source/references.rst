@@ -9,7 +9,7 @@ Papers.
 
 `Towards an Optimal Implementation of Cascade. <https://www.semanticscholar.org/paper/Towards-an-optimal-implementation-of-cascade-Mateo-Pacher/d9b1467ed1c78499c9dc52b082cf6bd73c900666>`_ *Jesús Martínez Mateo, Christoph Pacher, Momtchil Peev, Alex Ciurana Aguilar, Vicente Martín Ayuso.* 2014.
 
-`Secret-Key Reconciliation by Public Discussion <https://link.springer.com/content/pdf/10.1007/3-540-48285-7_35.pdf>`_  *Charles H. Bennett and Gilles Brassard.* Proceedings of IEEE International Conference on Computers,Systems and Signal Processing, pages 175–179, Sep 1984.
+`Secret-Key Reconciliation by Public Discussion. <https://link.springer.com/content/pdf/10.1007/3-540-48285-7_35.pdf>`_  *Charles H. Bennett and Gilles Brassard.* Proceedings of IEEE International Conference on Computers,Systems and Signal Processing, pages 175–179, Sep 1984.
 
 `An analysis of error reconciliation protocols used in Quantum Key Distribution systems. <https://www.researchgate.net/publication/281479898_An_analysis_of_error_reconciliation_protocols_used_in_Quantum_Key_Distribution_systems>`_ *James S Johnson, Michael R Grimaila, Jeffrey W. Humphries, and Gerald B Baumgartner.* The Journal of Defense Modeling & Simulation 12(3):217-227, Jul 2015.
 
@@ -24,6 +24,8 @@ Papers.
 `Error Reconciliation in Quantum Key Distribution Protocols. <https://www.researchgate.net/publication/341361133_Error_Reconciliation_in_Quantum_Key_Distribution_Protocols>`_ *Miralem Mehic, Marcin Niemiec, Harun Šiljak, and Miroslav Vozňák.* Lecture Notes in Computer Science, 2020.
 
 `Using Cascade in Quantum Key Distribution. https://arxiv.org/abs/2307.00576`_ *Devashish Tupkary, Norbert Lütkenhaus.* arXiv:2307.00576 [quant-ph], Dec 2023.
+
+`Cracking the Curious Case of the Cascade Protocol. <https://www.researchgate.net/publication/372972603_Cracking_the_Curious_Case_of_the_Cascade_Protocol>`_ *Anand Choudhary, Ajay Wasan.* IEEE Access. PP. 1-1. 10.1109/ACCESS.2023.3303392, 2023.
 
 Thesis.
 =======

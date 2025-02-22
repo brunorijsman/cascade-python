@@ -39,6 +39,8 @@ Thesis.
 
 `An Empirical Analysis of the Cascade Secret Key Reconciliation Protocol for Quantum Key Distribution. <https://scholar.afit.edu/cgi/viewcontent.cgi?article=2524&context=etd>`_ *Timothy I. Calver, Captain, USAF.* Master's Thesis, Department of the Air Force, Air University, Air Force Institute of Technology.
 
+`Quantum Key Distribution post processing. <https://webthesis.biblio.polito.it/29325/1/tesi.pdf>`_ *Marco Giulio Lorenzo.* Master's Thesis, Politecnico di Torino, 2023.
+
 Implementations.
 ================
 
